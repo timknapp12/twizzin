@@ -1,0 +1,36 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/twizzin-fe/node_modules
+/twizzin-fe/.pnp
+/twizzin-fe.pnp.js
+/twizzin-fe.yarn/install-state.gz
+
+# testing
+/twizzin-fe/coverage
+
+# next.js
+/twizzin-fe/.next/
+/twizzin-fe/out/
+
+# production
+/twizzin-fe/build
+
+# misc
+/twizzin-fe.DS_Store
+/twizzin-fe*.pem
+
+# debug
+/twizzin-fenpm-debug.log*
+/twizzin-feyarn-debug.log*
+/twizzin-feyarn-error.log*
+
+# local env files
+/twizzin-fe.env*.local
+
+# vercel
+/twizzin-fe.vercel
+
+# typescript
+/twizzin-fe*.tsbuildinfo
+/twizzin-fenext-env.d.ts

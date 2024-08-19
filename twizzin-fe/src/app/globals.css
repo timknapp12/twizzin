@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-color: theme('colors.light.foreground');
+  --background-color: theme('colors.light.background');
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-color: theme('colors.dark.foreground');
+    --background-color: theme('colors.dark.background');
+  }
+}
+
+body {
+  color: var(--foreground-color);
+  background-color: var(--background-color);
+}
+
+.atma {
+  font-family: 'Atma', system-ui;
+  font-weight: 400;
+  font-style: normal;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
