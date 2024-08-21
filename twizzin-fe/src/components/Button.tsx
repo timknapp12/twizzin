@@ -20,11 +20,11 @@ export const Button = ({
     className={`
         w-full
         px-4 py-2
-        rounded-tl-lg rounded-br-lg
+        rounded-tl-2xl rounded-br-2xl
         bg-gradient-to-br from-lightPurple to-darkPurple
         text-dark-background dark:text-light-background
         text-xl sm:text-2xl
-        hover:opacity-80 transition-opacity
+        hover:opacity-90 transition-opacity
         cursor-pointer
         ${className || ''}
       `}

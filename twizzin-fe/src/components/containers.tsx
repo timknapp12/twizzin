@@ -16,13 +16,13 @@ export const BorderedContainer = ({
   className,
 }: ScreenContainerProps & { className?: string }) => (
   <div
-    className={`flex-grow w-full p-4 rounded-tl-lg rounded-br-lg bg-gradient-to-br from-lightPurple to-darkPurple flex ${
+    className={`flex-grow w-full p-4 rounded-tl-2xl rounded-br-2xl bg-gradient-to-br from-lightPurple to-darkPurple flex ${
       className || ''
     }`}
   >
     <div className='relative w-full'>
-      <div className='absolute -top-12 -right-12 w-[calc(100%+24px)] h-[calc(100%+24px)] border border-dark-background dark:border-light-background rounded-tl-lg rounded-br-lg pointer-events-none'></div>
-      <div className='bg-light-background dark:bg-dark-background w-full h-full rounded-tl-lg rounded-br-lg pt-6 pr-6 pb-12 pl-16 flex flex-col'>
+      <div className='absolute -top-12 -right-12 w-[calc(100%+24px)] h-[calc(100%+24px)] border border-dark-background dark:border-light-background rounded-tl-2xl rounded-br-2xl pointer-events-none'></div>
+      <div className='bg-light-background dark:bg-dark-background w-full h-full rounded-tl-2xl rounded-br-2xl pt-6 pr-6 pb-12 pl-16 flex flex-col'>
         <Column>{children}</Column>
       </div>
     </div>
@@ -101,7 +101,7 @@ export const GradientContainer = ({
   className,
 }: ScreenContainerProps) => (
   <div
-    className={`flex-grow w-full p-4 rounded-tl-lg rounded-br-lg bg-gradient-to-br from-lightPurple to-darkPurple ${
+    className={`flex-grow w-full p-4 rounded-tl-2xl rounded-br-2xl bg-gradient-to-br from-lightPurple to-darkPurple ${
       className || ''
     }`}
   >
