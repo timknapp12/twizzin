@@ -6,7 +6,7 @@ interface ScreenContainerProps {
 }
 
 export const ScreenContainer = ({ children }: ScreenContainerProps) => (
-  <main className='flex min-h-screen flex-col items-center justify-start pl-8 pr-16 p-16'>
+  <main className='flex min-h-screen flex-col items-center justify-start pl-6 sm:pl-8 pr-10 sm:pr-16 p-10 sm:p-16'>
     <BorderedContainer>{children}</BorderedContainer>
   </main>
 );
@@ -22,7 +22,7 @@ export const BorderedContainer = ({
   >
     <div className='relative w-full'>
       <div className='absolute -top-12 -right-12 w-[calc(100%+24px)] h-[calc(100%+24px)] border border-dark-background dark:border-light-background rounded-tl-2xl rounded-br-2xl pointer-events-none'></div>
-      <div className='bg-light-background dark:bg-dark-background w-full h-full rounded-tl-2xl rounded-br-2xl pt-6 pr-6 pb-12 pl-16 flex flex-col'>
+      <div className='bg-light-background dark:bg-dark-background w-full h-full rounded-tl-2xl rounded-br-2xl pt-6 pr-6 pb-12 pl-14 flex flex-col'>
         <Column>{children}</Column>
       </div>
     </div>
@@ -87,9 +87,9 @@ export const Row = ({
   ...props
 }: RowProps) => (
   <div
-    className={`flex flex-row items-${align} ${justifyClassMap[justify]} ${
-      className || ''
-    }`}
+    className={`flex flex-row flex-wrap items-${align} ${
+      justifyClassMap[justify]
+    } ${className || ''}`}
     {...props}
   >
     {children}
@@ -101,7 +101,7 @@ export const GradientContainer = ({
   className,
 }: ScreenContainerProps) => (
   <div
-    className={`flex-grow w-full p-4 rounded-tl-2xl rounded-br-2xl bg-gradient-to-br from-lightPurple to-darkPurple ${
+    className={`w-full p-4 rounded-tl-2xl rounded-br-2xl bg-gradient-to-br from-lightPurple to-darkPurple ${
       className || ''
     }`}
   >
