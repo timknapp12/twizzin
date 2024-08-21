@@ -13,10 +13,15 @@ export const ScreenContainer = ({ children }: ScreenContainerProps) => (
 
 export const BorderedContainer = ({
   children,
+  className,
 }: ScreenContainerProps & { className?: string }) => (
-  <div className='flex-grow w-full p-4 rounded-tl-lg rounded-br-lg bg-gradient-to-br from-lightPurple to-darkPurple flex'>
+  <div
+    className={`flex-grow w-full p-4 rounded-tl-lg rounded-br-lg bg-gradient-to-br from-lightPurple to-darkPurple flex ${
+      className || ''
+    }`}
+  >
     <div className='relative w-full'>
-      <div className='absolute -top-12 -right-12 w-[calc(100%+24px)] h-[calc(100%+24px)] border border-white rounded-tl-lg rounded-br-lg'></div>
+      <div className='absolute -top-12 -right-12 w-[calc(100%+24px)] h-[calc(100%+24px)] border border-dark-background dark:border-light-background rounded-tl-lg rounded-br-lg pointer-events-none'></div>
       <div className='bg-light-background dark:bg-dark-background w-full h-full rounded-tl-lg rounded-br-lg pt-6 pr-6 pb-12 pl-16 flex flex-col'>
         <Column>{children}</Column>
       </div>
@@ -24,9 +29,30 @@ export const BorderedContainer = ({
   </div>
 );
 
+const justifyClassMap = {
+  start: 'justify-start',
+  center: 'justify-center',
+  end: 'justify-end',
+  between: 'justify-between',
+  around: 'justify-around',
+  evenly: 'justify-evenly',
+} as const;
+
+const alignClassMap = {
+  start: 'items-start',
+  center: 'items-center',
+  end: 'items-end',
+  stretch: 'items-stretch',
+  baseline: 'items-baseline',
+  'space-between': 'items-space-between',
+} as const;
+
+type JustifyType = keyof typeof justifyClassMap;
+type AlignType = keyof typeof alignClassMap;
+
 interface ColumnProps extends React.HTMLAttributes<HTMLDivElement> {
-  justify?: 'start' | 'center' | 'end' | 'between' | 'around' | 'evenly';
-  align?: 'start' | 'center' | 'end' | 'stretch' | 'baseline';
+  justify?: JustifyType;
+  align?: AlignType;
   children: ReactNode;
 }
 
@@ -38,9 +64,9 @@ export const Column = ({
   ...props
 }: ColumnProps) => (
   <div
-    className={`flex flex-col justify-${justify} items-${align} ${
-      className || ''
-    }`}
+    className={`flex flex-col ${justifyClassMap[justify]} ${
+      alignClassMap[align]
+    } ${className || ''}`}
     {...props}
   >
     {children}
@@ -48,7 +74,7 @@ export const Column = ({
 );
 
 interface RowProps extends React.HTMLAttributes<HTMLDivElement> {
-  justify?: 'start' | 'center' | 'end' | 'between' | 'around' | 'evenly';
+  justify?: JustifyType;
   align?: 'start' | 'center' | 'end' | 'stretch' | 'baseline';
   children: ReactNode;
 }
@@ -61,7 +87,7 @@ export const Row = ({
   ...props
 }: RowProps) => (
   <div
-    className={`flex flex-row justify-${justify} items-${align} ${
+    className={`flex flex-row items-${align} ${justifyClassMap[justify]} ${
       className || ''
     }`}
     {...props}
