@@ -21,3 +21,9 @@ export const H1Brand = ({ children, className, ...props }: TextProps) => (
     {children}
   </span>
 );
+
+export const ButtonText = ({ children, className, ...props }: TextProps) => (
+  <span className={`text-lg sm:text-xl md:text-3xl ${className}`} {...props}>
+    {children}
+  </span>
+);
