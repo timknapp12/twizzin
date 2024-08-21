@@ -8,13 +8,16 @@ interface TextProps {
 }
 
 export const H1 = ({ children, className, ...props }: TextProps) => (
-  <span className={`text-4xl ${className}`} {...props}>
+  <span className={`text-2xl sm:text-3xl md:text-4xl ${className}`} {...props}>
     {children}
   </span>
 );
 
 export const H1Brand = ({ children, className, ...props }: TextProps) => (
-  <span className={`text-4xl ${atma.className} ${className}`} {...props}>
+  <span
+    className={`text-2xl sm:text-3xl md:text-5xl ${atma.className} ${className}`}
+    {...props}
+  >
     {children}
   </span>
 );
