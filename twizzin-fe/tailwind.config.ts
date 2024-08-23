@@ -28,7 +28,11 @@ const config: Config = {
       none: '0',
       sm: '.125rem',
       DEFAULT: '.25rem',
+      md: '.375rem',
       lg: '.5rem',
+      xl: '1rem',
+      '2xl': '1.5rem',
+      '3xl': '2rem',
       full: '9999px',
     },
     spacing: {
