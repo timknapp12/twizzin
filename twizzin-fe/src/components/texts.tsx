@@ -22,8 +22,38 @@ export const H1Brand = ({ children, className, ...props }: TextProps) => (
   </span>
 );
 
+export const H2 = ({ children, className, ...props }: TextProps) => (
+  <span className={`text-xl sm:text-2xl md:text-3xl ${className}`} {...props}>
+    {children}
+  </span>
+);
+
+export const H2Brand = ({ children, className, ...props }: TextProps) => (
+  <span
+    className={`text-xl sm:text-2xl md:text-4xl ${atma.className} ${className}`}
+    {...props}
+  >
+    {children}
+  </span>
+);
+
+export const H3 = ({ children, className, ...props }: TextProps) => (
+  <span className={`text-lg sm:text-xl md:text-2xl ${className}`} {...props}>
+    {children}
+  </span>
+);
+
+export const H3Brand = ({ children, className, ...props }: TextProps) => (
+  <span
+    className={`text-lg sm:text-xl md:text-3xl ${atma.className} ${className}`}
+    {...props}
+  >
+    {children}
+  </span>
+);
+
 export const ButtonText = ({ children, className, ...props }: TextProps) => (
-  <span className={`text-lg sm:text-xl md:text-3xl ${className}`} {...props}>
+  <span className={`text-base sm:text-lg md:text-2xl ${className}`} {...props}>
     {children}
   </span>
 );

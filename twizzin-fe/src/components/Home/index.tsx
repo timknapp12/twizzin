@@ -26,9 +26,9 @@ export const HomeComponent = () => {
         <GradientContainer>
           <TwizzinLogo />
           {/* <Row>
-            <H1 className='font-mono'>You be</H1>
+            <H1>You be</H1>
             <H1Brand className='mr-2 ml-2 mt-2'>TWIZZIN</H1Brand>
-            <H1 className='font-mono'>in:</H1>
+            <H1>in:</H1>
           </Row> */}
           <Landing />
         </GradientContainer>
@@ -40,7 +40,7 @@ export const HomeComponent = () => {
             <Row className='w-full relative'>
               <span className='flex-grow mr-6 ml-6'>Gimme more info</span>
               <FaChevronDown
-                size={18}
+                size={16}
                 className='absolute top-2 right-0 hidden sm:block'
               />
             </Row>

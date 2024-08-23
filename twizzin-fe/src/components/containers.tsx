@@ -6,11 +6,12 @@ interface ScreenContainerProps {
 }
 
 export const ScreenContainer = ({ children }: ScreenContainerProps) => (
-  <main className='flex min-h-screen flex-col items-center justify-start p-6 sm:pl-8 sm:pr-16 sm:pr-16 sm:p-16'>
+  <main className='flex min-h-screen flex-col items-center justify-start p-6 sm:pl-8 sm:pr-16 sm:p-16'>
     <BorderedContainer>{children}</BorderedContainer>
   </main>
 );
 
+// This container is used to wrap the content of the screen with 2 borders, which is hidden on mobile
 export const BorderedContainer = ({
   children,
   className,
@@ -29,6 +30,7 @@ export const BorderedContainer = ({
   </div>
 );
 
+// use tailwind props to set the justify and align of Column and Row Components
 const justifyClassMap = {
   start: 'justify-start',
   center: 'justify-center',
