@@ -1,3 +1,5 @@
 {
-  "extends": "next/core-web-vitals"
+  "extends": "next/core-web-vitals",
+  "react/jsx-uses-react": "off",
+  "react/react-in-jsx-scope": "off"
 }
