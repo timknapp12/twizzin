@@ -6,7 +6,7 @@ interface ScreenContainerProps {
 }
 
 export const ScreenContainer = ({ children }: ScreenContainerProps) => (
-  <main className='flex min-h-screen flex-col items-center justify-start pl-6 sm:pl-8 pr-10 sm:pr-16 p-10 sm:p-16'>
+  <main className='flex min-h-screen flex-col items-center justify-start p-6 sm:pl-8 sm:pr-16 sm:pr-16 sm:p-16'>
     <BorderedContainer>{children}</BorderedContainer>
   </main>
 );
@@ -16,13 +16,13 @@ export const BorderedContainer = ({
   className,
 }: ScreenContainerProps & { className?: string }) => (
   <div
-    className={`flex-grow w-full p-4 rounded-tl-2xl rounded-br-2xl bg-gradient-to-br from-lightPurple to-darkPurple flex ${
+    className={`flex-grow w-full sm:p-4 rounded-tl-2xl rounded-br-2xl bg-gradient-to-br from-lightPurple to-darkPurple flex ${
       className || ''
     }`}
   >
     <div className='relative w-full'>
-      <div className='absolute -top-12 -right-12 w-[calc(100%+24px)] h-[calc(100%+24px)] border border-dark-background dark:border-light-background rounded-tl-2xl rounded-br-2xl pointer-events-none'></div>
-      <div className='bg-light-background dark:bg-dark-background w-full h-full rounded-tl-2xl rounded-br-2xl pt-6 pr-6 pb-12 pl-14 flex flex-col'>
+      <div className='absolute sm:-top-12 sm:-right-12 sm:w-[calc(100%+24px)] sm:h-[calc(100%+24px)] sm:border border-dark-background dark:border-light-background rounded-tl-2xl rounded-br-2xl pointer-events-none'></div>
+      <div className='bg-light-background dark:bg-dark-background w-full h-full rounded-tl-2xl rounded-br-2xl p-6 sm:pt-6 sm:pr-6 sm:pb-12 sm:pl-14 flex flex-col'>
         <Column>{children}</Column>
       </div>
     </div>
