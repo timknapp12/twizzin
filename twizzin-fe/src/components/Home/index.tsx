@@ -5,18 +5,19 @@ import {
   ScreenContainer,
   TwizzinLogo,
   GradientContainer,
-  Row,
-  Button,
   Column,
 } from '@/components';
-import { FaChevronDown } from 'react-icons/fa';
 import MoreInfo from './MoreInfo';
 import { Landing } from './Landing';
 
 export const HomeComponent = () => {
   const [showMoreInfo, setShowMoreInfo] = useState(false);
 
-  const toggleMoreInfo = () => setShowMoreInfo((prev) => !prev);
+  const toggleMoreInfo = () => {
+    setTimeout(() => {
+      setShowMoreInfo((prev) => !prev);
+    }, 200);
+  };
 
   return (
     <ScreenContainer>
@@ -25,20 +26,7 @@ export const HomeComponent = () => {
           <TwizzinLogo />
           <Landing />
         </GradientContainer>
-        {showMoreInfo ? (
-          // TODO make this a smooth transition
-          <MoreInfo toggleMoreInfo={toggleMoreInfo} />
-        ) : (
-          <Button onClick={toggleMoreInfo}>
-            <Row className='w-full relative'>
-              <span className='flex-grow mr-6 ml-6'>Gimme more info</span>
-              <FaChevronDown
-                size={16}
-                className='absolute top-2 right-0 hidden sm:block'
-              />
-            </Row>
-          </Button>
-        )}
+        <MoreInfo isOpen={showMoreInfo} toggleMoreInfo={toggleMoreInfo} />
       </Column>
     </ScreenContainer>
   );
