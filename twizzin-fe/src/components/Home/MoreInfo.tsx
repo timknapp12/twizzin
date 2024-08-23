@@ -11,15 +11,26 @@ const MoreInfo = ({ toggleMoreInfo }: { toggleMoreInfo: () => void }) => (
           className='absolute top-2 right-0 hidden sm:block'
         />
       </Row>
-      <p className='text-sm'>
-        This is a lot of data and explanation about the app. This is a lot of
-        data and explanation about the app. This is a lot of data and
-        explanation about the app. This is a lot of data and explanation about
-        the app. This is a lot of data and explanation about the app.
-        explanation about the app. This is a lot of data and explanation about
-        the app. This is a lot of data and explanation about the app.
-        explanation about the app. This is a lot of data and explanation about
-        the app. This is a lot of data and explanation about the app.
+      <p className='text-sm text-left'>
+        Are you a triva wizz? Then Twizzin is the game for you. Compete with
+        other players at the same time answering the same set of multiple choice
+        questions. Follow these simple steps to play:
+        <br />
+        <br />
+        Step 1: Within 10 minutes of start time, connect your Solana wallet.
+        <br />
+        Step 2: Enter a username for the game session and pay the 0.1 SOL entry
+        fee.
+        <br />
+        Step 3: At the start time, answer the questions as fast and accurately
+        as you can.
+        <br />
+        Step 4: When you are done, click submit.
+        <br />
+        Step 4: See how you stacked up against the other twizzers.
+        <br />
+        Winners are selected based on accuracy and speed. The winners will split
+        what's in the pool, minus a 3% fee for the creators.
       </p>
     </Column>
   </Button>

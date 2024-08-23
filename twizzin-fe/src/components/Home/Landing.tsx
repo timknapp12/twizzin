@@ -7,7 +7,6 @@ export const Landing = () => {
     <Column className='gap-4'>
       <Row className='text-center'>
         <Column className='items-center'>
-          <H3>This sick game called</H3>
           <H3Brand className='mt-2 mb-2'>TWIZZIN</H3Brand>
           <H3>
             is currently in development. Follow us on X to stay updated on our
