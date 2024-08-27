@@ -34,3 +34,11 @@
 # typescript
 /twizzin-fe*.tsbuildinfo
 /twizzin-fenext-env.d.ts
+
+# env variables
+.env.local
+.env.development
+.env.staging
+.env.production
+
+/twizzin-fe/.vercel

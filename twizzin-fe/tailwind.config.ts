@@ -19,6 +19,7 @@ const config: Config = {
       black: '#1A1A1A ',
       white: '#FFFFFF',
       gray: 'rbga(189,186,186, 0.75)',
+      pink: '#EF1BA3',
     },
     fontFamily: {
       sans: ['Graphik', 'sans-serif'],
