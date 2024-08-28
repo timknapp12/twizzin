@@ -16,10 +16,15 @@ const config: Config = {
     colors: {
       lightPurple: '#AA76FF',
       darkPurple: '#680CFF',
-      black: '#1A1A1A ',
+      black: '#1A1A1A',
+      lightBlack: '#2A2A2A',
       white: '#FFFFFF',
+      offWhite: '#F5F5F5',
       gray: 'rbga(189,186,186, 0.75)',
       pink: '#EF1BA3',
+      red: '#FF3366',
+      blue: '#4169E1',
+      green: '#00FF00',
     },
     fontFamily: {
       sans: ['Graphik', 'sans-serif'],
