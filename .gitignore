@@ -42,3 +42,16 @@
 .env.production
 
 /twizzin-fe/.vercel
+
+# backend
+/twizzin-be/.anchor
+/twizzin-be/.DS_Store
+/twizzin-be/target
+/twizzin-be/**/*.rs.bk
+/twizzin-be/node_modules
+/twizzin-be/test-ledger
+/twizzin-be/.yarn
+
+
+twizzin-wallet.json
+
