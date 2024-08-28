@@ -1,5 +1,6 @@
 use anchor_lang::prelude::*;
 
+use crate::errors::ErrorCode;
 use crate::state::Game;
 
 #[derive(Accounts)]
@@ -25,14 +26,20 @@ pub struct InitGame<'info> {
 impl<'info> InitGame<'info> {
     pub fn init_game(
         &mut self,
-        fee: u16,
+        name: String,
+        entry_fee: u64,
+        commission: u16,
         start_time: u64,
         end_time: u64,
         bumps: &InitGameBumps,
     ) -> Result<()> {
+        require!(name.len() > 0 && name.len() < 33, ErrorCode::NameTooLong);
+
         self.game.set_inner(Game {
             admin: self.admin.key(),
-            fee,
+            name,
+            entry_fee,
+            commission,
             bump: bumps.game,
             vault_bump: bumps.vault,
             start_time,

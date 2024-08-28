@@ -4,7 +4,9 @@ use anchor_lang::prelude::*;
 // GAME ACCOUNT will serve as the escrow
 pub struct Game {
     pub admin: Pubkey,
-    pub fee: u16,
+    pub name: String, // set this to 32 as max length
+    pub entry_fee: u64,
+    pub commission: u16,
     pub bump: u8,
     pub vault_bump: u8,
     pub start_time: u64,
@@ -16,10 +18,11 @@ pub struct Game {
 
 impl Space for Game {
     const INIT_SPACE: usize = 8 + // discriminator
-        32 + 
-        2 + 
+        32 + // pubkey
+        (4 + 32) + // name - 32 is max length and 4 is the length of the string
+        2 + // commission
         (1 * 2) + // bumps
-        (8 * 2) + // start_time and end_time -> u64 * 2
+        (8 * 3) + // entry_fee, start_time and end_time -> u64 * 2
         (4 * 2); // Vec length (u32) -> 4 * 2
 }
 

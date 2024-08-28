@@ -2,8 +2,8 @@ use anchor_lang::prelude::*;
 
 declare_id!("DPkdxvGPH81zodC8LnSg3xnhEKABSCadE5ifxNWwsQ6Y");
 
-pub mod error;
-pub use error::ErrorCode;
+pub mod errors;
+pub use errors::ErrorCode;
 
 pub mod contexts;
 pub use contexts::*;
@@ -17,14 +17,20 @@ pub mod twizzin_be {
 
     pub fn init_game(
         ctx: Context<InitGame>,
-        fee: u16,
+        name: String,
+        entry_fee: u64,
+        commission: u16,
         start_time: u64,
         end_time: u64,
     ) -> Result<()> {
-        ctx.accounts
-            .init_game(fee, start_time, end_time, &ctx.bumps)
+        ctx.accounts.init_game(
+            name, entry_fee, commission, start_time, end_time, &ctx.bumps,
+        )
     }
-    // FUNCTIONS
+
+    pub fn add_player(ctx: Context<AddPlayer>) -> Result<()> {
+        ctx.accounts.add_player()
+    }
     // join_game by player
     // submit guesses by player
     // end_game by escrow? - how do I trigger this?
