@@ -9,8 +9,8 @@ import { useAppContext } from '@/contexts/AppContext';
 
 export const CreateComponent = () => {
   const { isSignedIn, setIsSignedIn, setAdmin } = useAppContext();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('twizzinapp@gmail.com');
+  const [password, setPassword] = useState('dapp_for_ca$hMoney_76');
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {

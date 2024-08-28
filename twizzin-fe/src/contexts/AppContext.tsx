@@ -8,8 +8,8 @@ interface AppContextType {
   setAdmin: (admin: any) => void;
   gameTitle: string;
   setGameTitle: (value: string) => void;
-  gameTime: string;
-  setGameTime: (value: string) => void;
+  gameTime: Date | null;
+  setGameTime: (value: Date | null) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -27,7 +27,7 @@ const AppProvider = ({ children }: { children: ReactNode }) => {
   const [admin, setAdmin] = useState(null);
 
   const [gameTitle, setGameTitle] = useState<string>('');
-  const [gameTime, setGameTime] = useState<string>('');
+  const [gameTime, setGameTime] = useState<Date | null>(new Date());
 
   return (
     <AppContext.Provider
