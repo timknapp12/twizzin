@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Column, ScreenContainer } from '../containers';
+import { Column, Row } from '../containers';
 import { Input } from '../inputs';
 import { Button } from '../Button';
 import { supabase } from '../../utils/supabaseClient';
@@ -9,8 +9,8 @@ import { useAppContext } from '@/contexts/AppContext';
 
 export const CreateComponent = () => {
   const { isSignedIn, setIsSignedIn, setAdmin } = useAppContext();
-  const [email, setEmail] = useState('twizzinapp@gmail.com');
-  const [password, setPassword] = useState('dapp_for_ca$hMoney_76');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -44,37 +44,41 @@ export const CreateComponent = () => {
   }
 
   return (
-    <ScreenContainer>
+    <main className='flex min-h-screen flex-col items-center p-12'>
       {isSignedIn ? (
         <CreateGame />
       ) : (
-        <Column className='w-full gap-4'>
+        <Column className='w-full gap-8'>
           <p className='text-2xl font-bold'>Sign in to create a Twizzin game</p>
-          <Input
-            type='email'
-            id='email'
-            name='email'
-            placeholder='Enter your email'
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            aria-label='Email'
-            required
-          />
-          <Input
-            type='password'
-            id='password'
-            name='password'
-            placeholder='Enter your password'
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            aria-label='Password'
-            required
-          />
+          <Row className='w-full gap-4'>
+            <Input
+              className='flex-grow'
+              type='email'
+              id='email'
+              name='email'
+              placeholder='Enter your email'
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              aria-label='Email'
+              required
+            />
+            <Input
+              className='flex-grow'
+              type='password'
+              id='password'
+              name='password'
+              placeholder='Enter your password'
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              aria-label='Password'
+              required
+            />
+          </Row>
           <Column className='w-1/2'>
             <Button onClick={handleSignIn}>Sign in</Button>
           </Column>
         </Column>
       )}
-    </ScreenContainer>
+    </main>
   );
 };
