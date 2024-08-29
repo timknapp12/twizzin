@@ -17,12 +17,6 @@ pub mod utils;
 pub mod twizzin_be {
     use super::*;
 
-    // Removed Borsh derive macros
-    // #[derive(BorshDeserialize, BorshSerialize)]
-    // pub struct InitGame {
-    //     // ... struct fields ...
-    // }
-
     pub fn init_game(
         ctx: Context<InitGame>,
         name: String,
