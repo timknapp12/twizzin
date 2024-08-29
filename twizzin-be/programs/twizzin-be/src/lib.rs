@@ -11,9 +11,17 @@ pub use contexts::*;
 pub mod state;
 pub use state::*;
 
+pub mod utils;
+
 #[program]
 pub mod twizzin_be {
     use super::*;
+
+    // Removed Borsh derive macros
+    // #[derive(BorshDeserialize, BorshSerialize)]
+    // pub struct InitGame {
+    //     // ... struct fields ...
+    // }
 
     pub fn init_game(
         ctx: Context<InitGame>,
@@ -22,9 +30,10 @@ pub mod twizzin_be {
         commission: u16,
         start_time: u64,
         end_time: u64,
+        answers: Vec<(u8, String, String)>,
     ) -> Result<()> {
         ctx.accounts.init_game(
-            name, entry_fee, commission, start_time, end_time, &ctx.bumps,
+            name, entry_fee, commission, start_time, end_time, answers, &ctx.bumps,
         )
     }
 
