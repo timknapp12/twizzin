@@ -11,9 +11,8 @@ pub struct Game {
     pub vault_bump: u8,
     pub start_time: u64,
     pub end_time: u64,
-    pub players: Vec<PlayerEntry>,
-    pub answers: Vec<CorrectAnswers>,
-    // pub entries: u32, // this is in Andre's repo - not sure why
+    pub players: Vec<PlayerEntry>, // size of vector will dynamically be figured in add_player context
+    pub answers: Vec<CorrectAnswers>, // size of vector will dynamically be figured in add_question context
 }
 
 impl Space for Game {
@@ -39,11 +38,10 @@ impl Space for PlayerEntry {
 
 #[derive(Debug, Clone, AnchorSerialize, AnchorDeserialize)]
 pub struct CorrectAnswers {
-    pub question_id: String,
     pub display_order: u8,
     pub answer: [u8; 32], // SHA256 hash of the correct answer
 }
 
 impl Space for CorrectAnswers {
-    const INIT_SPACE: usize = 4 + 36 + 1 + 32;
+    const INIT_SPACE: usize = 1 + 32;
 }
