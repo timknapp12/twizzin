@@ -37,6 +37,8 @@ impl<'info> InitGame<'info> {
     ) -> Result<()> {
         require!(name.len() > 0 && name.len() < 33, ErrorCode::NameTooLong);
 
+        println!("answers: {:?}", answers);
+
         let hashed_answers = hash_answers(answers);
 
         self.game.set_inner(Game {

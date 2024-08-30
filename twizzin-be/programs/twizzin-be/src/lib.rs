@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-declare_id!("DPkdxvGPH81zodC8LnSg3xnhEKABSCadE5ifxNWwsQ6Y");
+declare_id!("8uqVcDqy6CSS9Ss8VYpPWD5J8daQy3BvsAecQ64DgFAR");
 
 pub mod errors;
 pub use errors::ErrorCode;
@@ -34,6 +34,7 @@ pub mod twizzin_be {
     pub fn add_player(ctx: Context<AddPlayer>) -> Result<()> {
         ctx.accounts.add_player()
     }
+
     // join_game by player
     // submit guesses by player
     // end_game by escrow? - how do I trigger this?
