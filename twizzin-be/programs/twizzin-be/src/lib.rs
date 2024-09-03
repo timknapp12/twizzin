@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-declare_id!("8uqVcDqy6CSS9Ss8VYpPWD5J8daQy3BvsAecQ64DgFAR");
+declare_id!("C5gNE451zYDXvyHKgmpAMHHtDmf3SFjDifRnPnFcZwxt");
 
 pub mod errors;
 pub use errors::ErrorCode;
@@ -32,8 +32,8 @@ pub mod twizzin_be {
         )
     }
 
-    pub fn add_player(ctx: Context<AddPlayer>) -> Result<()> {
-        ctx.accounts.add_player()
+    pub fn add_player(ctx: Context<AddPlayer>, game_code: String) -> Result<()> {
+        ctx.accounts.add_player(game_code)
     }
 
     // join_game by player

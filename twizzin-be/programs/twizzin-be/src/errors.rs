@@ -13,4 +13,6 @@ pub enum ErrorCode {
     PlayerNotInGame,
     #[msg("Name must be between 1 and 32 characters")]
     NameTooLong,
+    #[msg("This does not match the game code")]
+    InvalidGameCode,
 }
