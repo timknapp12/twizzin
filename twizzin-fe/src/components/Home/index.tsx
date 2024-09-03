@@ -6,6 +6,9 @@ import {
   TwizzinLogo,
   GradientContainer,
   Column,
+  Row,
+  H3,
+  H3Brand,
 } from '@/components';
 import MoreInfo from './MoreInfo';
 import { Landing } from './Landing';
@@ -23,12 +26,11 @@ export const HomeComponent = () => {
     <ScreenContainer>
       <Column className='gap-4 w-full lg:w-1/2 mx-auto'>
         <GradientContainer>
+          <Row>
+            <H3Brand className='mr-2 ml-2 mt-2'>TWIZZIN:</H3Brand>
+            <H3>a game for trivia wizzes</H3>
+          </Row>
           <TwizzinLogo />
-          {/* <Row>
-            <H1>You be</H1>
-            <H1Brand className='mr-2 ml-2 mt-2'>TWIZZIN</H1Brand>
-            <H1>in:</H1>
-          </Row> */}
           <Landing />
         </GradientContainer>
         <MoreInfo isOpen={showMoreInfo} toggleMoreInfo={toggleMoreInfo} />

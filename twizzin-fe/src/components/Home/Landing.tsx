@@ -15,7 +15,7 @@ export const Landing = () => {
         </Column>
       </Row>
       <a
-        href='https://x.com/Tim52455313'
+        href='https://x.com/twizzinapp'
         target='_blank'
         rel='noopener noreferrer'
       >
