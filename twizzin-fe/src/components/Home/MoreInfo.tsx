@@ -30,9 +30,18 @@ const MoreInfo = ({
           style={{ maxHeight: isOpen ? '1000px' : '0px' }}
         >
           <p className='text-sm text-left'>
-            Are you a triva wizz? Then Twizzin is the game for you. Compete with
-            other players at the same time answering the same set of multiple
-            choice questions. Follow these simple steps to play:
+            twizzin [twi' z' in] verb, informal
+            <br />
+            1. To be in a state of heightened mental acuity and knowledge
+            recall, particularly while answering trivia questions.
+            <br />
+            2. To perform exceptionally well in a quiz or trivia competition, as
+            if possessing expert-level knowledge or magical, wizzard-like
+            abilities.
+            <br />
+            <br />
+            Compete with other players at the same time, answering the same set
+            of multiple choice questions. Follow these simple steps to play:
             <br />
             <br />
             Step 1: Within 10 minutes of start time, connect your Solana wallet.
@@ -48,7 +57,7 @@ const MoreInfo = ({
             Step 4: See how you stacked up against the other twizzers.
             <br />
             Winners are selected based on accuracy and speed. The winners will
-            split what's in the pool, minus a 3% fee for the creators.
+            split what's in the pool, minus a small fee for the creators.
           </p>
         </div>
       </Column>
