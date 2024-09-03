@@ -55,6 +55,6 @@ impl Space for CorrectAnswers {
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
 pub struct AnswerInput {
     pub display_order: u8,
-    pub answer: String,
-    pub salt: String,
+    pub answer: String, // a, b, c, d
+    pub salt: String,   // question_id
 }
