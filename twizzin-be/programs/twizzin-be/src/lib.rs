@@ -24,7 +24,7 @@ pub mod twizzin_be {
         commission: u16,
         start_time: u64,
         end_time: u64,
-        answers: Vec<(u8, String, String)>,
+        answers: Vec<AnswerInput>,
     ) -> Result<()> {
         ctx.accounts.init_game(
             name, entry_fee, commission, start_time, end_time, answers, &ctx.bumps,

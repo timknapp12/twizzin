@@ -2,16 +2,18 @@ use anchor_lang::prelude::*;
 
 use crate::errors::ErrorCode;
 use crate::state::Game;
-use crate::utils::hash_and_salt::hash_answers;
+use crate::utils::hash::hash_answers;
+use crate::{AnswerInput, CorrectAnswers};
 
 #[derive(Accounts)]
+#[instruction(name: String, entry_fee: u64, commission: u16, start_time: u64, end_time: u64, answers: Vec<(u8, String, String)>)]
 pub struct InitGame<'info> {
     #[account(mut)]
     pub admin: Signer<'info>,
     #[account(
         init,
         payer = admin,
-        space = Game::INIT_SPACE,
+        space = Game::INIT_SPACE + (answers.len() * CorrectAnswers::INIT_SPACE),
         seeds = [b"game", admin.key().as_ref()],
         bump
     )]
@@ -32,12 +34,10 @@ impl<'info> InitGame<'info> {
         commission: u16,
         start_time: u64,
         end_time: u64,
-        answers: Vec<(u8, String, String)>, // display_order, correct_answer, question_id as salt
+        answers: Vec<AnswerInput>, // display_order, correct_answer, question_id as salt
         bumps: &InitGameBumps,
     ) -> Result<()> {
         require!(name.len() > 0 && name.len() < 33, ErrorCode::NameTooLong);
-
-        println!("answers: {:?}", answers);
 
         let hashed_answers = hash_answers(answers);
 

@@ -1,1 +1,1 @@
-pub mod hash_and_salt;
+pub mod hash;
