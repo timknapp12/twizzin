@@ -6,7 +6,8 @@ pub struct Game {
     pub admin: Pubkey,
     pub name: String, // set this to 32 as max length
     pub entry_fee: u64,
-    pub commission: u16,
+    pub commission: u8,    // percentage of the pool
+    pub game_code: String, // 6 char max
     pub bump: u8,
     pub vault_bump: u8,
     pub start_time: u64,
@@ -20,7 +21,8 @@ impl Game {
         32 + // pubkey
         (4 + 32) + // name (4 for length, 32 for max string length)
         8 + // entry_fee
-        2 + // commission
+        1 + // commission
+        (4 + 6) + // game_code (4 for length, 6 for max string length)
         1 + // bump
         1 + // vault_bump
         8 + // start_time

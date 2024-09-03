@@ -21,13 +21,14 @@ pub mod twizzin_be {
         ctx: Context<InitGame>,
         name: String,
         entry_fee: u64,
-        commission: u16,
+        commission: u8,
+        game_code: String,
         start_time: u64,
         end_time: u64,
         answers: Vec<AnswerInput>,
     ) -> Result<()> {
         ctx.accounts.init_game(
-            name, entry_fee, commission, start_time, end_time, answers, &ctx.bumps,
+            name, entry_fee, commission, game_code, start_time, end_time, answers, &ctx.bumps,
         )
     }
 

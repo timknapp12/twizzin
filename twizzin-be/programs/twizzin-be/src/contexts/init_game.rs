@@ -31,7 +31,8 @@ impl<'info> InitGame<'info> {
         &mut self,
         name: String,
         entry_fee: u64,
-        commission: u16,
+        commission: u8,
+        game_code: String,
         start_time: u64,
         end_time: u64,
         answers: Vec<AnswerInput>, // display_order, correct_answer, question_id as salt
@@ -46,6 +47,7 @@ impl<'info> InitGame<'info> {
             name,
             entry_fee,
             commission,
+            game_code,
             bump: bumps.game,
             vault_bump: bumps.vault,
             start_time,

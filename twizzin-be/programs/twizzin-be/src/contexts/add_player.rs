@@ -15,7 +15,7 @@ pub struct AddPlayer<'info> {
     )]
     pub game: Account<'info, Game>,
     #[account(
-        seeds = [b"vault", game.admin.as_ref(), game.key().as_ref()],
+        seeds = [b"vault", game.admin.as_ref(), game.key().as_ref(), game.game_code.as_ref()],
         bump,
     )]
     pub vault: SystemAccount<'info>,
