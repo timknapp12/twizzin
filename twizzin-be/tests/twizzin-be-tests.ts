@@ -84,6 +84,7 @@ describe('twizzin-be', () => {
 
     console.log('Game initialized, fetching game state');
     const gameState = await program.account.game.fetch(gameAccount);
+    // console.log('Initial game state:', JSON.stringify(gameState, null, 2));
 
     expect(gameState.name).to.equal(gameName);
     expect(gameState.entryFee.eq(entryFee)).to.be.true;
@@ -93,6 +94,59 @@ describe('twizzin-be', () => {
     expect(gameState.endTime.eq(endTime)).to.be.true;
     expect(gameState.answers.length).to.equal(answers.length);
     console.log('Game initialization test completed successfully');
+  });
+
+  it('Updates a game with partial parameters', async () => {
+    console.log('Starting game update test');
+
+    const airdropSignature = await provider.connection.requestAirdrop(
+      provider.wallet.publicKey,
+      2 * LAMPORTS_PER_SOL
+    );
+
+    await confirm(airdropSignature);
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    const newGameName = 'Updated Test Game';
+    const newAnswers = [
+      { displayOrder: 0, answer: 'D', salt: 'salt0' },
+      { displayOrder: 1, answer: 'C', salt: 'salt1' },
+      { displayOrder: 2, answer: 'B', salt: 'salt2' },
+      { displayOrder: 3, answer: 'A', salt: 'salt3' },
+      { displayOrder: 4, answer: 'A', salt: 'salt4' },
+    ];
+
+    console.log('Sending updateGame transaction');
+    const tx = await program.methods
+      .updateGame(
+        newGameName,
+        null, // entryFee
+        null, // commission
+        null, // startTime
+        null, // endTime
+        newAnswers
+      )
+      .accounts({
+        admin: provider.wallet.publicKey,
+        game: gameAccount,
+        systemProgram: SystemProgram.programId,
+      } as any)
+      .rpc();
+
+    await confirm(tx);
+
+    console.log('Game updated, fetching updated game state');
+    const updatedGameState = await program.account.game.fetch(gameAccount);
+
+    expect(updatedGameState.name).to.equal(newGameName);
+    expect(updatedGameState.answers.length).to.equal(newAnswers.length);
+
+    // Check that other fields remain unchanged
+    expect(updatedGameState.entryFee.eq(new BN(LAMPORTS_PER_SOL / 100))).to.be
+      .true;
+    expect(updatedGameState.commission).to.equal(5);
+
+    console.log('Game update test completed successfully');
   });
 
   it('Adds a player to the game', async () => {
@@ -109,7 +163,7 @@ describe('twizzin-be', () => {
     await confirm(airdropSignature);
 
     // Add a delay to ensure the airdrop is processed
-    await new Promise((resolve) => setTimeout(resolve, 5000));
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     const balance = await provider.connection.getBalance(
       playerKeypair.publicKey
@@ -150,7 +204,7 @@ describe('twizzin-be', () => {
       2 * LAMPORTS_PER_SOL
     );
     await confirm(airdropSignature);
-    await new Promise((resolve) => setTimeout(resolve, 5000));
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     // Add player to the game
     await program.methods
@@ -164,11 +218,19 @@ describe('twizzin-be', () => {
       .signers([playerKeypair])
       .rpc();
 
+    // Fetch and log the game state after adding the player
+    let gameState = await program.account.game.fetch(gameAccount);
+    // console.log(
+    //   'Game state after adding player:',
+    //   JSON.stringify(gameState, null, 2)
+    // );
+
     const guesses = [
-      { displayOrder: 0, answer: 'A', salt: 'salt0' },
-      { displayOrder: 1, answer: 'B', salt: 'salt1' },
-      { displayOrder: 2, answer: 'C', salt: 'salt2' },
-      { displayOrder: 3, answer: 'D', salt: 'salt3' },
+      { displayOrder: 0, answer: 'D', salt: 'salt0' },
+      { displayOrder: 1, answer: 'C', salt: 'salt1' },
+      { displayOrder: 2, answer: 'B', salt: 'salt2' },
+      { displayOrder: 3, answer: 'A', salt: 'salt3' },
+      { displayOrder: 4, answer: 'A', salt: 'salt4' },
     ];
     const endTime = new BN(Math.floor(Date.now() / 1000));
 
@@ -186,25 +248,27 @@ describe('twizzin-be', () => {
     await confirm(tx);
 
     console.log('Player updated, fetching updated game state');
-    const gameState = await program.account.game.fetch(gameAccount);
+    gameState = await program.account.game.fetch(gameAccount);
+    // console.log('Updated game state:', JSON.stringify(gameState, null, 2));
 
     const updatedPlayer = gameState.players.find((p) =>
       p.player.equals(playerKeypair.publicKey)
     );
+    // console.log('Updated player:', JSON.stringify(updatedPlayer, null, 2));
+
     expect(updatedPlayer).to.not.be.undefined;
-    expect(updatedPlayer!.numCorrect).to.equal(4); // All guesses are correct
+    expect(updatedPlayer!.numCorrect).to.equal(5); // All guesses are correct
     expect(updatedPlayer!.playerEndTime.eq(endTime)).to.be.true;
 
-    console.log('Update player test completed successfully');
+    console.log('Update player test completed');
   });
-
   it('Adds three players with different correct answer counts', async () => {
     console.log('Starting test for multiple players with different scores');
 
     const players = [
-      { keypair: Keypair.generate(), correctAnswers: 1 },
       { keypair: Keypair.generate(), correctAnswers: 2 },
       { keypair: Keypair.generate(), correctAnswers: 3 },
+      { keypair: Keypair.generate(), correctAnswers: 4 },
     ];
 
     for (const player of players) {
@@ -213,7 +277,7 @@ describe('twizzin-be', () => {
         2 * LAMPORTS_PER_SOL
       );
       await confirm(airdropSignature);
-      await new Promise((resolve) => setTimeout(resolve, 5000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       await program.methods
         .addPlayer(gameCode)
@@ -230,10 +294,11 @@ describe('twizzin-be', () => {
     // Update players with different guesses
     for (const player of players) {
       const guesses = [
-        { displayOrder: 0, answer: 'A', salt: 'salt0' },
-        { displayOrder: 1, answer: 'B', salt: 'salt1' },
-        { displayOrder: 2, answer: 'C', salt: 'salt2' },
-        { displayOrder: 3, answer: 'D', salt: 'salt3' },
+        { displayOrder: 0, answer: 'D', salt: 'salt0' },
+        { displayOrder: 1, answer: 'C', salt: 'salt1' },
+        { displayOrder: 2, answer: 'B', salt: 'salt2' },
+        { displayOrder: 3, answer: 'A', salt: 'salt3' },
+        { displayOrder: 4, answer: 'A', salt: 'salt4' },
       ];
 
       // Modify guesses to match the desired number of correct answers

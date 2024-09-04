@@ -19,6 +19,16 @@ pub struct UpdatePlayer<'info> {
 impl<'info> UpdatePlayer<'info> {
     pub fn update_player(&mut self, guesses: Vec<AnswerInput>, end_time: u64) -> Result<()> {
         let player_key = self.player.key();
+
+        // Check if the game has started and hasn't ended yet
+        let current_time = Clock::get()?.unix_timestamp as u64;
+        require!(
+            self.game.start_time <= current_time,
+            ErrorCode::GameNotStarted
+        );
+        require!(self.game.end_time >= current_time, ErrorCode::GameEnded);
+
+        // Extract correct answers and create hashed guesses before mutable borrow
         let correct_answers = self.game.answers.clone();
 
         // Find the player's entry in the game
@@ -29,7 +39,17 @@ impl<'info> UpdatePlayer<'info> {
             .find(|entry| entry.player == player_key)
             .ok_or(ErrorCode::PlayerNotFound)?;
 
-        // Iterate through the guesses and compare with correct answers
+        // Ensure the player hasn't already submitted their guesses
+        require!(
+            player_entry.player_end_time == 0,
+            ErrorCode::PlayerAlreadySubmitted
+        );
+
+        // Reset num_correct and set end_time
+        player_entry.num_correct = 0;
+        player_entry.player_end_time = end_time;
+
+        // Compare hashed guesses with correct answers
         for guess in guesses {
             if let Some(correct_answer) = correct_answers
                 .iter()
