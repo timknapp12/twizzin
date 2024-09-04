@@ -36,8 +36,14 @@ pub mod twizzin_be {
         ctx.accounts.add_player(game_code)
     }
 
-    // join_game by player
-    // submit guesses by player
+    // this happens when a player submits their guesses
+    pub fn update_player(
+        ctx: Context<UpdatePlayer>,
+        guesses: Vec<AnswerInput>,
+        end_time: u64,
+    ) -> Result<()> {
+        ctx.accounts.update_player(guesses, end_time)
+    }
     // end_game by escrow? - how do I trigger this?
     // identify_winners
     // calculate_payout

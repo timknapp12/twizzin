@@ -10,7 +10,7 @@ pub enum ErrorCode {
     #[msg("Player already in game")]
     PlayerAlreadyInGame,
     #[msg("Player not in game")]
-    PlayerNotInGame,
+    PlayerNotFound,
     #[msg("Name must be between 1 and 32 characters")]
     NameTooLong,
     #[msg("This does not match the game code")]
