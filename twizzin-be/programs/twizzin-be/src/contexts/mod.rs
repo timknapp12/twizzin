@@ -6,3 +6,6 @@ pub use add_player::*;
 
 pub mod update_player;
 pub use update_player::*;
+
+pub mod update_game;
+pub use update_game::*;

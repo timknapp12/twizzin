@@ -15,4 +15,12 @@ pub enum ErrorCode {
     NameTooLong,
     #[msg("This does not match the game code")]
     InvalidGameCode,
+    #[msg("Not admin")]
+    NotAdmin,
+    #[msg("Game not started")]
+    GameNotStarted,
+    #[msg("Game ended")]
+    GameEnded,
+    #[msg("Player already submitted")]
+    PlayerAlreadySubmitted,
 }
