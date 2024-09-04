@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-declare_id!("8uqVcDqy6CSS9Ss8VYpPWD5J8daQy3BvsAecQ64DgFAR");
+declare_id!("C5gNE451zYDXvyHKgmpAMHHtDmf3SFjDifRnPnFcZwxt");
 
 pub mod errors;
 pub use errors::ErrorCode;
@@ -32,12 +32,18 @@ pub mod twizzin_be {
         )
     }
 
-    pub fn add_player(ctx: Context<AddPlayer>) -> Result<()> {
-        ctx.accounts.add_player()
+    pub fn add_player(ctx: Context<AddPlayer>, game_code: String) -> Result<()> {
+        ctx.accounts.add_player(game_code)
     }
 
-    // join_game by player
-    // submit guesses by player
+    // this happens when a player submits their guesses
+    pub fn update_player(
+        ctx: Context<UpdatePlayer>,
+        guesses: Vec<AnswerInput>,
+        end_time: u64,
+    ) -> Result<()> {
+        ctx.accounts.update_player(guesses, end_time)
+    }
     // end_game by escrow? - how do I trigger this?
     // identify_winners
     // calculate_payout

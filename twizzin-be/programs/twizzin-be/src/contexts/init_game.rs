@@ -6,7 +6,7 @@ use crate::utils::hash::hash_answers;
 use crate::{AnswerInput, CorrectAnswers};
 
 #[derive(Accounts)]
-#[instruction(name: String, entry_fee: u64, commission: u16, start_time: u64, end_time: u64, answers: Vec<(u8, String, String)>)]
+#[instruction(name: String, entry_fee: u64, commission: u8, game_code: String, start_time: u64, end_time: u64, answers: Vec<AnswerInput>)]
 pub struct InitGame<'info> {
     #[account(mut)]
     pub admin: Signer<'info>,
@@ -14,12 +14,12 @@ pub struct InitGame<'info> {
         init,
         payer = admin,
         space = Game::INIT_SPACE + (answers.len() * CorrectAnswers::INIT_SPACE),
-        seeds = [b"game", admin.key().as_ref()],
+        seeds = [b"game", admin.key().as_ref(), game_code.as_bytes()],
         bump
     )]
     pub game: Account<'info, Game>,
     #[account(
-        seeds = [b"vault", admin.key().as_ref(), game.key().as_ref()],
+        seeds = [b"vault", admin.key().as_ref(), game_code.as_bytes()],
         bump,
     )]
     pub vault: SystemAccount<'info>,
