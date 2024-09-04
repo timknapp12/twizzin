@@ -32,6 +32,19 @@ pub mod twizzin_be {
         )
     }
 
+    pub fn update_game(
+        ctx: Context<UpdateGame>,
+        name: Option<String>,
+        entry_fee: Option<u64>,
+        commission: Option<u8>,
+        start_time: Option<u64>,
+        end_time: Option<u64>,
+        answers: Option<Vec<AnswerInput>>,
+    ) -> Result<()> {
+        ctx.accounts
+            .update_game(name, entry_fee, commission, start_time, end_time, answers)
+    }
+
     pub fn add_player(ctx: Context<AddPlayer>, game_code: String) -> Result<()> {
         ctx.accounts.add_player(game_code)
     }
