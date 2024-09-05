@@ -23,4 +23,10 @@ pub enum ErrorCode {
     GameEnded,
     #[msg("Player already submitted")]
     PlayerAlreadySubmitted,
+    #[msg("Invalid admin")]
+    InvalidAdmin,
+    #[msg("Max winners must be between 1 and 10")]
+    MaxWinnersTooHigh,
+    #[msg("Invalid end time")]
+    InvalidEndTime,
 }
