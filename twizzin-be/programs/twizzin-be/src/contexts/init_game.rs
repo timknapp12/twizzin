@@ -6,7 +6,7 @@ use crate::utils::hash::hash_answers;
 use crate::{AnswerInput, CorrectAnswers};
 
 #[derive(Accounts)]
-#[instruction(name: String, entry_fee: u64, commission: u8, game_code: String, start_time: u64, end_time: u64, answers: Vec<AnswerInput>)]
+#[instruction(name: String, entry_fee: u64, commission: u8, game_code: String, start_time: i64, end_time: i64, max_winners: u8, answers: Vec<AnswerInput>)]
 pub struct InitGame<'info> {
     #[account(mut)]
     pub admin: Signer<'info>,
@@ -33,12 +33,17 @@ impl<'info> InitGame<'info> {
         entry_fee: u64,
         commission: u8,
         game_code: String,
-        start_time: u64,
-        end_time: u64,
+        start_time: i64,
+        end_time: i64,
+        max_winners: u8,
         answers: Vec<AnswerInput>, // display_order, correct_answer, question_id as salt
         bumps: &InitGameBumps,
     ) -> Result<()> {
         require!(name.len() > 0 && name.len() < 33, ErrorCode::NameTooLong);
+        require!(
+            max_winners > 0 && max_winners < 11,
+            ErrorCode::MaxWinnersTooHigh
+        );
 
         let hashed_answers = hash_answers(answers);
 
@@ -52,6 +57,7 @@ impl<'info> InitGame<'info> {
             vault_bump: bumps.vault,
             start_time,
             end_time,
+            max_winners,
             players: Vec::new(),
             answers: hashed_answers,
         });

@@ -17,16 +17,17 @@ pub struct UpdatePlayer<'info> {
 }
 
 impl<'info> UpdatePlayer<'info> {
-    pub fn update_player(&mut self, guesses: Vec<AnswerInput>, end_time: u64) -> Result<()> {
+    pub fn update_player(&mut self, guesses: Vec<AnswerInput>, end_time: i64) -> Result<()> {
         let player_key = self.player.key();
 
         // Check if the game has started and hasn't ended yet
-        let current_time = Clock::get()?.unix_timestamp as u64;
+        let current_time = Clock::get()?.unix_timestamp * 1000; // convert to milliseconds
         require!(
             self.game.start_time <= current_time,
             ErrorCode::GameNotStarted
         );
         require!(self.game.end_time >= current_time, ErrorCode::GameEnded);
+        require!(self.game.end_time >= end_time, ErrorCode::InvalidEndTime);
 
         // Extract correct answers and create hashed guesses before mutable borrow
         let correct_answers = self.game.answers.clone();

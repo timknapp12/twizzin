@@ -23,8 +23,9 @@ impl<'info> UpdateGame<'info> {
         name: Option<String>,
         entry_fee: Option<u64>,
         commission: Option<u8>,
-        start_time: Option<u64>,
-        end_time: Option<u64>,
+        start_time: Option<i64>,
+        end_time: Option<i64>,
+        max_winners: Option<u8>,
         answers: Option<Vec<AnswerInput>>,
         // game_code is not allowed to be updated
     ) -> Result<()> {
@@ -47,6 +48,13 @@ impl<'info> UpdateGame<'info> {
         }
         if let Some(end_time) = end_time {
             self.game.end_time = end_time;
+        }
+        if let Some(max_winners) = max_winners {
+            require!(
+                max_winners > 0 && max_winners < 11,
+                ErrorCode::MaxWinnersTooHigh
+            );
+            self.game.max_winners = max_winners;
         }
         if let Some(answers) = answers {
             if answers.len() != self.game.answers.len() {

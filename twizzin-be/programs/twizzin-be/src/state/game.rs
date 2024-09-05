@@ -10,8 +10,9 @@ pub struct Game {
     pub game_code: String, // 6 char max
     pub bump: u8,
     pub vault_bump: u8,
-    pub start_time: u64,
-    pub end_time: u64,
+    pub start_time: i64,
+    pub end_time: i64,
+    pub max_winners: u8,
     pub players: Vec<PlayerEntry>, // size of vector will dynamically be figured in add_player context
     pub answers: Vec<CorrectAnswers>, // size of vector will dynamically be figured in add_question context
 }
@@ -27,6 +28,7 @@ impl Game {
         1 + // vault_bump
         8 + // start_time
         8 + // end_time
+        1 + // max_winners
         4 + // players vector length (just the length field, not the contents)
         4; // answers vector length (just the length field, not the contents)
 }
@@ -35,7 +37,7 @@ impl Game {
 pub struct PlayerEntry {
     pub player: Pubkey,
     pub num_correct: u8,
-    pub player_end_time: u64,
+    pub player_end_time: i64,
 }
 
 impl Space for PlayerEntry {
