@@ -29,4 +29,18 @@ pub enum ErrorCode {
     MaxWinnersTooHigh,
     #[msg("Invalid end time")]
     InvalidEndTime,
+    #[msg("Overflow")]
+    Overflow,
+    #[msg("Insufficient funds")]
+    InsufficientFunds,
+    #[msg("Invalid treasury")]
+    InvalidTreasury,
+    #[msg("Invalid winner")]
+    InvalidWinner,
+    #[msg("No recent blockhash")]
+    NoRecentBlockhash,
+    #[msg("Invalid slot hashes")]
+    InvalidSlotHashes,
+    #[msg("No recent slot hash")]
+    NoRecentSlotHash,
 }
