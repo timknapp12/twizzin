@@ -3,8 +3,7 @@ use anchor_lang::solana_program::{program::invoke_signed, pubkey::Pubkey, system
 use anchor_lang::system_program::{transfer, Transfer};
 
 use crate::errors::ErrorCode;
-use crate::state::game::PlayerEntry;
-use crate::state::ProgramConfig;
+use crate::state::{game::PlayerEntry, ProgramConfig};
 use crate::utils::{calculate_payout::calculate_payout, find_winners::find_winners};
 use crate::Game;
 
@@ -42,21 +41,17 @@ pub struct EndGame<'info> {
         seeds = [b"vault", admin.key().as_ref(), game.game_code.as_bytes()],
         bump = game.vault_bump,
     )]
-    pub vault: SystemAccount<'info>,
-    #[account(
-        mut,
-        seeds = [b"config", admin.key().as_ref(), game.game_code.as_bytes()],
-        bump,
-        close = admin
-    )]
+    /// CHECK: This account is being closed
+    pub vault: UncheckedAccount<'info>,
+    #[account()]
     pub config: Account<'info, ProgramConfig>,
-    pub system_program: Program<'info, System>,
-    /// CHECK: This account is not read or written, just used for transferring funds
     #[account(
         mut,
         constraint = treasury.key() == config.treasury_pubkey @ ErrorCode::InvalidTreasury
     )]
+    /// CHECK: This account is used for transferring funds
     pub treasury: UncheckedAccount<'info>,
+    pub system_program: Program<'info, System>,
 }
 
 impl<'info> EndGame<'info> {
@@ -74,11 +69,10 @@ impl<'info> EndGame<'info> {
             self.pay_winner(&winner.player, payout_per_winner)?;
         }
 
-        // Pay admin
         self.pay_admin(commission_amount)?;
 
-        // Pay remaining balance to treasury
-        self.pay_treasury()?;
+        // sends the 1% fee to treasury minus tx fees
+        self.pay_treasury_and_close_vault()?;
 
         // Return sorted players and winners
         Ok((
@@ -145,36 +139,47 @@ impl<'info> EndGame<'info> {
         Ok(())
     }
 
-    fn pay_treasury(&self) -> Result<()> {
-        let remaining_balance = self.vault.lamports();
-        let signer_seeds: &[&[&[u8]]] = &[&[
-            b"vault",
-            self.admin.key.as_ref(),
-            self.game.game_code.as_bytes(),
-            &[self.game.vault_bump],
-        ]];
+    fn pay_treasury_and_close_vault(&self) -> Result<()> {
+        let vault_balance = self.vault.lamports();
 
-        let cpi_ctx = CpiContext::new_with_signer(
-            self.system_program.to_account_info(),
-            Transfer {
-                from: self.vault.to_account_info(),
-                to: self.treasury.to_account_info(),
-            },
-            signer_seeds,
-        );
+        if vault_balance > 0 {
+            let signer_seeds: &[&[&[u8]]] = &[&[
+                b"vault",
+                self.admin.key.as_ref(),
+                self.game.game_code.as_bytes(),
+                &[self.game.vault_bump],
+            ]];
 
-        transfer(cpi_ctx, remaining_balance)?;
+            // Transfer entire balance to treasury
+            let transfer_ix = system_instruction::transfer(
+                &self.vault.key(),
+                &self.treasury.key(),
+                vault_balance,
+            );
 
-        emit!(TreasuryPaid {
-            treasury: self.config.treasury_pubkey,
-            amount: remaining_balance,
-        });
+            invoke_signed(
+                &transfer_ix,
+                &[
+                    self.vault.to_account_info(),
+                    self.treasury.to_account_info(),
+                    self.system_program.to_account_info(),
+                ],
+                signer_seeds,
+            )?;
 
-        msg!(
-            "Paid remaining {} lamports to treasury {}",
-            remaining_balance,
-            self.config.treasury_pubkey
-        );
+            emit!(TreasuryPaid {
+                treasury: self.treasury.key(),
+                amount: vault_balance,
+            });
+
+            msg!(
+                "Vault closed. {} lamports transferred to treasury",
+                vault_balance
+            );
+        } else {
+            msg!("Vault already empty");
+        }
+
         Ok(())
     }
 }
