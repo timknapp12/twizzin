@@ -19,8 +19,11 @@ pub struct InitGame<'info> {
     )]
     pub game: Account<'info, Game>,
     #[account(
+        init,
+        payer = admin,
+        space = 8,  
         seeds = [b"vault", admin.key().as_ref(), game_code.as_bytes()],
-        bump,
+        bump
     )]
     pub vault: SystemAccount<'info>,
     pub system_program: Program<'info, System>,

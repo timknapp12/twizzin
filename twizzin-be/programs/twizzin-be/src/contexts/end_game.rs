@@ -41,8 +41,7 @@ pub struct EndGame<'info> {
         seeds = [b"vault", admin.key().as_ref(), game.game_code.as_bytes()],
         bump = game.vault_bump,
     )]
-    /// CHECK: This account is being closed
-    pub vault: UncheckedAccount<'info>,
+    pub vault: SystemAccount<'info>,
     #[account()]
     pub config: Account<'info, ProgramConfig>,
     #[account(
