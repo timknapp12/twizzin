@@ -1,13 +1,9 @@
 use crate::errors::ErrorCode;
-use crate::state::{Game, ProgramConfig};
+use crate::state::Game;
 use crate::utils::hash::hash_answers;
 use crate::{AnswerInput, CorrectAnswers};
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::pubkey::Pubkey;
-use std::str::FromStr;
-
-// Include the JSON file content at compile time
-const WALLET_JSON: &str = include_str!("../../../../twizzin-wallet.json");
 
 #[derive(Accounts)]
 #[instruction(name: String, entry_fee: u64, commission: u8, game_code: String, start_time: i64, end_time: i64, max_winners: u8, answers: Vec<AnswerInput>)]
@@ -27,14 +23,6 @@ pub struct InitGame<'info> {
         bump,
     )]
     pub vault: SystemAccount<'info>,
-    #[account(
-        init,
-        payer = admin,
-        space = ProgramConfig::INIT_SPACE,
-        seeds = [b"config", admin.key().as_ref(), game_code.as_bytes()],
-        bump
-    )]
-    pub config: Account<'info, ProgramConfig>,
     pub system_program: Program<'info, System>,
 }
 
@@ -73,19 +61,6 @@ impl<'info> InitGame<'info> {
             players: Vec::new(),
             answers: hashed_answers,
         });
-
-        // Parse the JSON at compile time
-        let wallet: serde_json::Value =
-            serde_json::from_str(WALLET_JSON).expect("Failed to parse twizzin-wallet.json");
-
-        let treasury_pubkey_str = wallet["treasury_pubkey"]
-            .as_str()
-            .expect("treasury_pubkey not found in JSON");
-
-        let treasury_pubkey =
-            Pubkey::from_str(treasury_pubkey_str).expect("Invalid treasury public key");
-
-        self.config.set_inner(ProgramConfig { treasury_pubkey });
 
         Ok(())
     }

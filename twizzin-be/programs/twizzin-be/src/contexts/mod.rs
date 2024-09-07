@@ -1,6 +1,9 @@
 pub mod init_game;
 pub use init_game::*;
 
+pub mod init_config;
+pub use init_config::*;
+
 pub mod add_player;
 pub use add_player::*;
 
