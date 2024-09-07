@@ -17,6 +17,10 @@ pub mod utils;
 pub mod twizzin_be {
     use super::*;
 
+    pub fn init_config(ctx: Context<InitConfig>, treasury_pubkey: Pubkey) -> Result<()> {
+        ctx.accounts.init_config(treasury_pubkey)
+    }
+
     pub fn init_game(
         ctx: Context<InitGame>,
         name: String,
