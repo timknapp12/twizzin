@@ -73,7 +73,6 @@ impl<'info> EndGame<'info> {
         // sends the 1% fee to treasury minus tx fees
         self.pay_treasury_and_close_vault()?;
 
-        // Return sorted players and winners
         Ok((
             sorted_players,
             winners,
@@ -89,7 +88,7 @@ impl<'info> EndGame<'info> {
             self.game.game_code.as_bytes(),
             &[self.game.vault_bump],
         ]];
-
+        // we don't use Anchor's Transfer, but solana primitives because we don't pass in known accounts of winners, since the program does it automatically
         let ix = system_instruction::transfer(&self.vault.key(), winner_pubkey, amount);
 
         invoke_signed(
@@ -150,21 +149,16 @@ impl<'info> EndGame<'info> {
             ]];
 
             // Transfer entire balance to treasury
-            let transfer_ix = system_instruction::transfer(
-                &self.vault.key(),
-                &self.treasury.key(),
-                vault_balance,
+            let cpi_ctx = CpiContext::new_with_signer(
+                self.system_program.to_account_info(),
+                Transfer {
+                    from: self.vault.to_account_info(),
+                    to: self.treasury.to_account_info(),
+                },
+                signer_seeds,
             );
 
-            invoke_signed(
-                &transfer_ix,
-                &[
-                    self.vault.to_account_info(),
-                    self.treasury.to_account_info(),
-                    self.system_program.to_account_info(),
-                ],
-                signer_seeds,
-            )?;
+            transfer(cpi_ctx, vault_balance)?;
 
             emit!(TreasuryPaid {
                 treasury: self.treasury.key(),
