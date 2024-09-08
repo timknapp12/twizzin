@@ -17,18 +17,31 @@ pub mod utils;
 pub mod twizzin_be {
     use super::*;
 
+    pub fn init_config(ctx: Context<InitConfig>, treasury_pubkey: Pubkey) -> Result<()> {
+        ctx.accounts.init_config(treasury_pubkey)
+    }
+
     pub fn init_game(
         ctx: Context<InitGame>,
         name: String,
         entry_fee: u64,
         commission: u8,
         game_code: String,
-        start_time: u64,
-        end_time: u64,
+        start_time: i64,
+        end_time: i64,
+        max_winners: u8,
         answers: Vec<AnswerInput>,
     ) -> Result<()> {
         ctx.accounts.init_game(
-            name, entry_fee, commission, game_code, start_time, end_time, answers, &ctx.bumps,
+            name,
+            entry_fee,
+            commission,
+            game_code,
+            start_time,
+            end_time,
+            max_winners,
+            answers,
+            &ctx.bumps,
         )
     }
 
@@ -37,12 +50,20 @@ pub mod twizzin_be {
         name: Option<String>,
         entry_fee: Option<u64>,
         commission: Option<u8>,
-        start_time: Option<u64>,
-        end_time: Option<u64>,
+        start_time: Option<i64>,
+        end_time: Option<i64>,
+        max_winners: Option<u8>,
         answers: Option<Vec<AnswerInput>>,
     ) -> Result<()> {
-        ctx.accounts
-            .update_game(name, entry_fee, commission, start_time, end_time, answers)
+        ctx.accounts.update_game(
+            name,
+            entry_fee,
+            commission,
+            start_time,
+            end_time,
+            max_winners,
+            answers,
+        )
     }
 
     pub fn add_player(ctx: Context<AddPlayer>, game_code: String) -> Result<()> {
@@ -53,16 +74,14 @@ pub mod twizzin_be {
     pub fn update_player(
         ctx: Context<UpdatePlayer>,
         guesses: Vec<AnswerInput>,
-        end_time: u64,
+        end_time: i64,
     ) -> Result<()> {
         ctx.accounts.update_player(guesses, end_time)
     }
-    // end_game by escrow? - how do I trigger this?
-    // identify_winners
-    // calculate_payout
-    // calculate_treasury
-    // pay_winners
-    // pay_treasury
-    // close accounts (vault, escrow, players, game state)? close all of these?
-    // who do we payout when closing accounts? Is it cheap and dirty to pay the treasury?
+
+    pub fn end_game(
+        ctx: Context<EndGame>,
+    ) -> Result<(Vec<PlayerEntry>, Vec<PlayerEntry>, u64, u64)> {
+        ctx.accounts.end_game()
+    }
 }

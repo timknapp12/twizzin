@@ -23,4 +23,24 @@ pub enum ErrorCode {
     GameEnded,
     #[msg("Player already submitted")]
     PlayerAlreadySubmitted,
+    #[msg("Invalid admin")]
+    InvalidAdmin,
+    #[msg("Max winners must be between 1 and 10")]
+    MaxWinnersTooHigh,
+    #[msg("Invalid end time")]
+    InvalidEndTime,
+    #[msg("Overflow")]
+    Overflow,
+    #[msg("Insufficient funds")]
+    InsufficientFunds,
+    #[msg("Invalid treasury")]
+    InvalidTreasury,
+    #[msg("Invalid winner")]
+    InvalidWinner,
+    #[msg("No recent blockhash")]
+    NoRecentBlockhash,
+    #[msg("Invalid slot hashes")]
+    InvalidSlotHashes,
+    #[msg("No recent slot hash")]
+    NoRecentSlotHash,
 }
