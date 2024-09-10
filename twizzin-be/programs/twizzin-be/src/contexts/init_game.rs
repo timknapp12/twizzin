@@ -1,9 +1,9 @@
+use anchor_lang::prelude::*;
+
 use crate::errors::ErrorCode;
 use crate::state::Game;
 use crate::utils::hash::hash_answers;
 use crate::{AnswerInput, CorrectAnswers};
-use anchor_lang::prelude::*;
-use anchor_lang::solana_program::pubkey::Pubkey;
 
 #[derive(Accounts)]
 #[instruction(name: String, entry_fee: u64, commission: u8, game_code: String, start_time: i64, end_time: i64, max_winners: u8, answers: Vec<AnswerInput>)]
@@ -19,9 +19,7 @@ pub struct InitGame<'info> {
     )]
     pub game: Account<'info, Game>,
     #[account(
-        init,
-        payer = admin,
-        space = 8,  
+        // we don't need to initialize the vault account because it's a system account
         seeds = [b"vault", admin.key().as_ref(), game_code.as_bytes()],
         bump
     )]
