@@ -53,6 +53,35 @@ describe('twizzin-be', () => {
     await airdropSol(provider.wallet.publicKey, 10);
   });
 
+  it('Initializes the program config', async () => {
+    console.log('Starting program config initialization test');
+
+    const treasuryKeypair = anchor.web3.Keypair.generate();
+    const configKeypair = anchor.web3.Keypair.generate();
+
+    console.log('Sending initConfig transaction');
+    const tx = await program.methods
+      .initConfig(treasuryKeypair.publicKey)
+      .accounts({
+        admin: provider.wallet.publicKey,
+        config: configKeypair.publicKey,
+        systemProgram: SystemProgram.programId,
+      } as any)
+      .signers([configKeypair])
+      .rpc();
+
+    await confirm(tx);
+
+    console.log('Config initialized, fetching config state');
+    const configState = await program.account.programConfig.fetch(
+      configKeypair.publicKey
+    );
+
+    expect(configState.treasuryPubkey.equals(treasuryKeypair.publicKey)).to.be
+      .true;
+    console.log('Program config initialization test completed successfully');
+  });
+
   it('Initializes a game', async () => {
     console.log('Starting game initialization test');
     const gameName = 'Test Game';
