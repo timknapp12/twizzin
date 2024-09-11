@@ -1062,41 +1062,27 @@ describe('twizzin-be', () => {
     // Verify that the treasury received at least the expected fee
     expect(treasuryBalanceChange).to.be.gte(treasuryFee.toNumber());
 
-    // ... (previous code remains the same)
-
-    // Calculate the total payout (winners only)
-    const totalPayout = balanceChanges
-      .slice(players.length - actualWinners)
-      .reduce((sum, change) => sum + change, 0);
-
-    // Calculate the total fees collected (entry fees from all players)
-    const totalFeesCollected = entryFee.mul(new BN(players.length)).toNumber();
+    // Calculate the net change across all players
+    const netPlayerChange = balanceChanges.reduce(
+      (sum, change) => sum + change,
+      0
+    );
 
     // Calculate the total distribution
     const totalDistributed =
-      totalPayout +
-      adminBalanceChange +
-      treasuryBalanceChange +
-      entryFee.toNumber() * (players.length - actualWinners); // Add entry fees from non-winners
+      netPlayerChange + adminBalanceChange + treasuryBalanceChange;
 
     console.log('Distribution details:');
-    console.log(`  Total payout to winners: ${totalPayout}`);
+    console.log(`  Net player change: ${netPlayerChange}`);
     console.log(`  Admin commission: ${adminBalanceChange}`);
     console.log(`  Treasury fee: ${treasuryBalanceChange}`);
-    console.log(
-      `  Entry fees from non-winners: ${
-        entryFee.toNumber() * (players.length - actualWinners)
-      }`
-    );
     console.log(`  Total distributed: ${totalDistributed}`);
-    console.log(`  Total fees collected: ${totalFeesCollected}`);
+    console.log(`  Total fees collected: ${totalPool.toNumber()}`);
 
-    // The total distributed should be close to the total fees collected
-    const distributionDifference = Math.abs(
-      totalDistributed - totalFeesCollected
-    );
+    // The total distributed should be close to zero (as it's a zero-sum game minus fees)
+    const distributionDifference = Math.abs(totalDistributed);
     const distributionPercentageDifference =
-      (distributionDifference / totalFeesCollected) * 100;
+      (distributionDifference / totalPool.toNumber()) * 100;
 
     console.log(`  Distribution difference: ${distributionDifference}`);
     console.log(
@@ -1108,11 +1094,8 @@ describe('twizzin-be', () => {
     // Allow for a small difference due to transaction fees
     expect(distributionPercentageDifference).to.be.lessThan(1); // 1% tolerance
 
-    // Verify that the total distributed is close to the total fees collected
-    expect(totalDistributed).to.be.closeTo(
-      totalFeesCollected,
-      totalFeesCollected * 0.01
-    ); // 1% tolerance
+    // Verify that the total distributed is close to zero
+    expect(totalDistributed).to.be.closeTo(0, totalPool.toNumber() * 0.01); // 1% of total fees tolerance
 
     console.log('End game test with multiple winners completed successfully');
   });
