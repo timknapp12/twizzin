@@ -27,7 +27,13 @@ impl<'info> UpdatePlayer<'info> {
             ErrorCode::GameNotStarted
         );
         require!(self.game.end_time >= current_time, ErrorCode::GameEnded);
+
+        // Check if the player's end time is within the game's time bounds
+        require!(self.game.start_time <= end_time, ErrorCode::InvalidEndTime);
         require!(self.game.end_time >= end_time, ErrorCode::InvalidEndTime);
+
+        // Check if the player's end time is not in the future
+        require!(end_time <= current_time, ErrorCode::InvalidEndTime);
 
         // Extract correct answers and create hashed guesses before mutable borrow
         let correct_answers = self.game.answers.clone();

@@ -111,7 +111,7 @@ mod tests {
     }
 
     #[test]
-    fn test_find_winners_with_clear_winner() {
+    fn test_find_clear_winner() {
         let game = Game {
             admin: Pubkey::new_unique(),
             name: "Test Game".to_string(),
