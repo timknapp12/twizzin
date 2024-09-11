@@ -79,9 +79,9 @@ pub mod twizzin_be {
         ctx.accounts.update_player(guesses, end_time)
     }
 
-    pub fn end_game(
-        ctx: Context<EndGame>,
+    pub fn end_game<'info>(
+        ctx: Context<'_, '_, '_, 'info, EndGame<'info>>,
     ) -> Result<(Vec<PlayerEntry>, Vec<PlayerEntry>, u64, u64)> {
-        ctx.accounts.end_game()
+        ctx.accounts.end_game(&ctx.remaining_accounts)
     }
 }

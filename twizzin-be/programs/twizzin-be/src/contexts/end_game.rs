@@ -54,7 +54,10 @@ pub struct EndGame<'info> {
 }
 
 impl<'info> EndGame<'info> {
-    pub fn end_game(&mut self) -> Result<(Vec<PlayerEntry>, Vec<PlayerEntry>, u64, u64)> {
+    pub fn end_game(
+        &mut self,
+        remaining_accounts: &[AccountInfo<'info>],
+    ) -> Result<(Vec<PlayerEntry>, Vec<PlayerEntry>, u64, u64)> {
         let pool = self.vault.lamports();
         let (sorted_players, winners) = find_winners(&self.game);
         let winners_count = winners.len() as u8;
@@ -64,13 +67,16 @@ impl<'info> EndGame<'info> {
             calculate_payout(pool, commission_percent, winners_count);
 
         // Pay out winners
-        for winner in &winners {
-            self.pay_winner(&winner.player, payout_per_winner)?;
+        for winner in winners.iter() {
+            if let Some(winner_account) = remaining_accounts
+                .iter()
+                .find(|acc| acc.key() == winner.player)
+            {
+                self.pay_winner(winner_account, payout_per_winner)?;
+            }
         }
 
         self.pay_admin(commission_amount)?;
-
-        // sends the 1% fee to treasury minus tx fees
         self.pay_treasury_and_close_vault()?;
 
         Ok((
@@ -81,7 +87,7 @@ impl<'info> EndGame<'info> {
         ))
     }
 
-    fn pay_winner(&self, winner_pubkey: &Pubkey, amount: u64) -> Result<()> {
+    fn pay_winner(&self, winner_account: &AccountInfo<'info>, amount: u64) -> Result<()> {
         let signer_seeds: &[&[&[u8]]] = &[&[
             b"vault",
             self.admin.key.as_ref(),
@@ -89,23 +95,24 @@ impl<'info> EndGame<'info> {
             &[self.game.vault_bump],
         ]];
         // we don't use Anchor's Transfer, but solana primitives because we don't pass in known accounts of winners, since the program does it automatically
-        let ix = system_instruction::transfer(&self.vault.key(), winner_pubkey, amount);
+        let ix = system_instruction::transfer(&self.vault.key(), &winner_account.key(), amount);
 
         invoke_signed(
             &ix,
             &[
                 self.vault.to_account_info(),
+                winner_account.clone(),
                 self.system_program.to_account_info(),
             ],
             signer_seeds,
         )?;
 
         emit!(WinnerPaid {
-            winner: *winner_pubkey,
+            winner: *winner_account.key,
             amount,
         });
 
-        msg!("Paid {} lamports to winner {}", amount, winner_pubkey);
+        msg!("Paid {} lamports to winner {}", amount, winner_account.key);
         Ok(())
     }
 
@@ -148,7 +155,7 @@ impl<'info> EndGame<'info> {
                 &[self.game.vault_bump],
             ]];
 
-            // Transfer entire balance to treasury
+            // Transfer entire balance to treasury, which is 1% of pool minus tx fees
             let cpi_ctx = CpiContext::new_with_signer(
                 self.system_program.to_account_info(),
                 Transfer {
