@@ -45,7 +45,7 @@ export const H3 = ({ children, className, ...props }: TextProps) => (
 
 export const H3Brand = ({ children, className, ...props }: TextProps) => (
   <span
-    className={`text-lg sm:text-xl md:text-3xl ${atma.className} ${className}`}
+    className={`text-xl sm:text-2xl md:text-4xl ${atma.className} ${className}`}
     {...props}
   >
     {children}

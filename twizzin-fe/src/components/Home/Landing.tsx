@@ -6,11 +6,10 @@ export const Landing = () => {
   return (
     <Column className='gap-4'>
       <Row className='text-center'>
-        <Column className='items-center'>
-          <H3Brand className='mt-2 mb-2'>TWIZZIN</H3Brand>
+        <Column className='items-center mt-6'>
           <H3>
-            is currently in development. Follow us on X and Telegram to stay
-            updated on our progress.
+            Twizzin is currently in development. Follow us on X and Telegram to
+            stay updated on our progress.
           </H3>
         </Column>
       </Row>

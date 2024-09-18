@@ -18,24 +18,55 @@ const CreateGame = () => {
         <p className='text-2xl font-bold'>Create a Twizzin game</p>
         <Row className='w-full gap-4'>
           <Input
-            style={{ width: '50%' }}
+            style={{ width: '48%' }}
             type='text'
             value={gameTitle}
             onChange={(e: { target: { value: string } }) =>
               setGameTitle(e.target.value)
             }
             placeholder='Game Title'
+            label='Game Title'
           />
-          <DatePicker
+          <Input
+            style={{ width: '48%' }}
+            type='text'
+            value={'0.1'}
+            onChange={(e: { target: { value: string } }) =>
+              setGameTitle(e.target.value)
+            }
+            placeholder='Commission in %'
+            label='Entry Fee in SOL'
+          />
+          <Input
+            style={{ width: '48%' }}
+            type='text'
+            value={'5'}
+            onChange={(e: { target: { value: string } }) =>
+              setGameTitle(e.target.value)
+            }
+            placeholder='Commission in %'
+            label='Commission in %'
+          />
+          <Input
+            style={{ width: '48%' }}
+            type='text'
+            value={'3'}
+            onChange={(e: { target: { value: string } }) =>
+              setGameTitle(e.target.value)
+            }
+            placeholder='Number of Max Winners'
+            label='Number of Max Winners'
+          />
+          {/* <DatePicker
             selected={gameTime}
             onChange={handleDateChange}
             showTimeSelect
             className='w-full px-4 py-2 border border-lightPurple rounded-md focus:outline-none focus:ring-2 focus:ring-darkPurple focus:border-transparent bg-light-background dark:bg-dark-background'
             placeholderText='Select date and time'
             dateFormat='Pp'
-          />
+          /> */}
         </Row>
-        <div className='h-10' />
+        <div className='h-4' />
         <Column className='w-full gap-6'>
           <QuestionGroup index={0} />
           <QuestionGroup index={1} />
