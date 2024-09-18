@@ -12,7 +12,7 @@ pub mod state;
 pub use state::*;
 
 pub mod utils;
-
+// TODO - add a game_code length check
 #[program]
 pub mod twizzin_be {
     use super::*;

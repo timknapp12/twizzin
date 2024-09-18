@@ -44,15 +44,14 @@ const MoreInfo = ({
             of multiple choice questions. Follow these simple steps to play:
             <br />
             <br />
-            Step 1: Within 10 minutes of start time, connect your Solana wallet.
+            Step 1: Connect your Solana wallet.
             <br />
-            Step 2: Enter a username for the game session and pay the 0.1 SOL
-            entry fee.
+            Step 2: Enter a username and game code and pay the entry fee.
             <br />
-            Step 3: At the start time, answer the questions as fast and
+            Step 3: When the game starts, answer the questions as fast and
             accurately as you can.
             <br />
-            Step 4: When you are done, click submit.
+            Step 4: Click the submit button.
             <br />
             Step 4: See how you stacked up against the other twizzers.
             <br />
