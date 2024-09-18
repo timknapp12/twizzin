@@ -40,23 +40,13 @@ const MoreInfo = ({
             abilities.
             <br />
             <br />
-            Compete with other players at the same time, answering the same set
-            of multiple choice questions. Follow these simple steps to play:
-            <br />
-            <br />
-            Step 1: Connect your Solana wallet.
-            <br />
-            Step 2: Enter a username and game code and pay the entry fee.
-            <br />
-            Step 3: When the game starts, answer the questions as fast and
-            accurately as you can.
-            <br />
-            Step 4: Click the submit button.
-            <br />
-            Step 5: See how you stacked up against the other twizzers.
-            <br />
-            Winners are selected based on accuracy and speed. The winners will
-            split what's in the pool, minus a small fee for the creators.
+            Twizzin is an interactive Web3 trivia game built on the Solana
+            blockchain, where players compete against each other in real time.
+            To join a game, players must pay an entry fee in SOL tokens, which
+            contributes to the prize pool. Each round, everyone answers the same
+            set of multiple-choice questions, earning points based on speed and
+            accuracy. The top performers on the leaderboard are rewarded with a
+            share of the prize pool.
           </p>
         </div>
       </Column>
