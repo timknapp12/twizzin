@@ -53,7 +53,7 @@ const MoreInfo = ({
             <br />
             Step 4: Click the submit button.
             <br />
-            Step 4: See how you stacked up against the other twizzers.
+            Step 5: See how you stacked up against the other twizzers.
             <br />
             Winners are selected based on accuracy and speed. The winners will
             split what's in the pool, minus a small fee for the creators.
