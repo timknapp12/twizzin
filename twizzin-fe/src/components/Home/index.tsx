@@ -30,7 +30,7 @@ export const HomeComponent = () => {
             <H3>Take your friend's SOuL</H3>
           </Column>
           <TwizzinLogo />
-          <H3>The web3 trivia game built on Solana</H3>
+          <H3>The Web3 trivia game built on Solana</H3>
           <Landing />
         </GradientContainer>
         <MoreInfo isOpen={showMoreInfo} toggleMoreInfo={toggleMoreInfo} />
