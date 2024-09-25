@@ -11,7 +11,8 @@ twizzin_be = "ALQmwhCJVQk3rDu85aVfKTmujDax8uTdZ3HRKnjPVPxg"
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "Localnet"
+# cluster = "Localnet"
+cluster = "https://api.devnet.solana.com"
 wallet = "~/.config/solana/id.json"
 
 [scripts]
