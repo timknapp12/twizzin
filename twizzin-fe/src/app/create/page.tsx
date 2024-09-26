@@ -1,4 +1,4 @@
-import { CreateComponent } from '../../components/Create';
+import { CreateComponent } from '@/components';
 
 const Create = () => {
   return <CreateComponent />;

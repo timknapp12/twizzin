@@ -5,3 +5,4 @@ export * from './inputs';
 export * from './Button';
 export * from './Home';
 export * from './Create';
+export * from './Admin';
