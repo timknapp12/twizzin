@@ -1,6 +1,6 @@
 import { FaXTwitter, FaTelegram } from 'react-icons/fa6';
 import { Column, Row } from '../containers';
-import { H3, H3Brand } from '../texts';
+import { H3 } from '../texts';
 
 export const Landing = () => {
   return (
