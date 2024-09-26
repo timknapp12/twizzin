@@ -6,14 +6,12 @@ import { Button } from '../Button';
 import { supabase } from '../../utils/supabaseClient';
 import CreateGame from '../Create/createGame';
 import { useAppContext } from '@/contexts/AppContext';
-import { useTranslation } from 'react-i18next';
 
 export const AdminComponent = () => {
   const { isSignedIn, setIsSignedIn, setAdmin } = useAppContext();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isClient, setIsClient] = useState(false);
-  const { t } = useTranslation();
   useEffect(() => {
     setIsClient(true);
   }, []);
@@ -49,14 +47,14 @@ export const AdminComponent = () => {
         <CreateGame />
       ) : (
         <Column className='w-full gap-8 max-w-[600px] mx-auto'>
-          <p className='text-2xl font-bold'>{t('Twizzin admin sign in')}</p>
+          <p className='text-2xl font-bold'>{'Twizzin admin sign in'}</p>
           <Row className='w-full gap-4'>
             <Input
               className='flex-grow'
               type='email'
               id='email'
               name='email'
-              placeholder={t('Enter your email')}
+              placeholder={'Enter your email'}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               aria-label='Email'
@@ -67,7 +65,7 @@ export const AdminComponent = () => {
               type='password'
               id='password'
               name='password'
-              placeholder={t('Enter your password')}
+              placeholder={'Enter your password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               aria-label='Password'

@@ -1,7 +1,5 @@
-import { AdminComponent } from '@/components';
+import { redirect } from 'next/navigation';
 
-const Admin = () => {
-  return <AdminComponent />;
-};
-
-export default Admin;
+export default function AdminRedirectPage() {
+  redirect('/en/admin');
+}
