@@ -1,15 +1,18 @@
 import { FaXTwitter, FaTelegram } from 'react-icons/fa6';
 import { Column, Row } from '../containers';
 import { H3 } from '../texts';
+import { useTranslation } from 'react-i18next';
 
 export const Landing = () => {
+  const { t } = useTranslation();
   return (
     <Column className='gap-4'>
       <Row className='text-center'>
         <Column className='items-center mt-6'>
           <H3>
-            Twizzin is currently in development. Follow us on X and Telegram to
-            stay updated on our progress.
+            {t(
+              'Twizzin is currently in development. Follow us on X and Telegram to stay updated on our progress.'
+            )}
           </H3>
         </Column>
       </Row>

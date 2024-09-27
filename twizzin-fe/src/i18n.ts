@@ -11,10 +11,10 @@ i18n.use(initReactI18next).init({
     es: { common: esTranslations },
     de: { common: deTranslations },
   },
-  lng: 'en', // default language
+  lng: 'en',
   fallbackLng: 'en',
   interpolation: {
-    escapeValue: false, // react already safes from xss
+    escapeValue: false,
   },
 });
 
