@@ -1,7 +1,8 @@
 import { HomeComponent } from '@/components';
 
-export default function Home({ params }: { params: { lang: string } }) {
-  return <HomeComponent params={params} />;
+// TODO: Add params to HomeComponent
+export default function Home() {
+  return <HomeComponent />;
 }
 
 // import { Connection, Keypair, PublicKey } from '@solana/web3.js';
