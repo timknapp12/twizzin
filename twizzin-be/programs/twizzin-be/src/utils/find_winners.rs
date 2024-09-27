@@ -48,7 +48,7 @@ mod tests {
                 PlayerEntry {
                     player: Pubkey::new_unique(),
                     num_correct: 3,
-                    player_end_time: 1679000000000i64, // March 17, 2023
+                    player_end_time: 1679000000000, // March 17, 2023
                 },
                 PlayerEntry {
                     player: Pubkey::new_unique(),

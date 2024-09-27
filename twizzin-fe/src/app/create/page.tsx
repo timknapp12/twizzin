@@ -1,7 +1,5 @@
-import { CreateComponent } from '../../components/Create';
+import { redirect } from 'next/navigation';
 
-const Create = () => {
-  return <CreateComponent />;
-};
-
-export default Create;
+export default function CreateRedirectPage() {
+  redirect('/en/create');
+}

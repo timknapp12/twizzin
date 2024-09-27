@@ -1,16 +1,6 @@
 'use client';
 import { createContext, useContext, useState, ReactNode } from 'react';
-
-interface AppContextType {
-  isSignedIn: boolean;
-  setIsSignedIn: (value: boolean) => void;
-  admin: object | null;
-  setAdmin: (admin: any) => void;
-  gameTitle: string;
-  setGameTitle: (value: string) => void;
-  gameTime: Date | null;
-  setGameTime: (value: Date | null) => void;
-}
+import { AppContextType, Question } from '@/types';
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -28,6 +18,15 @@ const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const [gameTitle, setGameTitle] = useState<string>('');
   const [gameTime, setGameTime] = useState<Date | null>(new Date());
+  const [questions, setQuestions] = useState<Question[]>([]);
+
+  const handleAddQuestion = (question: Question) => {
+    setQuestions((prevState) => [...prevState, question]);
+  };
+
+  const handleDeleteQuestion = (index: number) => {
+    setQuestions((prevState) => prevState.filter((_, i) => i !== index));
+  };
 
   return (
     <AppContext.Provider
@@ -40,6 +39,9 @@ const AppProvider = ({ children }: { children: ReactNode }) => {
         setGameTitle,
         gameTime,
         setGameTime,
+        questions,
+        handleAddQuestion,
+        handleDeleteQuestion,
       }}
     >
       {children}
