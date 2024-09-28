@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 // import { useRouter, usePathname } from 'next/navigation';
 import {
@@ -31,14 +30,6 @@ export const HomeComponent = () =>
     //   router.push(newPath);
     // };
 
-    const [showMoreInfo, setShowMoreInfo] = useState(false);
-
-    const toggleMoreInfo = () => {
-      setTimeout(() => {
-        setShowMoreInfo((prev) => !prev);
-      }, 200);
-    };
-
     return (
       <ScreenContainer>
         {/* <h1 className='text-4xl font-bold'>{t('Welcome')}</h1>
@@ -67,13 +58,13 @@ export const HomeComponent = () =>
           <GradientContainer>
             <Column>
               <H3Brand className='mr-2 ml-2 mt-2'>TWIZZIN</H3Brand>
-              <H3>Take your friend's SOuL</H3>
+              <H3>Proof of Learn</H3>
             </Column>
             <TwizzinLogo />
             <H3>{t('The Web3 trivia game built on Solana')}</H3>
             <Landing />
           </GradientContainer>
-          <MoreInfo isOpen={showMoreInfo} toggleMoreInfo={toggleMoreInfo} />
+          <MoreInfo />
         </Column>
       </ScreenContainer>
     );

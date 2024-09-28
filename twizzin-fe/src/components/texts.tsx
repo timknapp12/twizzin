@@ -52,6 +52,21 @@ export const H3Brand = ({ children, className, ...props }: TextProps) => (
   </span>
 );
 
+export const H5 = ({ children, className, ...props }: TextProps) => (
+  <span className={`text-sm sm:text-base md:text-lg ${className}`} {...props}>
+    {children}
+  </span>
+);
+
+export const H5Brand = ({ children, className, ...props }: TextProps) => (
+  <span
+    className={`text-sm sm:text-base md:text-xl ${atma.className} ${className}`}
+    {...props}
+  >
+    {children}
+  </span>
+);
+
 export const ButtonText = ({ children, className, ...props }: TextProps) => (
   <span className={`text-base sm:text-lg md:text-2xl ${className}`} {...props}>
     {children}
