@@ -1,6 +1,6 @@
 'use client';
 import { createContext, useContext, useState, ReactNode } from 'react';
-import { AppContextType, Question } from '@/types';
+import { AppContextType, QuestionForDb, GameData } from '@/types';
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -16,11 +16,28 @@ const AppProvider = ({ children }: { children: ReactNode }) => {
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [admin, setAdmin] = useState(null);
 
-  const [gameTitle, setGameTitle] = useState<string>('');
-  const [gameTime, setGameTime] = useState<Date | null>(new Date());
-  const [questions, setQuestions] = useState<Question[]>([]);
+  const initialGameData = {
+    gameName: '',
+    entryFee: 0,
+    startTime: new Date(),
+    commission: 0,
+    donation: 0,
+    maxWinners: 0,
+    answers: [],
+  };
+  const [gameData, setGameData] = useState(initialGameData);
+  console.log('gameData', gameData);
+  const handleGameData = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setGameData((prevData) => ({
+      ...prevData,
+      [name]: name === 'startTime' ? new Date(value) : value,
+    }));
+  };
 
-  const handleAddQuestion = (question: Question) => {
+  const [questions, setQuestions] = useState<QuestionForDb[]>([]);
+
+  const handleAddQuestion = (question: QuestionForDb) => {
     setQuestions((prevState) => [...prevState, question]);
   };
 
@@ -35,10 +52,8 @@ const AppProvider = ({ children }: { children: ReactNode }) => {
         setIsSignedIn,
         admin,
         setAdmin,
-        gameTitle,
-        setGameTitle,
-        gameTime,
-        setGameTime,
+        gameData,
+        handleGameData,
         questions,
         handleAddQuestion,
         handleDeleteQuestion,
