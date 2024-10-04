@@ -7,7 +7,9 @@
   "To be in a state of heightened mental acuity and knowledge recall, particularly while answering trivia questions.": "Estar en un estado de agudeza mental elevada y recuperación de conocimientos, particularmente al responder preguntas de trivia.",
   "To perform exceptionally well in a quiz or trivia competition, as if possessing expert-level knowledge or magical, wizzard-like abilities.": "Desempeñarse excepcionalmente bien en un concurso o competencia de trivia, como si se poseyera conocimiento de nivel experto o habilidades mágicas, como las de un mago.",
   "Twizzin is an interactive Web3 game that embraces the “Learn to Earn” model, making learning in Web3 fun and rewarding.": "Twizzin es un juego interactivo Web3 que adopta el modelo “Aprende para Ganar”, haciendo que el aprendizaje en Web3 sea divertido y gratificante.",
-  "Twizzin helps projects and DAOs incentivize their users and voters to truly understand their protocols and proposals.": "Twizzin ayuda a proyectos y DAOs a incentivar a sus usuarios y votantes para que realmente entiendan sus protocolos y propuestas.",
+  "Twizzin helps projects incentivize their users to truly understand their products.": "Twizzin ayuda a los proyectos a incentivar a sus usuarios para que realmente comprendan sus productos.",
+  "People love trivia and people love wagering. Twizzin uses both to create an exciting and engaging way to educate and entertain.": "A la gente le encanta la trivia y le encanta apostar. Twizzin combina ambos para crear una forma emocionante y atractiva de educar y entretener.",
+  "Players compete to answer the same set of questions at the same time, with the winners taking the prize pot.": "Los jugadores compiten para responder el mismo conjunto de preguntas al mismo tiempo, con los ganadores tomando el premio del pozo.",
   "But that's not all": "Pero eso no es todo",
   "Twizzin also hosts live trivia games for anyone and everyone, allowing players to put their money where their mouth is by competing in real-time with others around the world.": "Twizzin también organiza juegos de trivia en vivo para todos, permitiendo a los jugadores poner su dinero donde está su boca compitiendo en tiempo real con otros alrededor del mundo.",
   "These global games will attract a new user base to Web3 and Solana.": "Estos juegos globales atraerán una nueva base de usuarios a Web3 y Solana.",
@@ -32,5 +34,7 @@
   "Add 4 answers and select the correct one": "Añade 4 respuestas y selecciona la correcta",
   "Answer": "Respuesta",
   "Delete question": "Eliminar pregunta",
-  "Add question": "Añadir pregunta"
+  "Add question": "Añadir pregunta",
+  "Admin donation to the pool": "Donación del administrador al pozo",
+  "Game start time": "Hora de inicio del juego"
 }

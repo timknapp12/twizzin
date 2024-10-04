@@ -7,7 +7,9 @@
   "To be in a state of heightened mental acuity and knowledge recall, particularly while answering trivia questions.": "Sich in einem Zustand erhöhter geistiger Schärfe und Wissensabruf befinden, insbesondere beim Beantworten von Quizfragen.",
   "To perform exceptionally well in a quiz or trivia competition, as if possessing expert-level knowledge or magical, wizzard-like abilities.": "In einem Quiz oder einer Trivia-Wettbewerb außergewöhnlich gut abschneiden, als ob man über Expertenwissen oder magische, zauberhafte Fähigkeiten verfügt.",
   "Twizzin is an interactive Web3 game that embraces the “Learn to Earn” model, making learning in Web3 fun and rewarding.": "Twizzin ist ein interaktives Web3-Spiel, das das “Learn to Earn”-Modell umsetzt und das Lernen in Web3 unterhaltsam und lohnend gestaltet.",
-  "Twizzin helps projects and DAOs incentivize their users and voters to truly understand their protocols and proposals.": "Twizzin hilft Projekten und DAOs, ihre Nutzer und Wähler zu motivieren, ihre Protokolle und Vorschläge wirklich zu verstehen.",
+  "Twizzin helps projects incentivize their users to truly understand their products.": "Twizzin hilft Projekten, ihre Nutzer zu motivieren, ihre Produkte wirklich zu verstehen.",
+  "People love trivia and people love wagering. Twizzin uses both to create an exciting and engaging way to educate and entertain.": "Menschen lieben Quizspiele und Menschen lieben Wetten. Twizzin nutzt beides, um eine spannende und fesselnde Art zu schaffen, zu bilden und zu unterhalten.",
+  "Players compete to answer the same set of questions at the same time, with the winners taking the prize pot.": "Spieler konkurrieren darum, die gleiche Frage zu beantworten, wobei die Gewinner den Preispot erhalten.",
   "But that's not all": "Aber das ist noch nicht alles",
   "Twizzin also hosts live trivia games for anyone and everyone, allowing players to put their money where their mouth is by competing in real-time with others around the world.": "Twizzin veranstaltet auch Live-Quizspiele für jedermann und ermöglicht es den Spielern, ihr Geld dort einzusetzen, wo sie ihren Mund haben, indem sie in Echtzeit mit anderen auf der ganzen Welt konkurrieren.",
   "These global games will attract a new user base to Web3 and Solana.": "Diese globalen Spiele werden eine neue Nutzerbasis für Web3 und Solana anziehen.",
@@ -32,5 +34,7 @@
   "Add 4 answers and select the correct one": "Füge 4 Antworten hinzu und wähle die richtige aus",
   "Answer": "Antwort",
   "Delete question": "Frage löschen",
-  "Add question": "Frage hinzufügen"
+  "Add question": "Frage hinzufügen",
+  "Admin donation to the pool": "Admin-Spende in die Pool",
+  "Game start time": "Spielstartzeit"
 }
