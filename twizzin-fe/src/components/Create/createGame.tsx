@@ -1,5 +1,5 @@
 import { useAppContext } from '@/contexts/AppContext';
-import { Column, Input, Row, Label } from '@/components';
+import { Column, Input, Grid, Label, Row } from '@/components';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import QuestionGroup from './questionGroup';
@@ -22,9 +22,8 @@ const CreateGame = () => {
     <Column className='w-full h-full flex-grow gap-12' justify='between'>
       <Column className='w-full gap-4'>
         <p className='text-2xl font-bold'>{t('Create a Twizzin game')}</p>
-        <Row className='w-full gap-4'>
+        <Grid min='200px' gapSize='1rem' className='w-full'>
           <Input
-            style={{ width: '30%' }}
             type='text'
             name='gameName'
             value={gameData.gameName}
@@ -33,16 +32,14 @@ const CreateGame = () => {
             label={t('Game Title')}
           />
           <Input
-            style={{ width: '30%' }}
             type='number'
             name='entryFee'
             value={gameData.entryFee}
             onChange={handleGameData}
-            placeholder={t('Entry Fee in SOL')}
-            label={t('Entry Fee in SOL')}
+            placeholder={t('Entry Fee')}
+            label={t('Entry Fee')}
           />
           <Input
-            style={{ width: '30%' }}
             type='number'
             name='commission'
             value={gameData.commission}
@@ -51,7 +48,6 @@ const CreateGame = () => {
             label={t('Commission in %')}
           />
           <Input
-            style={{ width: '30%' }}
             type='number'
             name='donation'
             value={gameData.donation}
@@ -60,7 +56,6 @@ const CreateGame = () => {
             label={`${t('Admin donation to the pool')} (SOL)`}
           />
           <Input
-            style={{ width: '30%' }}
             type='number'
             name='maxWinners'
             value={gameData.maxWinners}
@@ -70,19 +65,22 @@ const CreateGame = () => {
             max={10}
             min={1}
           />
-          <Column align='start' style={{ width: '30%' }}>
+          <Column className='w-full' align='start'>
             <Label>{t('Game start time')}</Label>
-            <DatePicker
-              name='startTime'
-              selected={gameData.startTime}
-              onChange={handleDateChange}
-              showTimeSelect
-              className='w-full px-4 py-2 border border-lightPurple rounded-md focus:outline-none focus:ring-2 focus:ring-darkPurple focus:border-transparent bg-light-background dark:bg-dark-background'
-              placeholderText='Select date and time'
-              dateFormat='Pp'
-            />
+            <div className='w-full'>
+              <DatePicker
+                name='startTime'
+                selected={gameData.startTime}
+                onChange={handleDateChange}
+                showTimeSelect
+                className='w-full min-w-[200px] px-4 py-2 border border-lightPurple rounded-md focus:outline-none focus:ring-2 focus:ring-darkPurple focus:border-transparent bg-light-background dark:bg-dark-background'
+                placeholderText='Select date and time'
+                dateFormat='Pp'
+                wrapperClassName='w-full'
+              />
+            </div>
           </Column>
-        </Row>
+        </Grid>
         <div className='h-4' />
         <Column className='w-full gap-6'>
           <QuestionGroup index={0} />

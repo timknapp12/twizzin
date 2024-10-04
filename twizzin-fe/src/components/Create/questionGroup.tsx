@@ -12,7 +12,7 @@ const QuestionGroup = ({ index }: { index: number }) => {
       <p className='text-xl font-bold'>
         {t('Add 4 answers and select the correct one')}
       </p>
-      <Grid gapSize='4' className='w-full'>
+      <Grid min='200px' gapSize='1rem' className='w-full'>
         {answers.map((answer, index) => (
           <div key={index} className='flex items-center gap-2'>
             <input
@@ -23,7 +23,7 @@ const QuestionGroup = ({ index }: { index: number }) => {
             />
             <Input
               placeholder={`${t('Answer')}: ${answer}`}
-              className='w-full min-w-0 max-w-[200px]'
+              className='w-full min-w-0'
             />
           </div>
         ))}
