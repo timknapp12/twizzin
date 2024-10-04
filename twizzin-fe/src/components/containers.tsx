@@ -113,23 +113,27 @@ export const GradientContainer = ({
 
 // Grid
 interface GridProps {
-  gapSize?: '0' | '1' | '2' | '3' | '4' | '6' | '8' | '10' | '12' | '16';
-  cols?: string;
+  gapSize?: string;
+  min?: string;
   children: React.ReactNode;
   className?: string;
 }
 
 export const Grid: React.FC<GridProps> = ({
-  gapSize = '4',
-  cols = 'grid-cols-1 sm:grid-cols-2 md:grid-cols-4',
+  gapSize = '1rem',
+  min = '200px',
   children,
   className,
   ...props
 }) => {
-  const gapClass = `gap-${gapSize}`;
-
   return (
-    <div className={`grid ${cols} ${gapClass} ${className || ''}`} {...props}>
+    <div
+      className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 ${
+        className || ''
+      }`}
+      style={{ gap: gapSize }}
+      {...props}
+    >
       {children}
     </div>
   );
