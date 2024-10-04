@@ -11,7 +11,7 @@ interface IconButtonProps {
   disabled?: boolean;
 }
 
-const IconButton: React.FC<IconButtonProps> = ({
+export const IconButton: React.FC<IconButtonProps> = ({
   Icon,
   onClick,
   title,
@@ -40,5 +40,3 @@ const IconButton: React.FC<IconButtonProps> = ({
     </button>
   );
 };
-
-export default IconButton;
