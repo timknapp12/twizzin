@@ -128,10 +128,11 @@ export const Grid: React.FC<GridProps> = ({
 }) => {
   return (
     <div
-      className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 ${
-        className || ''
-      }`}
-      style={{ gap: gapSize }}
+      className={`grid ${className || ''}`}
+      style={{
+        gap: gapSize,
+        gridTemplateColumns: `repeat(auto-fit, minmax(${min}, 1fr))`,
+      }}
       {...props}
     >
       {children}
@@ -139,4 +140,5 @@ export const Grid: React.FC<GridProps> = ({
   );
 };
 
-export default Grid;
+// Remove the default export as it's not necessary
+// export default Grid;
