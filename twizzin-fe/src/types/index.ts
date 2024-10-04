@@ -14,9 +14,29 @@ export interface QuestionForDb {
   id?: string;
   displayOrder: number;
   question: string;
-  answers: string[];
+  answers: Answer[];
   correctAnswer: string;
+  timeLimit: number;
 }
+
+export interface Answer {
+  displayOrder: number;
+  answerText: string;
+  isCorrect: boolean;
+}
+
+export const displayOrderMap = {
+  0: 'A',
+  1: 'B',
+  2: 'C',
+  3: 'D',
+  4: 'E',
+  5: 'F',
+  6: 'G',
+  7: 'H',
+  8: 'I',
+  9: 'J',
+};
 
 export interface AnswerToBeHashed {
   displayOrder: number;

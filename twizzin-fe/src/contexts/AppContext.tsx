@@ -25,7 +25,7 @@ const AppProvider = ({ children }: { children: ReactNode }) => {
     maxWinners: 0,
     answers: [],
   };
-  const [gameData, setGameData] = useState(initialGameData);
+  const [gameData, setGameData] = useState<GameData>(initialGameData);
   console.log('gameData', gameData);
   const handleGameData = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

@@ -5,6 +5,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 import QuestionGroup from './questionGroup';
 import { FaPlus } from 'react-icons/fa6';
 import { useTranslation } from 'react-i18next';
+import IconButton from '../IconButton';
 
 const CreateGame = () => {
   const { gameData, handleGameData } = useAppContext();
@@ -22,7 +23,7 @@ const CreateGame = () => {
     <Column className='w-full h-full flex-grow gap-12' justify='between'>
       <Column className='w-full gap-4'>
         <p className='text-2xl font-bold'>{t('Create a Twizzin game')}</p>
-        <Grid min='200px' gapSize='1rem' className='w-full'>
+        <Grid min='400px' gapSize='1rem' className='w-full p-4'>
           <Input
             type='text'
             name='gameName'
@@ -36,8 +37,8 @@ const CreateGame = () => {
             name='entryFee'
             value={gameData.entryFee}
             onChange={handleGameData}
-            placeholder={t('Entry Fee')}
-            label={t('Entry Fee')}
+            placeholder={`${t('Entry Fee')} (SOL)`}
+            label={`${t('Entry Fee')} (SOL)`}
           />
           <Input
             type='number'
@@ -83,15 +84,17 @@ const CreateGame = () => {
         </Grid>
         <div className='h-4' />
         <Column className='w-full gap-6'>
-          <QuestionGroup index={0} />
-          <QuestionGroup index={1} />
+          <QuestionGroup displayOrder={0} />
+          <QuestionGroup displayOrder={1} />
         </Column>
       </Column>
       <Row className='w-full p-4' justify='end'>
-        <FaPlus
+        <IconButton
+          Icon={FaPlus}
+          onClick={() => {}}
           title={t('Add question')}
           className='cursor-pointer text-blue'
-          size={28}
+          size={32}
         />
       </Row>
     </Column>
