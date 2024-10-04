@@ -1,14 +1,22 @@
 import { useAppContext } from '@/contexts/AppContext';
-import { Column, Input, Grid, Label, Row } from '@/components';
+import {
+  Column,
+  Input,
+  Grid,
+  Label,
+  Row,
+  LabelSecondary,
+  IconButton,
+} from '@/components';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import QuestionGroup from './questionGroup';
 import { FaPlus } from 'react-icons/fa6';
 import { useTranslation } from 'react-i18next';
-import IconButton from '../IconButton';
 
 const CreateGame = () => {
-  const { gameData, handleGameData } = useAppContext();
+  const { gameData, handleGameData, questions, handleAddBlankQuestion } =
+    useAppContext();
   const { t } = useTranslation();
 
   const handleDateChange = (date: Date | null) => {
@@ -19,6 +27,10 @@ const CreateGame = () => {
     }
   };
 
+  const totalTime = questions.reduce(
+    (acc, question) => acc + question.timeLimit,
+    0
+  );
   return (
     <Column className='w-full h-full flex-grow gap-12' justify='between'>
       <Column className='w-full gap-4'>
@@ -82,16 +94,29 @@ const CreateGame = () => {
             </div>
           </Column>
         </Grid>
+
         <div className='h-4' />
+        <Row justify='end' className='w-full pr-4'>
+          <Label className='mr-2'>{`${t(
+            'Total game time in seconds'
+          )}:`}</Label>
+          <LabelSecondary>{totalTime}</LabelSecondary>
+        </Row>
         <Column className='w-full gap-6'>
-          <QuestionGroup displayOrder={0} />
-          <QuestionGroup displayOrder={1} />
+          {questions
+            .sort((a, b) => a.displayOrder - b.displayOrder)
+            .map((question) => (
+              <QuestionGroup
+                key={question.displayOrder}
+                questionFromParent={question}
+              />
+            ))}
         </Column>
       </Column>
       <Row className='w-full p-4' justify='end'>
         <IconButton
           Icon={FaPlus}
-          onClick={() => {}}
+          onClick={handleAddBlankQuestion}
           title={t('Add question')}
           className='cursor-pointer text-blue'
           size={32}
