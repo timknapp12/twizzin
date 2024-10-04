@@ -72,3 +72,12 @@ export const ButtonText = ({ children, className, ...props }: TextProps) => (
     {children}
   </span>
 );
+
+export const Label = ({ children, className, ...props }: TextProps) => (
+  <label
+    className={`block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300 ${className}`}
+    {...props}
+  >
+    {children}
+  </label>
+);
