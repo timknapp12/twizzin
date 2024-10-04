@@ -26,7 +26,7 @@ const AppProvider = ({ children }: { children: ReactNode }) => {
     answers: [],
   };
   const [gameData, setGameData] = useState<GameData>(initialGameData);
-  console.log('gameData', gameData);
+
   const handleGameData = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setGameData((prevData) => ({
@@ -35,14 +35,42 @@ const AppProvider = ({ children }: { children: ReactNode }) => {
     }));
   };
 
-  const [questions, setQuestions] = useState<QuestionForDb[]>([]);
+  const blankQuestion = {
+    displayOrder: 0,
+    question: '',
+    answers: [{ displayOrder: 0, answerText: '', isCorrect: false }],
+    correctAnswer: '',
+    timeLimit: 10,
+  };
+  const [questions, setQuestions] = useState<QuestionForDb[]>([blankQuestion]);
 
-  const handleAddQuestion = (question: QuestionForDb) => {
-    setQuestions((prevState) => [...prevState, question]);
+  const handleUpdateQuestionData = (updatedQuestion: QuestionForDb) => {
+    setQuestions((prevQuestions) =>
+      prevQuestions.map((q) =>
+        q.displayOrder === updatedQuestion.displayOrder ? updatedQuestion : q
+      )
+    );
   };
 
-  const handleDeleteQuestion = (index: number) => {
-    setQuestions((prevState) => prevState.filter((_, i) => i !== index));
+  const handleAddBlankQuestion = () => {
+    setQuestions((prevQuestions) => [
+      ...prevQuestions,
+      {
+        ...blankQuestion,
+        displayOrder: prevQuestions.length,
+      },
+    ]);
+  };
+
+  const handleDeleteQuestion = (displayOrder: number) => {
+    if (questions.length > 1) {
+      setQuestions((prevQuestions) => {
+        const newQuestions = prevQuestions.filter(
+          (q) => q.displayOrder !== displayOrder
+        );
+        return newQuestions.map((q, index) => ({ ...q, displayOrder: index }));
+      });
+    }
   };
 
   return (
@@ -55,8 +83,9 @@ const AppProvider = ({ children }: { children: ReactNode }) => {
         gameData,
         handleGameData,
         questions,
-        handleAddQuestion,
+        handleUpdateQuestionData,
         handleDeleteQuestion,
+        handleAddBlankQuestion,
       }}
     >
       {children}
