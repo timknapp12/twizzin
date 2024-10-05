@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import { useAppContext } from '@/contexts/AppContext';
 import {
   Column,
@@ -7,17 +8,22 @@ import {
   Row,
   LabelSecondary,
   IconButton,
+  Button,
+  Alert,
 } from '@/components';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import QuestionGroup from './questionGroup';
 import { FaPlus } from 'react-icons/fa6';
 import { useTranslation } from 'react-i18next';
+import { QuestionForDb, displayOrderMap } from '@/types';
 
 const CreateGame = () => {
   const { gameData, handleGameData, questions, handleAddBlankQuestion } =
     useAppContext();
   const { t } = useTranslation();
+  const [error, setError] = useState<string | null>(null);
+  console.log('error', error);
 
   const handleDateChange = (date: Date | null) => {
     if (date) {
@@ -31,6 +37,54 @@ const CreateGame = () => {
     (acc, question) => acc + question.timeLimit,
     0
   );
+
+  const validateQuestions = (): string | null => {
+    const isQuestionValid = (
+      question: QuestionForDb,
+      index: number
+    ): string | null => {
+      if (!question.question.trim()) {
+        return t('Question {{number}} is blank', { number: index + 1 });
+      }
+      if (!question.answers.some((answer) => answer.isCorrect)) {
+        return t(
+          'Question {{number}} does not have a correct answer selected',
+          { number: index + 1 }
+        );
+      }
+      const emptyAnswer = question.answers.findIndex(
+        (answer) => !answer.answerText.trim()
+      );
+      if (emptyAnswer !== -1) {
+        return t(
+          'Question {{questionNumber}}, Answer {{answerLetter}} is blank',
+          {
+            questionNumber: index + 1,
+            answerLetter:
+              displayOrderMap[emptyAnswer as keyof typeof displayOrderMap],
+          }
+        );
+      }
+      return null;
+    };
+
+    const errors = questions.map(isQuestionValid);
+    return errors.find((error) => error !== null) || null;
+  };
+
+  const handleSubmit = () => {
+    console.log('submit');
+    const validationError = validateQuestions();
+    if (validationError) {
+      setError(validationError);
+    } else {
+      setError(null);
+      // Proceed with game creation
+      console.log('Game creation validated, proceeding with submission');
+      // Add your game creation logic here
+    }
+  };
+
   return (
     <Column className='w-full h-full flex-grow gap-12' justify='between'>
       <Column className='w-full gap-4'>
@@ -122,6 +176,17 @@ const CreateGame = () => {
           size={32}
         />
       </Row>
+      <Column className='w-[50%] min-w-[200px] max-w-[400px]'>
+        {error && (
+          <Alert
+            variant='error'
+            title={t('Error')}
+            description={error}
+            onClose={() => setError(null)}
+          />
+        )}
+        <Button onClick={handleSubmit}>{t('Create game')}</Button>
+      </Column>
     </Column>
   );
 };
