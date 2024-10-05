@@ -51,5 +51,9 @@
   "Question {{number}} is blank": "Question {{number}} is blank",
   "Question {{number}} does not have a correct answer selected": "Question {{number}} does not have a correct answer selected",
   "Question {{questionNumber}}, Answer {{answerLetter}} is blank": "Question {{questionNumber}}, Answer {{answerLetter}} is blank",
-  "Question {{number}} time limit must be a number between 1 and 60 seconds": "Question {{number}} time limit must be a number between 1 and 60 seconds"
+  "Question {{number}} time limit must be a number between 1 and 60 seconds": "Question {{number}} time limit must be a number between 1 and 60 seconds",
+  "Game title is required": "Game title is required",
+  "Start time must be in the future": "Start time must be in the future",
+  "Number of max winners must be at least 1": "Number of max winners must be at least 1",
+  "Either entry fee or donation must be greater than 0": "Either entry fee or donation must be greater than 0"
 }

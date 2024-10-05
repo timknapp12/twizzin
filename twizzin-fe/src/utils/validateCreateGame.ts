@@ -1,9 +1,7 @@
-import { QuestionForDb, displayOrderMap } from '@/types';
+import { QuestionForDb, displayOrderMap, GameData } from '@/types';
 import i18next from 'i18next';
 
-export const validateQuestions = (
-  questions: QuestionForDb[]
-): string | null => {
+const validateQuestions = (questions: QuestionForDb[]): string | null => {
   const isQuestionValid = (
     question: QuestionForDb,
     index: number
@@ -47,4 +45,42 @@ export const validateQuestions = (
 
   const errors = questions.map(isQuestionValid);
   return errors.find((error) => error !== null) || null;
+};
+
+const validateGameData = (gameData: GameData): string | null => {
+  if (!gameData.gameName || gameData.gameName.trim() === '') {
+    return i18next.t('Game title is required');
+  }
+
+  if (!gameData.startTime || new Date(gameData.startTime) <= new Date()) {
+    return i18next.t('Start time must be in the future');
+  }
+
+  if (!gameData.maxWinners || gameData.maxWinners < 1) {
+    return i18next.t('Number of max winners must be at least 1');
+  }
+
+  if (
+    (!gameData.entryFee || gameData.entryFee <= 0) &&
+    (!gameData.donation || gameData.donation <= 0)
+  ) {
+    return i18next.t('Either entry fee or donation must be greater than 0');
+  }
+
+  return null;
+};
+
+export const validateGame = (
+  gameData: GameData,
+  questions: QuestionForDb[]
+): string | null => {
+  // Check game data
+  const gameDataError = validateGameData(gameData);
+  if (gameDataError) return gameDataError;
+
+  // Check questions
+  const questionsError = validateQuestions(questions);
+  if (questionsError) return questionsError;
+
+  return null;
 };

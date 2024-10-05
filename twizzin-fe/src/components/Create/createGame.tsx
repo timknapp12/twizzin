@@ -16,7 +16,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 import QuestionGroup from './questionGroup';
 import { FaPlus } from 'react-icons/fa6';
 import { useTranslation } from 'react-i18next';
-import { validateQuestions } from '@/utils';
+import { validateGame } from '@/utils';
 
 const CreateGame = () => {
   const { gameData, handleGameData, questions, handleAddBlankQuestion } =
@@ -35,7 +35,17 @@ const CreateGame = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setError(null);
-    handleGameData(e);
+    const { name, value, type } = e.target;
+
+    if (type === 'number') {
+      const parsedValue = parseInt(value, 10);
+      const finalValue = isNaN(parsedValue) ? 0 : parsedValue;
+      handleGameData({
+        target: { name, value: finalValue },
+      } as { target: { name: string; value: number | string } });
+    } else {
+      handleGameData(e);
+    }
   };
 
   const totalTime = questions.reduce(
@@ -45,7 +55,8 @@ const CreateGame = () => {
 
   const handleSubmit = () => {
     console.log('submit');
-    const validationError = validateQuestions(questions);
+    const validationError = validateGame(gameData, questions);
+
     if (validationError) {
       setError(validationError);
     } else {
@@ -99,9 +110,7 @@ const CreateGame = () => {
             value={gameData.maxWinners}
             onChange={handleInputChange}
             placeholder={t('Number of Max Winners')}
-            label={`${t('Number of Max Winners')} (1-10)`}
-            max={10}
-            min={1}
+            label={t('Number of Max Winners')}
           />
           <Column className='w-full' align='start'>
             <Label>{t('Game start time')}</Label>
