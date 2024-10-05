@@ -64,5 +64,10 @@
   "Game Code": "Game Code",
   "Your game is saved!": "Your game is saved!",
   "Update game": "Update game",
-  "Cancel": "Cancel"
+  "Cancel": "Cancel",
+  "Please connect your wallet": "Please connect your wallet",
+  "Connecting": "Connecting",
+  "Disconnect": "Disconnect",
+  "Connected: {{shortAddress}}": "Connected: {{shortAddress}}",
+  "Connect Wallet": "Connect Wallet"
 }
