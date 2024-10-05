@@ -16,13 +16,14 @@ const AppProvider = ({ children }: { children: ReactNode }) => {
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [admin, setAdmin] = useState(null);
 
-  const initialGameData = {
+  const initialGameData: GameData = {
+    gameCode: '',
     gameName: '',
     entryFee: 0,
     startTime: new Date(),
     commission: 0,
     donation: 0,
-    maxWinners: 0,
+    maxWinners: 1,
     answers: [],
   };
   const [gameData, setGameData] = useState<GameData>(initialGameData);
