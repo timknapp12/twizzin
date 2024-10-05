@@ -103,7 +103,7 @@ export const GradientContainer = ({
   className,
 }: ScreenContainerProps) => (
   <div
-    className={`w-full p-4 rounded-tl-2xl rounded-br-2xl bg-gradient-to-br from-lightPurple to-darkPurple ${
+    className={`w-full p-4 rounded-tl-2xl rounded-br-2xl bg-gradient-to-br from-lightPurple to-darkPurple text-white ${
       className || ''
     }`}
   >
