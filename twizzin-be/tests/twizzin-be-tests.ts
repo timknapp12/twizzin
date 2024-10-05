@@ -1,14 +1,7 @@
 import * as anchor from '@coral-xyz/anchor';
 import { Program } from '@coral-xyz/anchor';
 import { TwizzinBe } from '../target/types/twizzin_be';
-import { expect, assert } from 'chai';
-import { BN } from '@coral-xyz/anchor';
-import {
-  LAMPORTS_PER_SOL,
-  PublicKey,
-  SystemProgram,
-  Keypair,
-} from '@solana/web3.js';
+import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import { initializeProgramConfig } from './initConfig';
 import { initializeGame } from './initGame';
 import { updateGame } from './updateGame';

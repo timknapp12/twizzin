@@ -43,6 +43,15 @@ export const H3 = ({ children, className, ...props }: TextProps) => (
   </span>
 );
 
+export const H3Secondary = ({ children, className, ...props }: TextProps) => (
+  <span
+    className={`text-lg sm:text-xl md:text-2xl opacity-70 ${className}`}
+    {...props}
+  >
+    {children}
+  </span>
+);
+
 export const H3Brand = ({ children, className, ...props }: TextProps) => (
   <span
     className={`text-xl sm:text-2xl md:text-4xl ${atma.className} ${className}`}
@@ -68,7 +77,29 @@ export const H5Brand = ({ children, className, ...props }: TextProps) => (
 );
 
 export const ButtonText = ({ children, className, ...props }: TextProps) => (
-  <span className={`text-base sm:text-lg md:text-2xl ${className}`} {...props}>
+  <span className={`text-sm sm:text-base md:text-xl ${className}`} {...props}>
     {children}
   </span>
+);
+
+export const Label = ({ children, className, ...props }: TextProps) => (
+  <label
+    className={`block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300 ${className}`}
+    {...props}
+  >
+    {children}
+  </label>
+);
+
+export const LabelSecondary = ({
+  children,
+  className,
+  ...props
+}: TextProps) => (
+  <label
+    className={`block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300 opacity-70 ${className}`}
+    {...props}
+  >
+    {children}
+  </label>
 );

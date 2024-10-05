@@ -103,10 +103,39 @@ export const GradientContainer = ({
   className,
 }: ScreenContainerProps) => (
   <div
-    className={`w-full p-4 rounded-tl-2xl rounded-br-2xl bg-gradient-to-br from-lightPurple to-darkPurple ${
+    className={`w-full p-4 rounded-tl-2xl rounded-br-2xl bg-gradient-to-br from-lightPurple to-darkPurple text-white ${
       className || ''
     }`}
   >
     <Column>{children}</Column>
   </div>
 );
+
+// Grid
+interface GridProps {
+  gapSize?: string;
+  min?: string;
+  children: React.ReactNode;
+  className?: string;
+}
+
+export const Grid: React.FC<GridProps> = ({
+  gapSize = '1rem',
+  min = '200px',
+  children,
+  className,
+  ...props
+}) => {
+  return (
+    <div
+      className={`grid ${className || ''}`}
+      style={{
+        gap: gapSize,
+        gridTemplateColumns: `repeat(auto-fit, minmax(${min}, 1fr))`,
+      }}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+};

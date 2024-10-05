@@ -1,6 +1,6 @@
 'use client';
 import { createContext, useContext, useState, ReactNode } from 'react';
-import { AppContextType, Question } from '@/types';
+import { AppContextType, QuestionForDb, GameData } from '@/types';
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -16,16 +16,62 @@ const AppProvider = ({ children }: { children: ReactNode }) => {
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [admin, setAdmin] = useState(null);
 
-  const [gameTitle, setGameTitle] = useState<string>('');
-  const [gameTime, setGameTime] = useState<Date | null>(new Date());
-  const [questions, setQuestions] = useState<Question[]>([]);
+  const initialGameData: GameData = {
+    gameCode: '',
+    gameName: '',
+    entryFee: 0,
+    startTime: new Date(),
+    commission: 0,
+    donation: 0,
+    maxWinners: 1,
+    answers: [],
+  };
+  const [gameData, setGameData] = useState<GameData>(initialGameData);
 
-  const handleAddQuestion = (question: Question) => {
-    setQuestions((prevState) => [...prevState, question]);
+  const handleGameData = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setGameData((prevData) => ({
+      ...prevData,
+      [name]: name === 'startTime' ? new Date(value) : value,
+    }));
   };
 
-  const handleDeleteQuestion = (index: number) => {
-    setQuestions((prevState) => prevState.filter((_, i) => i !== index));
+  const blankQuestion = {
+    displayOrder: 0,
+    question: '',
+    answers: [{ displayOrder: 0, answerText: '', isCorrect: false }],
+    correctAnswer: '',
+    timeLimit: 10,
+  };
+  const [questions, setQuestions] = useState<QuestionForDb[]>([blankQuestion]);
+
+  const handleUpdateQuestionData = (updatedQuestion: QuestionForDb) => {
+    setQuestions((prevQuestions) =>
+      prevQuestions.map((q) =>
+        q.displayOrder === updatedQuestion.displayOrder ? updatedQuestion : q
+      )
+    );
+  };
+
+  const handleAddBlankQuestion = () => {
+    setQuestions((prevQuestions) => [
+      ...prevQuestions,
+      {
+        ...blankQuestion,
+        displayOrder: prevQuestions.length,
+      },
+    ]);
+  };
+
+  const handleDeleteQuestion = (displayOrder: number) => {
+    if (questions.length > 1) {
+      setQuestions((prevQuestions) => {
+        const newQuestions = prevQuestions.filter(
+          (q) => q.displayOrder !== displayOrder
+        );
+        return newQuestions.map((q, index) => ({ ...q, displayOrder: index }));
+      });
+    }
   };
 
   return (
@@ -35,13 +81,12 @@ const AppProvider = ({ children }: { children: ReactNode }) => {
         setIsSignedIn,
         admin,
         setAdmin,
-        gameTitle,
-        setGameTitle,
-        gameTime,
-        setGameTime,
+        gameData,
+        handleGameData,
         questions,
-        handleAddQuestion,
+        handleUpdateQuestionData,
         handleDeleteQuestion,
+        handleAddBlankQuestion,
       }}
     >
       {children}

@@ -3,18 +3,56 @@ export interface AppContextType {
   setIsSignedIn: (value: boolean) => void;
   admin: object | null;
   setAdmin: (admin: any) => void;
-  gameTitle: string;
-  setGameTitle: (value: string) => void;
-  gameTime: Date | null;
-  setGameTime: (value: Date | null) => void;
-  questions: Question[];
-  handleAddQuestion: (question: Question) => void;
+  gameData: any;
+  handleGameData: (data: any) => void;
+  questions: QuestionForDb[];
+  handleUpdateQuestionData: (question: QuestionForDb) => void;
   handleDeleteQuestion: (index: number) => void;
+  handleAddBlankQuestion: () => void;
 }
 
-export interface Question {
-  id: string;
+export interface QuestionForDb {
+  id?: string;
+  displayOrder: number;
   question: string;
-  answers: string[];
+  answers: Answer[];
   correctAnswer: string;
+  timeLimit: number;
+}
+
+export interface Answer {
+  displayOrder: number;
+  answerText: string;
+  isCorrect: boolean;
+}
+
+export const displayOrderMap = {
+  0: 'A',
+  1: 'B',
+  2: 'C',
+  3: 'D',
+  4: 'E',
+  5: 'F',
+  6: 'G',
+  7: 'H',
+  8: 'I',
+  9: 'J',
+};
+
+export interface AnswerToBeHashed {
+  displayOrder: number;
+  answer: string;
+  // use question id returned from db max 32 chars
+  salt: string;
+}
+
+export interface GameData {
+  gameCode: string; // length of 6
+  gameName: string;
+  entryFee: number;
+  startTime: Date;
+  commission: number;
+  donation: number;
+  maxWinners: number;
+  answers: AnswerToBeHashed[];
 }

@@ -2,9 +2,9 @@
 import { useState, useEffect } from 'react';
 import { Column, Row } from '../containers';
 import { Input } from '../inputs';
-import { Button } from '../Button';
+import { Button } from '../buttons/Button';
 import { supabase } from '../../utils/supabaseClient';
-import CreateGame from '../Create/createGame';
+import AddUpdateGame from '../Create/AddUpdateGame';
 import { useAppContext } from '@/contexts/AppContext';
 import { useTranslation } from 'react-i18next';
 
@@ -50,7 +50,7 @@ export const AdminComponent = () => {
   return (
     <main className='flex min-h-screen flex-col items-center p-12 '>
       {isSignedIn ? (
-        <CreateGame />
+        <AddUpdateGame />
       ) : (
         <Column className='w-full gap-8 max-w-[600px] mx-auto'>
           <p className='text-2xl font-bold'>{t('Twizzin admin sign in')}</p>

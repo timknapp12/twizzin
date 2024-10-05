@@ -58,9 +58,9 @@ export const HomeComponent = () =>
           <GradientContainer>
             <Column>
               <H3Brand className='mr-2 ml-2 mt-2'>TWIZZIN</H3Brand>
-              <H3>Proof of Learn</H3>
             </Column>
             <TwizzinLogo />
+            <H3>Proof of Learn</H3>
             <H3>{t('The Web3 trivia game built on Solana')}</H3>
             <Landing />
           </GradientContainer>

@@ -25,10 +25,13 @@ const MoreInfo = () => {
         <H5>Proof of Learn</H5>
         <p>
           {`${t(
-            `Twizzin is an interactive Web3 game that embraces the “Learn to Earn” model, making learning in Web3 fun and rewarding.`
+            `Twizzin is an interactive Web3 game that embraces the 'Learn to Earn' model, making learning in Web3 fun and rewarding.`
           )} `}
           {`${t(
-            `Twizzin helps projects and DAOs incentivize their users and voters to truly understand their protocols and proposals.`
+            'Players compete to answer the same set of questions at the same time, with the winners taking the prize pot.'
+          )} `}
+          {`${t(
+            `Twizzin helps projects incentivize their users to truly understand their products.`
           )} `}
         </p>
         <br />
@@ -37,8 +40,11 @@ const MoreInfo = () => {
           {`${t(
             `Twizzin also hosts live trivia games for anyone and everyone, allowing players to put their money where their mouth is by competing in real-time with others around the world.`
           )} `}
-          {t(
+          {`${t(
             `These global games will attract a new user base to Web3 and Solana.`
+          )} `}
+          {t(
+            'People love trivia and people love wagering. Twizzin uses both to create an exciting and engaging way to educate and entertain.'
           )}
         </p>
         <br />

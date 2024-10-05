@@ -2,6 +2,7 @@
   "name": "twizzin-fe",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -9,6 +10,10 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@solana/wallet-adapter-react": "^0.15.35",
+    "@solana/wallet-adapter-react-ui": "^0.9.35",
+    "@solana/wallet-adapter-wallets": "^0.19.32",
+    "@solana/web3.js": "^1.95.3",
     "@supabase/supabase-js": "^2.45.2",
     "i18next": "^23.15.1",
     "next": "^14.2.13",
