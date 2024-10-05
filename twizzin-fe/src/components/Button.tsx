@@ -21,6 +21,7 @@ export const Button = ({
         w-full
         px-4 py-2
         rounded-tl-2xl rounded-br-2xl
+        rounded-tr-2xl rounded-bl-2xl
         bg-gradient-to-br from-lightPurple to-darkPurple
         text-dark-background dark:text-light-background
         text-xl sm:text-2xl

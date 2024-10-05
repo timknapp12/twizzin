@@ -6,7 +6,7 @@
   "verb, informal": "verb, informal",
   "To be in a state of heightened mental acuity and knowledge recall, particularly while answering trivia questions.": "To be in a state of heightened mental acuity and knowledge recall, particularly while answering trivia questions.",
   "To perform exceptionally well in a quiz or trivia competition, as if possessing expert-level knowledge or magical, wizzard-like abilities.": "To perform exceptionally well in a quiz or trivia competition, as if possessing expert-level knowledge or magical, wizzard-like abilities.",
-  "Twizzin is an interactive Web3 game that embraces the “Learn to Earn” model, making learning in Web3 fun and rewarding.": "Twizzin is an interactive Web3 game that embraces the “Learn to Earn�� model, making learning in Web3 fun and rewarding.",
+  "Twizzin is an interactive Web3 game that embraces the 'Learn to Earn' model, making learning in Web3 fun and rewarding.": "Twizzin is an interactive Web3 game that embraces the 'Learn to Earn' model, making learning in Web3 fun and rewarding.",
   "Twizzin helps projects incentivize their users to truly understand their products.": "Twizzin helps projects incentivize their users to truly understand their products.",
   "People love trivia and people love wagering. Twizzin uses both to create an exciting and engaging way to educate and entertain.": "People love trivia and people love wagering. Twizzin uses both to create an exciting and engaging way to educate and entertain.",
   "Players compete to answer the same set of questions at the same time, with the winners taking the prize pot.": "Players compete to answer the same set of questions at the same time, with the winners taking the prize pot.",
@@ -45,5 +45,10 @@
   "seconds": "seconds",
   "Edit question": "Edit question",
   "Delete answer": "Delete answer",
-  "Enter question": "Enter question"
+  "Enter question": "Enter question",
+  "Create game": "Create game",
+  "Error": "Error",
+  "Question {{number}} is blank": "Question {{number}} is blank",
+  "Question {{number}} does not have a correct answer selected": "Question {{number}} does not have a correct answer selected",
+  "Question {{questionNumber}}, Answer {{answerLetter}} is blank": "Question {{questionNumber}}, Answer {{answerLetter}} is blank"
 }

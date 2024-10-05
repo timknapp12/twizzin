@@ -25,7 +25,7 @@ const MoreInfo = () => {
         <H5>Proof of Learn</H5>
         <p>
           {`${t(
-            `Twizzin is an interactive Web3 game that embraces the “Learn to Earn” model, making learning in Web3 fun and rewarding.`
+            `Twizzin is an interactive Web3 game that embraces the 'Learn to Earn' model, making learning in Web3 fun and rewarding.`
           )} `}
           {`${t(
             'Players compete to answer the same set of questions at the same time, with the winners taking the prize pot.'
