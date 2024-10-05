@@ -13,6 +13,7 @@ export interface AlertProps {
   title?: string;
   description: React.ReactNode;
   onClose?: () => void;
+  className?: string;
 }
 
 export const Alert: React.FC<AlertProps> = ({
@@ -20,6 +21,7 @@ export const Alert: React.FC<AlertProps> = ({
   title,
   description,
   onClose,
+  className = '',
 }) => {
   const variantClasses = {
     info: 'bg-blue/10 border-blue text-blue',
@@ -39,7 +41,7 @@ export const Alert: React.FC<AlertProps> = ({
 
   return (
     <Column
-      className={`w-full border-l-4 p-4 mb-4 ${variantClasses[variant]}`}
+      className={`w-full border-l-4 p-4 mb-4 ${variantClasses[variant]} ${className}`} // Update this line
       role='alert'
       align='space-between'
     >
