@@ -16,7 +16,7 @@ import {
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import QuestionGroup from './QuestionGroup';
+import AddUpdateQuestion from './AddUpdateQuestion';
 import DisplayAddedGame from './DisplayAddedGame';
 import { FaPlus } from 'react-icons/fa6';
 import { useTranslation } from 'react-i18next';
@@ -208,7 +208,7 @@ const AddUpdateGame = () => {
           {questions
             .sort((a, b) => a.displayOrder - b.displayOrder)
             .map((question) => (
-              <QuestionGroup
+              <AddUpdateQuestion
                 key={question.displayOrder}
                 questionFromParent={question}
                 setError={setError}

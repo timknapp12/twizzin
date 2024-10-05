@@ -13,7 +13,7 @@ import { FaTrashCan, FaPlus } from 'react-icons/fa6';
 import { useTranslation } from 'react-i18next';
 import { useAppContext } from '@/contexts/AppContext';
 
-interface QuestionGroupProps {
+interface AddUpdateQuestionProps {
   questionFromParent: QuestionForDb;
   setError: (error: string | null) => void;
 }
@@ -22,7 +22,7 @@ const getAnswerLetter = (displayOrder: number): string => {
   return displayOrderMap[displayOrder as keyof typeof displayOrderMap] || '';
 };
 
-const QuestionGroup: React.FC<QuestionGroupProps> = ({
+const AddUpdateQuestion: React.FC<AddUpdateQuestionProps> = ({
   questionFromParent,
   setError,
 }) => {
@@ -189,4 +189,4 @@ const QuestionGroup: React.FC<QuestionGroupProps> = ({
   );
 };
 
-export default QuestionGroup;
+export default AddUpdateQuestion;
