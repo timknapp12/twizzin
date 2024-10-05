@@ -14,7 +14,7 @@ Crypto needs a better way to teach users. Crypto needs Twizzin.
 
 ## Development
 
-#### Twizzin is open source!
+#### Twizzin is an open source project!
 
 ### Backend
 
