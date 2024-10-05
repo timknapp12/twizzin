@@ -50,5 +50,6 @@
   "Error": "Error",
   "Question {{number}} is blank": "Question {{number}} is blank",
   "Question {{number}} does not have a correct answer selected": "Question {{number}} does not have a correct answer selected",
-  "Question {{questionNumber}}, Answer {{answerLetter}} is blank": "Question {{questionNumber}}, Answer {{answerLetter}} is blank"
+  "Question {{questionNumber}}, Answer {{answerLetter}} is blank": "Question {{questionNumber}}, Answer {{answerLetter}} is blank",
+  "Question {{number}} time limit must be a number between 1 and 60 seconds": "Question {{number}} time limit must be a number between 1 and 60 seconds"
 }

@@ -16,16 +16,16 @@ import 'react-datepicker/dist/react-datepicker.css';
 import QuestionGroup from './questionGroup';
 import { FaPlus } from 'react-icons/fa6';
 import { useTranslation } from 'react-i18next';
-import { QuestionForDb, displayOrderMap } from '@/types';
+import { validateQuestions } from '@/utils';
 
 const CreateGame = () => {
   const { gameData, handleGameData, questions, handleAddBlankQuestion } =
     useAppContext();
   const { t } = useTranslation();
   const [error, setError] = useState<string | null>(null);
-  console.log('error', error);
 
   const handleDateChange = (date: Date | null) => {
+    setError(null);
     if (date) {
       handleGameData({
         target: { name: 'startTime', value: date.toISOString() },
@@ -33,48 +33,19 @@ const CreateGame = () => {
     }
   };
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setError(null);
+    handleGameData(e);
+  };
+
   const totalTime = questions.reduce(
     (acc, question) => acc + question.timeLimit,
     0
   );
 
-  const validateQuestions = (): string | null => {
-    const isQuestionValid = (
-      question: QuestionForDb,
-      index: number
-    ): string | null => {
-      if (!question.question.trim()) {
-        return t('Question {{number}} is blank', { number: index + 1 });
-      }
-      if (!question.answers.some((answer) => answer.isCorrect)) {
-        return t(
-          'Question {{number}} does not have a correct answer selected',
-          { number: index + 1 }
-        );
-      }
-      const emptyAnswer = question.answers.findIndex(
-        (answer) => !answer.answerText.trim()
-      );
-      if (emptyAnswer !== -1) {
-        return t(
-          'Question {{questionNumber}}, Answer {{answerLetter}} is blank',
-          {
-            questionNumber: index + 1,
-            answerLetter:
-              displayOrderMap[emptyAnswer as keyof typeof displayOrderMap],
-          }
-        );
-      }
-      return null;
-    };
-
-    const errors = questions.map(isQuestionValid);
-    return errors.find((error) => error !== null) || null;
-  };
-
   const handleSubmit = () => {
     console.log('submit');
-    const validationError = validateQuestions();
+    const validationError = validateQuestions(questions);
     if (validationError) {
       setError(validationError);
     } else {
@@ -94,7 +65,7 @@ const CreateGame = () => {
             type='text'
             name='gameName'
             value={gameData.gameName}
-            onChange={handleGameData}
+            onChange={handleInputChange}
             placeholder={t('Game Title')}
             label={t('Game Title')}
           />
@@ -102,7 +73,7 @@ const CreateGame = () => {
             type='number'
             name='entryFee'
             value={gameData.entryFee}
-            onChange={handleGameData}
+            onChange={handleInputChange}
             placeholder={`${t('Entry Fee')} (SOL)`}
             label={`${t('Entry Fee')} (SOL)`}
           />
@@ -110,7 +81,7 @@ const CreateGame = () => {
             type='number'
             name='commission'
             value={gameData.commission}
-            onChange={handleGameData}
+            onChange={handleInputChange}
             placeholder={t('Commission in %')}
             label={t('Commission in %')}
           />
@@ -118,7 +89,7 @@ const CreateGame = () => {
             type='number'
             name='donation'
             value={gameData.donation}
-            onChange={handleGameData}
+            onChange={handleInputChange}
             placeholder={t('Admin donation to the pool')}
             label={`${t('Admin donation to the pool')} (SOL)`}
           />
@@ -126,7 +97,7 @@ const CreateGame = () => {
             type='number'
             name='maxWinners'
             value={gameData.maxWinners}
-            onChange={handleGameData}
+            onChange={handleInputChange}
             placeholder={t('Number of Max Winners')}
             label={`${t('Number of Max Winners')} (1-10)`}
             max={10}
@@ -163,6 +134,7 @@ const CreateGame = () => {
               <QuestionGroup
                 key={question.displayOrder}
                 questionFromParent={question}
+                setError={setError}
               />
             ))}
         </Column>
