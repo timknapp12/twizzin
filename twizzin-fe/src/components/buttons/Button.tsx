@@ -32,6 +32,7 @@ export const Button = ({
         text-xl sm:text-2xl
         transition-all
         flex items-center justify-center
+        text-white
         ${
           secondary
             ? 'bg-transparent border-2 border-lightPurple text-lightPurple'
