@@ -17,13 +17,13 @@ import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import QuestionGroup from './QuestionGroup';
-import DisplayGame from './DisplayGame';
+import DisplayAddedGame from './DisplayAddedGame';
 import { FaPlus } from 'react-icons/fa6';
 import { useTranslation } from 'react-i18next';
 import { validateGame } from '@/utils';
 import { useScreenSize } from '@/hooks/useScreenSize';
 
-const CreateGame = () => {
+const AddUpdateGame = () => {
   const { gameData, handleGameData, questions, handleAddBlankQuestion } =
     useAppContext();
   const { t } = useTranslation();
@@ -115,7 +115,7 @@ const CreateGame = () => {
 
   if (!isEdit) {
     return (
-      <DisplayGame
+      <DisplayAddedGame
         gameData={gameData}
         questions={questions}
         showGameCode={showGameCode}
@@ -261,4 +261,4 @@ const CreateGame = () => {
   );
 };
 
-export default CreateGame;
+export default AddUpdateGame;

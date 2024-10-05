@@ -15,7 +15,7 @@ import { GameData, QuestionForDb } from '@/types';
 import { displayOrderMap } from '@/types';
 import { FaPencil, FaCircleCheck } from 'react-icons/fa6';
 
-interface DisplayGameProps {
+interface DisplayAddedGameProps {
   gameData: GameData;
   questions: QuestionForDb[];
   showGameCode: boolean;
@@ -23,7 +23,7 @@ interface DisplayGameProps {
   setIsEdit: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const DisplayGame: React.FC<DisplayGameProps> = ({
+const DisplayAddedGame: React.FC<DisplayAddedGameProps> = ({
   gameData,
   questions,
   showGameCode,
@@ -56,6 +56,7 @@ const DisplayGame: React.FC<DisplayGameProps> = ({
         <Column className='w-full gap-0'>
           {showGameCode && (
             <Alert
+              className='max-w-[500px]'
               variant='success'
               title={t('Your game is saved!')}
               description={`${t('Game Code')}: ${gameData.gameCode} `}
@@ -157,4 +158,4 @@ const DisplayGame: React.FC<DisplayGameProps> = ({
   );
 };
 
-export default DisplayGame;
+export default DisplayAddedGame;
