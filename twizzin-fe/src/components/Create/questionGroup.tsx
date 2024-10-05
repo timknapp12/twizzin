@@ -13,18 +13,25 @@ import { FaTrashCan, FaPlus } from 'react-icons/fa6';
 import { useTranslation } from 'react-i18next';
 import { useAppContext } from '@/contexts/AppContext';
 
+interface QuestionGroupProps {
+  questionFromParent: QuestionForDb;
+  setError: (error: string | null) => void;
+}
+
 const getAnswerLetter = (displayOrder: number): string => {
   return displayOrderMap[displayOrder as keyof typeof displayOrderMap] || '';
 };
 
-const QuestionGroup: React.FC<{ questionFromParent: QuestionForDb }> = ({
+const QuestionGroup: React.FC<QuestionGroupProps> = ({
   questionFromParent,
+  setError,
 }) => {
   const { handleUpdateQuestionData, handleDeleteQuestion, questions } =
     useAppContext();
   const { t } = useTranslation();
 
   const handleQuestionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setError(null);
     handleUpdateQuestionData({
       ...questionFromParent,
       question: e.target.value,
@@ -32,6 +39,7 @@ const QuestionGroup: React.FC<{ questionFromParent: QuestionForDb }> = ({
   };
 
   const handleAnswerChange = (displayOrder: number, value: string) => {
+    setError(null);
     handleUpdateQuestionData({
       ...questionFromParent,
       answers: questionFromParent.answers.map((a) =>
@@ -41,6 +49,7 @@ const QuestionGroup: React.FC<{ questionFromParent: QuestionForDb }> = ({
   };
 
   const handleCorrectAnswerChange = (selectedDisplayOrder: number) => {
+    setError(null);
     handleUpdateQuestionData({
       ...questionFromParent,
       answers: questionFromParent.answers.map((a) => ({
@@ -77,9 +86,12 @@ const QuestionGroup: React.FC<{ questionFromParent: QuestionForDb }> = ({
   };
 
   const handleTimeLimitChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setError(null);
+    const value = e.target.value;
+    const parsedValue = parseInt(value);
     handleUpdateQuestionData({
       ...questionFromParent,
-      timeLimit: parseInt(e.target.value),
+      timeLimit: isNaN(parsedValue) ? 0 : parsedValue,
     });
   };
 
@@ -157,7 +169,7 @@ const QuestionGroup: React.FC<{ questionFromParent: QuestionForDb }> = ({
           label={t('Time Limit in seconds')}
           type='number'
           name='questionTime'
-          value={questionFromParent.timeLimit}
+          value={questionFromParent.timeLimit || ''}
           onChange={handleTimeLimitChange}
           min={1}
           max={60}
