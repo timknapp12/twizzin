@@ -46,7 +46,7 @@
   "Edit question": "Edit question",
   "Delete answer": "Delete answer",
   "Enter question": "Enter question",
-  "Create game": "Create game",
+  "Create Game": "Create Game",
   "Error": "Error",
   "Question {{number}} is blank": "Question {{number}} is blank",
   "Question {{number}} does not have a correct answer selected": "Question {{number}} does not have a correct answer selected",
@@ -55,5 +55,14 @@
   "Game title is required": "Game title is required",
   "Start time must be in the future": "Start time must be in the future",
   "Number of max winners must be at least 1": "Number of max winners must be at least 1",
-  "Either entry fee or donation must be greater than 0": "Either entry fee or donation must be greater than 0"
+  "Either entry fee or donation must be greater than 0": "Either entry fee or donation must be greater than 0",
+  "Game Details": "Game Details",
+  "Commission": "Commission",
+  "Total game time in seconds": "Total game time in seconds",
+  "Questions": "Questions",
+  "Correct": "Correct",
+  "Game Code": "Game Code",
+  "Your game is saved!": "Your game is saved!",
+  "Update game": "Update game",
+  "Cancel": "Cancel"
 }
