@@ -77,7 +77,7 @@ export const H5Brand = ({ children, className, ...props }: TextProps) => (
 );
 
 export const ButtonText = ({ children, className, ...props }: TextProps) => (
-  <span className={`text-base sm:text-lg md:text-2xl ${className}`} {...props}>
+  <span className={`text-sm sm:text-base md:text-xl ${className}`} {...props}>
     {children}
   </span>
 );

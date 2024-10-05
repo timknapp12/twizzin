@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Column, Row } from '../containers';
 import { Input } from '../inputs';
-import { Button } from '../Button';
+import { Button } from '../buttons/Button';
 import { supabase } from '../../utils/supabaseClient';
 import CreateGame from '../Create/CreateGame';
 import { useAppContext } from '@/contexts/AppContext';

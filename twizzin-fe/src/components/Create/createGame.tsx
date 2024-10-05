@@ -3,6 +3,7 @@ import { useAppContext } from '@/contexts/AppContext';
 import {
   Column,
   Input,
+  H3,
   Grid,
   Label,
   Row,
@@ -10,7 +11,9 @@ import {
   IconButton,
   Button,
   Alert,
+  WalletButton,
 } from '@/components';
+import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import QuestionGroup from './QuestionGroup';
@@ -18,11 +21,19 @@ import DisplayGame from './DisplayGame';
 import { FaPlus } from 'react-icons/fa6';
 import { useTranslation } from 'react-i18next';
 import { validateGame } from '@/utils';
+import { useScreenSize } from '@/hooks/useScreenSize';
 
 const CreateGame = () => {
   const { gameData, handleGameData, questions, handleAddBlankQuestion } =
     useAppContext();
   const { t } = useTranslation();
+
+  const { connection } = useConnection();
+  const { publicKey } = useWallet();
+
+  const screenSize = useScreenSize();
+  console.log('screenSize', screenSize);
+  const adjustedMin = screenSize === 'small' ? '100%' : '400px';
 
   const [isEdit, setIsEdit] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -30,7 +41,7 @@ const CreateGame = () => {
   const [showGameCode, setShowGameCode] = useState(false);
 
   const doesGameCodeExist = gameData.gameCode && gameData.gameCode.length > 0;
-
+  console.log('doesGameCodeExist', doesGameCodeExist);
   const handleDateChange = (date: Date | null) => {
     setError(null);
     if (date) {
@@ -70,8 +81,12 @@ const CreateGame = () => {
     return result;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setIsLoading(true);
+    if (!publicKey || !connection) {
+      setIsLoading(false);
+      return setError('Please connect your wallet');
+    }
     const validationError = validateGame(gameData, questions);
 
     if (validationError) {
@@ -79,9 +94,10 @@ const CreateGame = () => {
       setIsLoading(false);
     } else {
       setError(null);
-      // Proceed with game creation
       console.log('Game creation validated, proceeding with submission');
-      // Add your game creation logic here
+
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
       if (!gameData.gameCode) {
         const gameCode = generateGameCode();
         handleGameData({
@@ -89,10 +105,9 @@ const CreateGame = () => {
         });
         setShowGameCode(true);
       }
-      setTimeout(() => {
-        setIsEdit(false);
-        setIsLoading(false);
-      }, 2000);
+
+      setIsLoading(false);
+      setIsEdit(false);
     }
   };
 
@@ -113,12 +128,18 @@ const CreateGame = () => {
   return (
     <Column className='w-full h-full flex-grow gap-12' justify='between'>
       <Column className='w-full gap-4'>
-        <p className='text-2xl font-bold'>
-          {doesGameCodeExist
-            ? `${t('Update game')}: ${gameData.gameCode}`
-            : t('Create a Twizzin game')}
-        </p>
-        <Grid min='400px' gapSize='1rem' className='w-full p-4'>
+        <Row className='w-full items-center flex-col lg:flex-row lg:justify-between'>
+          <div className='lg:w-[300px] mb-4 lg:mb-0 order-first lg:order-last'>
+            <WalletButton className='w-full' />
+          </div>
+          <H3 className='flex-1 text-center mb-4 lg:mb-0 lg:absolute lg:left-1/2 lg:transform lg:-translate-x-1/2'>
+            {doesGameCodeExist
+              ? `${t('Update game')}: ${gameData.gameCode}`
+              : t('Create a Twizzin game')}
+          </H3>
+          <div className='hidden lg:block w-[300px]' />
+        </Row>
+        <Grid min={adjustedMin} gapSize='1rem' className='w-full p-4'>
           <Input
             type='text'
             name='gameName'
