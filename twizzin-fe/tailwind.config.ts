@@ -25,6 +25,8 @@ const config: Config = {
       red: '#FF3366',
       blue: '#4169E1',
       green: '#00FF00',
+      yellow: '#FFD700',
+      orange: '#FFA500',
     },
     fontFamily: {
       sans: ['Graphik', 'sans-serif'],
