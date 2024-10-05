@@ -2,18 +2,25 @@
 
 import { ReactNode } from 'react';
 import { ButtonText } from './texts';
+import { FaSpinner } from 'react-icons/fa6';
 
 interface ButtonProps
   extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'> {
   children: ReactNode;
   className?: string;
   onClick?: () => void;
+  isLoading?: boolean;
+  disabled?: boolean;
+  secondary?: boolean;
 }
 
 export const Button = ({
   children,
   className,
   onClick,
+  isLoading = false,
+  disabled = false,
+  secondary = false,
   ...props
 }: ButtonProps) => (
   <button
@@ -22,16 +29,29 @@ export const Button = ({
         px-4 py-2
         rounded-tl-2xl rounded-br-2xl
         rounded-tr-2xl rounded-bl-2xl
-        bg-gradient-to-br from-lightPurple to-darkPurple
-        text-dark-background dark:text-light-background
         text-xl sm:text-2xl
-        hover:opacity-90 transition-opacity
-        cursor-pointer
+        transition-all
+        flex items-center justify-center
+        ${
+          secondary
+            ? 'bg-transparent border-2 border-lightPurple text-lightPurple'
+            : 'bg-gradient-to-br from-lightPurple to-darkPurple text-dark-background dark:text-light-background'
+        }
+        ${
+          isLoading || disabled
+            ? 'opacity-70 cursor-not-allowed'
+            : 'cursor-pointer hover:opacity-90'
+        }
         ${className || ''}
       `}
     onClick={onClick}
+    disabled={isLoading || disabled}
     {...props}
   >
-    <ButtonText>{children}</ButtonText>
+    {isLoading ? (
+      <FaSpinner className='animate-spin' size={32} />
+    ) : (
+      <ButtonText>{children}</ButtonText>
+    )}
   </button>
 );
