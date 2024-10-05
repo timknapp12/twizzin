@@ -14,6 +14,8 @@ Crypto needs a better way to teach users. Crypto needs Twizzin.
 
 ## Development
 
+#### Twizzin is open source!
+
 ### Backend
 
 The backend is built with Anchor/Rust and runs on Solana. The code for this is in the `twizzin-be` directory. There is also a private database running on Supabase that is used to questions and answers, as well as points earned by each player.
