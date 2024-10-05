@@ -137,7 +137,7 @@ const QuestionGroup: React.FC<QuestionGroupProps> = ({
                   Icon={FaPlus}
                   onClick={handleAddAnswer}
                   title={t('Add answer')}
-                  className='cursor-pointer text-white'
+                  className='cursor-pointer text-black dark:text-white'
                   size={16}
                   disabled={questionFromParent.answers.length >= 10}
                 />

@@ -47,7 +47,7 @@ export interface AnswerToBeHashed {
 }
 
 export interface GameData {
-  // gameCode is 6 chars max - returned from db
+  gameCode: string; // length of 6
   gameName: string;
   entryFee: number;
   startTime: Date;

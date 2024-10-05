@@ -4,7 +4,7 @@ import { Column, Row } from '../containers';
 import { Input } from '../inputs';
 import { Button } from '../Button';
 import { supabase } from '../../utils/supabaseClient';
-import CreateGame from '../Create/createGame';
+import CreateGame from '../Create/CreateGame';
 import { useAppContext } from '@/contexts/AppContext';
 import { useTranslation } from 'react-i18next';
 

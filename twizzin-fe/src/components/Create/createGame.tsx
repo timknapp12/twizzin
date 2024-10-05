@@ -13,7 +13,8 @@ import {
 } from '@/components';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import QuestionGroup from './questionGroup';
+import QuestionGroup from './QuestionGroup';
+import DisplayGame from './DisplayGame';
 import { FaPlus } from 'react-icons/fa6';
 import { useTranslation } from 'react-i18next';
 import { validateGame } from '@/utils';
@@ -22,7 +23,13 @@ const CreateGame = () => {
   const { gameData, handleGameData, questions, handleAddBlankQuestion } =
     useAppContext();
   const { t } = useTranslation();
+
+  const [isEdit, setIsEdit] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showGameCode, setShowGameCode] = useState(false);
+
+  const doesGameCodeExist = gameData.gameCode && gameData.gameCode.length > 0;
 
   const handleDateChange = (date: Date | null) => {
     setError(null);
@@ -53,24 +60,64 @@ const CreateGame = () => {
     0
   );
 
+  const generateGameCode = (): string => {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let result = '';
+    for (let i = 0; i < 6; i++) {
+      const randomIndex = Math.floor(Math.random() * characters.length);
+      result += characters.charAt(randomIndex);
+    }
+    return result;
+  };
+
   const handleSubmit = () => {
-    console.log('submit');
+    setIsLoading(true);
     const validationError = validateGame(gameData, questions);
 
     if (validationError) {
       setError(validationError);
+      setIsLoading(false);
     } else {
       setError(null);
       // Proceed with game creation
       console.log('Game creation validated, proceeding with submission');
       // Add your game creation logic here
+      if (!gameData.gameCode) {
+        const gameCode = generateGameCode();
+        handleGameData({
+          target: { name: 'gameCode', value: gameCode },
+        });
+        setShowGameCode(true);
+      }
+      setTimeout(() => {
+        setIsEdit(false);
+        setIsLoading(false);
+      }, 2000);
     }
   };
+
+  const onCancelUpdate = () => setIsEdit(false);
+
+  if (!isEdit) {
+    return (
+      <DisplayGame
+        gameData={gameData}
+        questions={questions}
+        showGameCode={showGameCode}
+        setShowGameCode={setShowGameCode}
+        setIsEdit={setIsEdit}
+      />
+    );
+  }
 
   return (
     <Column className='w-full h-full flex-grow gap-12' justify='between'>
       <Column className='w-full gap-4'>
-        <p className='text-2xl font-bold'>{t('Create a Twizzin game')}</p>
+        <p className='text-2xl font-bold'>
+          {doesGameCodeExist
+            ? `${t('Update game')}: ${gameData.gameCode}`
+            : t('Create a Twizzin game')}
+        </p>
         <Grid min='400px' gapSize='1rem' className='w-full p-4'>
           <Input
             type='text'
@@ -166,8 +213,29 @@ const CreateGame = () => {
             onClose={() => setError(null)}
           />
         )}
-        <Button onClick={handleSubmit}>{t('Create game')}</Button>
+
+        {!doesGameCodeExist && (
+          <Button onClick={handleSubmit} isLoading={isLoading}>
+            {t('Create Game')}
+          </Button>
+        )}
       </Column>
+      {doesGameCodeExist && isEdit && (
+        <Column className='w-[80%]'>
+          <Row justify='between' className='w-full gap-4'>
+            <Button onClick={onCancelUpdate} className='flex-1' secondary>
+              {t('Cancel')}
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              isLoading={isLoading}
+              className='flex-1'
+            >
+              {t('Update Game')}
+            </Button>
+          </Row>
+        </Column>
+      )}
     </Column>
   );
 };
