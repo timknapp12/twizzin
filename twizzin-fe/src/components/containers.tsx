@@ -89,7 +89,7 @@ export const Row = ({
   ...props
 }: RowProps) => (
   <div
-    className={`flex flex-row flex-wrap items-${align} ${
+    className={`w-full flex flex-row flex-wrap items-${align} ${
       justifyClassMap[justify]
     } ${className || ''}`}
     {...props}

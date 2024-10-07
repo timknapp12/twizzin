@@ -69,5 +69,6 @@
   "Connecting": "Connecting",
   "Disconnect": "Disconnect",
   "Connected: {{shortAddress}}": "Connected: {{shortAddress}}",
-  "Connect Wallet": "Connect Wallet"
+  "Connect Wallet": "Connect Wallet",
+  "Create game": "Create game"
 }
