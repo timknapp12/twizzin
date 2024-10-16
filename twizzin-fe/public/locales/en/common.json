@@ -69,5 +69,8 @@
   "Connecting": "Connecting",
   "Disconnect": "Disconnect",
   "Connected: {{shortAddress}}": "Connected: {{shortAddress}}",
-  "Connect Wallet": "Connect Wallet"
+  "Connect Wallet": "Connect Wallet",
+  "Join": "Join",
+  "Game code must be 6 characters": "Game code must be 6 characters",
+  "Enter a game code provided by your host": "Enter a game code provided by your host"
 }
