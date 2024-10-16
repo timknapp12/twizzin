@@ -74,6 +74,9 @@ const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // code that players enter to join a game
+  const [gameCode, setGameCode] = useState('');
+
   return (
     <AppContext.Provider
       value={{
@@ -87,6 +90,8 @@ const AppProvider = ({ children }: { children: ReactNode }) => {
         handleUpdateQuestionData,
         handleDeleteQuestion,
         handleAddBlankQuestion,
+        gameCode,
+        setGameCode,
       }}
     >
       {children}
