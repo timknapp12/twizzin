@@ -9,6 +9,8 @@ export interface AppContextType {
   handleUpdateQuestionData: (question: QuestionForDb) => void;
   handleDeleteQuestion: (index: number) => void;
   handleAddBlankQuestion: () => void;
+  gameCode: string;
+  setGameCode: (code: string) => void;
 }
 
 export interface QuestionForDb {
