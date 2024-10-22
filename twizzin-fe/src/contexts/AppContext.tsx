@@ -1,6 +1,15 @@
 'use client';
-import { createContext, useContext, useState, ReactNode } from 'react';
+
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from 'react';
 import { AppContextType, QuestionForDb, GameData } from '@/types';
+import { usePathname, useRouter } from 'next/navigation';
+import i18n from '@/i18n';
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -15,6 +24,50 @@ export const useAppContext = () => {
 const AppProvider = ({ children }: { children: ReactNode }) => {
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [admin, setAdmin] = useState(null);
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // Initialize language from localStorage or default to 'en'
+  const [language, setLanguage] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('language') || 'en';
+    }
+    return 'en';
+  });
+
+  // Handle language changes and synchronization
+  useEffect(() => {
+    // Skip if i18n is not initialized
+    if (!i18n.isInitialized) {
+      return;
+    }
+
+    const handleLanguageChange = () => {
+      const newLanguage = i18n.language;
+      setLanguage(newLanguage);
+      localStorage.setItem('language', newLanguage);
+
+      // Update URL path when language changes
+      const currentLang = pathname.split('/')[1];
+      if (currentLang !== newLanguage && currentLang) {
+        const newPath = pathname.replace(`/${currentLang}`, `/${newLanguage}`);
+        router.push(newPath);
+      }
+    };
+
+    // Set initial language if different from current i18n language
+    if (i18n.language !== language) {
+      i18n.changeLanguage(language);
+    }
+
+    // Listen for language changes
+    i18n.on('languageChanged', handleLanguageChange);
+
+    // Cleanup listener on unmount
+    return () => {
+      i18n.off('languageChanged', handleLanguageChange);
+    };
+  }, [language, pathname, router]);
 
   const initialGameData: GameData = {
     gameCode: '',
@@ -26,6 +79,7 @@ const AppProvider = ({ children }: { children: ReactNode }) => {
     maxWinners: 1,
     answers: [],
   };
+
   const [gameData, setGameData] = useState<GameData>(initialGameData);
 
   const handleGameData = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -43,6 +97,7 @@ const AppProvider = ({ children }: { children: ReactNode }) => {
     correctAnswer: '',
     timeLimit: 10,
   };
+
   const [questions, setQuestions] = useState<QuestionForDb[]>([blankQuestion]);
 
   const handleUpdateQuestionData = (updatedQuestion: QuestionForDb) => {
@@ -74,8 +129,13 @@ const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // code that players enter to join a game
   const [gameCode, setGameCode] = useState('');
+
+  const changeLanguage = (newLang: string) => {
+    if (i18n.isInitialized) {
+      i18n.changeLanguage(newLang);
+    }
+  };
 
   return (
     <AppContext.Provider
@@ -92,6 +152,8 @@ const AppProvider = ({ children }: { children: ReactNode }) => {
         handleAddBlankQuestion,
         gameCode,
         setGameCode,
+        language,
+        changeLanguage,
       }}
     >
       {children}

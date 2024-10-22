@@ -1,5 +1,7 @@
-import { redirect } from 'next/navigation';
+'use client';
+import { useLanguageRedirect, LoadingSpinner } from '@/utils/languageRedirect';
 
 export default function CreateRedirectPage() {
-  redirect('/en/create');
+  useLanguageRedirect('/create');
+  return <LoadingSpinner />;
 }

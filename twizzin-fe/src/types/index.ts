@@ -11,6 +11,8 @@ export interface AppContextType {
   handleAddBlankQuestion: () => void;
   gameCode: string;
   setGameCode: (code: string) => void;
+  language: string;
+  changeLanguage: (language: string) => void;
 }
 
 export interface QuestionForDb {

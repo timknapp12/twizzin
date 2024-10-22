@@ -3,6 +3,25 @@ import type { NextRequest } from 'next/server';
 
 const supportedLocales = ['en', 'es', 'de'];
 
+function getPreferredLocale(request: NextRequest): string {
+  // Get the Accept-Language header
+  const acceptLanguage = request.headers.get('accept-language');
+
+  if (acceptLanguage) {
+    // Get the first preferred language that's supported
+    const preferredLocale = acceptLanguage
+      .split(',')
+      .map((lang) => lang.split(';')[0].substring(0, 2))
+      .find((lang) => supportedLocales.includes(lang));
+
+    if (preferredLocale) {
+      return preferredLocale;
+    }
+  }
+
+  return 'en'; // Default to English if no match
+}
+
 export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
@@ -22,8 +41,13 @@ export function middleware(request: NextRequest) {
     !pathname.startsWith('/api') &&
     !pathname.includes('.')
   ) {
-    // Redirect to the English version
-    return NextResponse.redirect(new URL(`/en${pathname}`, request.url));
+    // Get the preferred locale
+    const preferredLocale = getPreferredLocale(request);
+
+    // Redirect to the preferred locale version
+    return NextResponse.redirect(
+      new URL(`/${preferredLocale}${pathname}`, request.url)
+    );
   }
 
   return NextResponse.next();
