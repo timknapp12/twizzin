@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next';
 import { useAppContext } from '../../contexts/AppContext';
 import { Button } from '../buttons';
 
@@ -15,8 +14,7 @@ export const LanguageModal: React.FC<LanguageModalProps> = ({
   onLanguageChange,
   className,
 }) => {
-  const { t } = useTranslation();
-  const { language, changeLanguage } = useAppContext();
+  const { t, language, changeLanguage } = useAppContext();
 
   const handleLanguageChange = (
     event: React.ChangeEvent<HTMLSelectElement>

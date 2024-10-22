@@ -13,6 +13,7 @@ export interface AppContextType {
   setGameCode: (code: string) => void;
   language: string;
   changeLanguage: (language: string) => void;
+  t: (key: string) => string;
 }
 
 export interface QuestionForDb {

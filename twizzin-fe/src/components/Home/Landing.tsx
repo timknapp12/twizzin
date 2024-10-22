@@ -1,10 +1,10 @@
 import { FaXTwitter, FaTelegram } from 'react-icons/fa6';
 import { Column, Row } from '../containers';
 import { H3 } from '../texts';
-import { useTranslation } from 'react-i18next';
+import { useAppContext } from '@/contexts/AppContext';
 
 export const Landing = () => {
-  const { t } = useTranslation();
+  const { t } = useAppContext();
   return (
     <Column className='gap-4'>
       <Row className='text-center'>

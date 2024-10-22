@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { LanguageModal } from './modals';
-import { useTranslation } from 'react-i18next';
+import { useAppContext } from '@/contexts/AppContext';
 
 interface MenuDropdownProps {
   anchorEl: React.RefObject<HTMLElement>;
@@ -14,7 +14,7 @@ export const MenuDropdown: React.FC<MenuDropdownProps> = ({
   onClose,
 }) => {
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const { t } = useTranslation();
+  const { t } = useAppContext();
   const [isLanguageModalOpen, setIsLanguageModalOpen] = useState(false);
 
   useEffect(() => {

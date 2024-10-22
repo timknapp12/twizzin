@@ -1,5 +1,4 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import {
   Column,
   Row,
@@ -11,6 +10,7 @@ import {
   H5,
   IconButton,
 } from '@/components';
+import { useAppContext } from '@/contexts/AppContext';
 import { GameData, QuestionForDb } from '@/types';
 import { displayOrderMap } from '@/types';
 import { FaPencil, FaCircleCheck } from 'react-icons/fa6';
@@ -30,7 +30,7 @@ const DisplayAddedGame: React.FC<DisplayAddedGameProps> = ({
   setShowGameCode,
   setIsEdit,
 }) => {
-  const { t } = useTranslation();
+  const { t } = useAppContext();
 
   const totalTime = questions.reduce(
     (acc, question) => acc + question.timeLimit,

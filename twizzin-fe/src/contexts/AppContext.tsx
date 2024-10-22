@@ -10,6 +10,7 @@ import React, {
 import { AppContextType, QuestionForDb, GameData } from '@/types';
 import { usePathname, useRouter } from 'next/navigation';
 import i18n from '@/i18n';
+import { useTranslation } from 'react-i18next';
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -22,6 +23,8 @@ export const useAppContext = () => {
 };
 
 const AppProvider = ({ children }: { children: ReactNode }) => {
+  const { t } = useTranslation();
+
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [admin, setAdmin] = useState(null);
   const router = useRouter();
@@ -154,6 +157,7 @@ const AppProvider = ({ children }: { children: ReactNode }) => {
         setGameCode,
         language,
         changeLanguage,
+        t,
       }}
     >
       {children}

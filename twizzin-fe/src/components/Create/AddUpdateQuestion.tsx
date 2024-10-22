@@ -10,7 +10,6 @@ import {
 } from '@/components';
 import { QuestionForDb, displayOrderMap } from '@/types';
 import { FaTrashCan, FaPlus } from 'react-icons/fa6';
-import { useTranslation } from 'react-i18next';
 import { useAppContext } from '@/contexts/AppContext';
 
 interface AddUpdateQuestionProps {
@@ -26,9 +25,8 @@ const AddUpdateQuestion: React.FC<AddUpdateQuestionProps> = ({
   questionFromParent,
   setError,
 }) => {
-  const { handleUpdateQuestionData, handleDeleteQuestion, questions } =
+  const { t, handleUpdateQuestionData, handleDeleteQuestion, questions } =
     useAppContext();
-  const { t } = useTranslation();
 
   const handleQuestionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setError(null);

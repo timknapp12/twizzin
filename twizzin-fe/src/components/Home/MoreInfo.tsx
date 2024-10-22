@@ -1,9 +1,9 @@
 import React from 'react';
 import { Column, H5, GradientContainer, Row, H5Brand } from '@/components';
-import { useTranslation } from 'react-i18next';
+import { useAppContext } from '@/contexts/AppContext';
 
 const MoreInfo = () => {
-  const { t } = useTranslation();
+  const { t } = useAppContext();
   return (
     <GradientContainer>
       <Column align='start' className='w-full'>
