@@ -14,6 +14,8 @@ export interface AppContextType {
   language: string;
   changeLanguage: (language: string) => void;
   t: (key: string) => string;
+  currency: string;
+  changeCurrency: (currency: string) => void;
 }
 
 export interface QuestionForDb {

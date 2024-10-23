@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { LanguageModal } from './modals';
+import { CurrencyModal } from './modals';
 import { useAppContext } from '@/contexts/AppContext';
 
 interface MenuDropdownProps {
@@ -14,8 +15,9 @@ export const MenuDropdown: React.FC<MenuDropdownProps> = ({
   onClose,
 }) => {
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const { t, language } = useAppContext();
+  const { t, language, currency } = useAppContext();
   const [isLanguageModalOpen, setIsLanguageModalOpen] = useState(false);
+  const [isCurrencyModalOpen, setIsCurrencyModalOpen] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -25,10 +27,14 @@ export const MenuDropdown: React.FC<MenuDropdownProps> = ({
         anchorEl.current &&
         !anchorEl.current.contains(event.target as Node)
       ) {
-        // Check if the click is inside the LanguageModal
+        // Check if the click is inside the LanguageModal or CurrencyModal
         const languageModal = document.querySelector('.language-modal');
-        if (languageModal && languageModal.contains(event.target as Node)) {
-          return; // Don't close if the click is inside the LanguageModal
+        const currencyModal = document.querySelector('.currency-modal');
+        if (
+          (languageModal && languageModal.contains(event.target as Node)) ||
+          (currencyModal && currencyModal.contains(event.target as Node))
+        ) {
+          return; // Don't close if the click is inside either modal
         }
         onClose();
       }
@@ -48,7 +54,7 @@ export const MenuDropdown: React.FC<MenuDropdownProps> = ({
     }
   }, [anchorEl]);
 
-  const handleLanguageChange = () => {
+  const onCloseMenus = () => {
     setIsLanguageModalOpen(false);
     onClose();
   };
@@ -67,19 +73,30 @@ export const MenuDropdown: React.FC<MenuDropdownProps> = ({
               setIsLanguageModalOpen(true);
             }}
           >
-            {`${t('Change language')} (${language.toUpperCase()})`}
+            {t('Change language')} ({language.toUpperCase()})
           </li>
-          <li className='py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer'>
-            {t('Change currency')}
+          <li
+            className='py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer'
+            onClick={() => {
+              setIsCurrencyModalOpen(true);
+            }}
+          >
+            {t('Change currency')} ({currency.toUpperCase()})
           </li>
         </ul>
       </div>
       {isLanguageModalOpen && (
         <LanguageModal
           isOpen={isLanguageModalOpen}
-          onClose={() => setIsLanguageModalOpen(false)}
-          onLanguageChange={handleLanguageChange}
+          onCloseMenus={onCloseMenus}
           className='language-modal'
+        />
+      )}
+      {isCurrencyModalOpen && (
+        <CurrencyModal
+          isOpen={isCurrencyModalOpen}
+          onCloseMenus={onCloseMenus}
+          className='currency-modal'
         />
       )}
     </>

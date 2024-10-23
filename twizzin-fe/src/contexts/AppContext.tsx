@@ -11,7 +11,7 @@ import { AppContextType, QuestionForDb, GameData } from '@/types';
 import { usePathname, useRouter } from 'next/navigation';
 import i18n from '@/i18n';
 import { useTranslation } from 'react-i18next';
-
+import { localeMap } from '@/utils/locales';
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const useAppContext = () => {
@@ -71,6 +71,8 @@ const AppProvider = ({ children }: { children: ReactNode }) => {
       const newLanguage = i18n.language;
       setLanguage(newLanguage);
       localStorage.setItem('language', newLanguage);
+      const newLocale = localeMap[newLanguage as keyof typeof localeMap];
+      localStorage.setItem('locale', newLocale);
 
       // Update URL path when language changes
       const currentLang = pathname.split('/')[1];
@@ -162,6 +164,20 @@ const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // CURRENCY
+  const [currency, setCurrency] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('currency') || 'USD';
+    }
+    return 'USD';
+  });
+
+  const changeCurrency = (newCurrency: string) => {
+    setCurrency(newCurrency);
+    localStorage.setItem('currency', newCurrency);
+    // You might want to add logic here to convert prices or update API calls
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -180,6 +196,8 @@ const AppProvider = ({ children }: { children: ReactNode }) => {
         language,
         changeLanguage,
         t,
+        currency,
+        changeCurrency,
       }}
     >
       {children}
