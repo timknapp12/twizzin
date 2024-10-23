@@ -1,7 +1,5 @@
-'use client';
-import { useLanguageRedirect, LoadingSpinner } from '@/utils/languageRedirect';
+import { redirect } from 'next/navigation';
 
 export default function JoinRedirectPage() {
-  useLanguageRedirect('/join');
-  return <LoadingSpinner />;
+  redirect('/en/join');
 }

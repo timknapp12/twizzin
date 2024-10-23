@@ -1,7 +1,5 @@
-'use client';
-import { useLanguageRedirect, LoadingSpinner } from '@/utils/languageRedirect';
+import { redirect } from 'next/navigation';
 
 export default function AdminRedirectPage() {
-  useLanguageRedirect('/admin');
-  return <LoadingSpinner />;
+  redirect('/en/admin');
 }

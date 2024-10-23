@@ -14,7 +14,7 @@ export const MenuDropdown: React.FC<MenuDropdownProps> = ({
   onClose,
 }) => {
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const { t } = useAppContext();
+  const { t, language } = useAppContext();
   const [isLanguageModalOpen, setIsLanguageModalOpen] = useState(false);
 
   useEffect(() => {
@@ -67,7 +67,7 @@ export const MenuDropdown: React.FC<MenuDropdownProps> = ({
               setIsLanguageModalOpen(true);
             }}
           >
-            {t('Change language')}
+            {`${t('Change language')} (${language.toUpperCase()})`}
           </li>
           <li className='py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer'>
             {t('Change currency')}

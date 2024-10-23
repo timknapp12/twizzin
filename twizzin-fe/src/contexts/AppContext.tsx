@@ -37,6 +37,28 @@ const AppProvider = ({ children }: { children: ReactNode }) => {
     }
     return 'en';
   });
+  useEffect(() => {
+    const urlSegments = pathname.split('/').filter(Boolean); // This removes empty strings
+    const urlLocale = urlSegments[0];
+    const supportedLocales = ['en', 'es', 'de'];
+
+    if (!supportedLocales.includes(urlLocale)) {
+      // Get the path after the locale segment, or default to empty string
+      const pathAfterLocale = urlSegments.slice(1).join('/');
+      // Construct new path with 'en' and the rest of the path
+      const newPath = `/en/${pathAfterLocale}`;
+      router.replace(newPath);
+      return;
+    }
+
+    if (urlLocale !== language) {
+      setLanguage(urlLocale);
+      localStorage.setItem('language', urlLocale);
+      if (i18n.isInitialized) {
+        i18n.changeLanguage(urlLocale);
+      }
+    }
+  }, [pathname, language, router]);
 
   // Handle language changes and synchronization
   useEffect(() => {
