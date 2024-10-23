@@ -1,8 +1,7 @@
 'use client';
 
-import React, { ReactNode, useState } from 'react';
-import { FiMenu } from 'react-icons/fi';
-import { MenuDropdown } from './MenuDropdown';
+import React, { ReactNode } from 'react';
+import { Header } from './Header';
 
 interface ScreenContainerProps {
   children: ReactNode;
@@ -10,32 +9,9 @@ interface ScreenContainerProps {
 }
 
 export const ScreenContainer = ({ children }: ScreenContainerProps) => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const menuButtonRef = React.useRef<HTMLButtonElement>(null);
-
-  const handleMenuClick = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
-
   return (
     <main className='flex min-h-screen flex-col items-center justify-start'>
-      <header className='w-full flex justify-between items-center p-4 sm:px-8 relative z-50'>
-        <div />
-        <button
-          ref={menuButtonRef}
-          onClick={handleMenuClick}
-          className='p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors'
-          aria-label='Open menu'
-        >
-          <FiMenu size={24} />
-        </button>
-        {isMenuOpen && (
-          <MenuDropdown
-            anchorEl={menuButtonRef}
-            onClose={() => setIsMenuOpen(false)}
-          />
-        )}
-      </header>
+      <Header />
       <div className='flex-grow w-full p-6 sm:pl-8 sm:pr-16 sm:pb-16'>
         <BorderedContainer>{children}</BorderedContainer>
       </div>
