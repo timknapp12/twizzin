@@ -19,14 +19,12 @@ import 'react-datepicker/dist/react-datepicker.css';
 import AddUpdateQuestion from './AddUpdateQuestion';
 import DisplayAddedGame from './DisplayAddedGame';
 import { FaPlus } from 'react-icons/fa6';
-import { useTranslation } from 'react-i18next';
 import { validateGame } from '@/utils';
 import { useScreenSize } from '@/hooks/useScreenSize';
 
 const AddUpdateGame = () => {
-  const { gameData, handleGameData, questions, handleAddBlankQuestion } =
+  const { t, gameData, handleGameData, questions, handleAddBlankQuestion } =
     useAppContext();
-  const { t } = useTranslation();
 
   const { connection } = useConnection();
   const { publicKey } = useWallet();

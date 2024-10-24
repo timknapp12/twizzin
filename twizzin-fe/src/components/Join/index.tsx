@@ -11,12 +11,10 @@ import {
   H3,
   H3Brand,
 } from '@/components';
-import { useTranslation } from 'react-i18next';
 import { useAppContext } from '@/contexts/AppContext';
 
 export const JoinComponent = () => {
-  const { gameCode, setGameCode } = useAppContext();
-  const { t } = useTranslation();
+  const { t, gameCode, setGameCode } = useAppContext();
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');

@@ -6,15 +6,12 @@ import { Button } from '../buttons/Button';
 import { supabase } from '../../utils/supabaseClient';
 import AddUpdateGame from '../Create/AddUpdateGame';
 import { useAppContext } from '@/contexts/AppContext';
-import { useTranslation } from 'react-i18next';
 
 export const AdminComponent = () => {
-  const { isSignedIn, setIsSignedIn, setAdmin } = useAppContext();
+  const { t, isSignedIn, setIsSignedIn, setAdmin } = useAppContext();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isClient, setIsClient] = useState(false);
-
-  const { t } = useTranslation();
 
   useEffect(() => {
     setIsClient(true);

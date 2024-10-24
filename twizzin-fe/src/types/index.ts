@@ -11,6 +11,11 @@ export interface AppContextType {
   handleAddBlankQuestion: () => void;
   gameCode: string;
   setGameCode: (code: string) => void;
+  language: string;
+  changeLanguage: (language: string) => void;
+  t: (key: string) => string;
+  currency: string;
+  changeCurrency: (currency: string) => void;
 }
 
 export interface QuestionForDb {

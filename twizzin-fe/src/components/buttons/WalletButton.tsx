@@ -3,9 +3,9 @@
 import React, { useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Button } from './Button';
-import { useTranslation } from 'react-i18next';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 import { FaSignOutAlt } from 'react-icons/fa';
+import { useAppContext } from '@/contexts/AppContext';
 
 interface WalletButtonProps {
   className?: string;
@@ -14,7 +14,7 @@ interface WalletButtonProps {
 export const WalletButton: React.FC<WalletButtonProps> = ({ className }) => {
   const { connecting, connected, publicKey, disconnect } = useWallet();
   const { setVisible } = useWalletModal();
-  const { t } = useTranslation();
+  const { t } = useAppContext();
   const [isHovering, setIsHovering] = useState(false);
 
   const handleClick = () => {
@@ -39,9 +39,8 @@ export const WalletButton: React.FC<WalletButtonProps> = ({ className }) => {
         );
       }
       const address = publicKey.toBase58();
-      return t('Connected: {{shortAddress}}', {
-        shortAddress: `${address.slice(0, 4)}...${address.slice(-4)}`,
-      });
+      const shortAddress = `${address.slice(0, 4)}...${address.slice(-4)}`;
+      return t(`Connected: ${shortAddress}`);
     }
     return t('Connect Wallet');
   };
