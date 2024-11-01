@@ -175,7 +175,7 @@ const AppProvider = ({ children }: { children: ReactNode }) => {
   const changeCurrency = (newCurrency: string) => {
     setCurrency(newCurrency);
     localStorage.setItem('currency', newCurrency);
-    // You might want to add logic here to convert prices or update API calls
+    // TODO - add logic here to convert prices
   };
 
   return (
