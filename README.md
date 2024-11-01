@@ -19,6 +19,7 @@ Crypto needs a better way to teach users. Crypto needs Twizzin.
 ### Backend
 
 The backend is built with Anchor/Rust and runs on Solana. The code for this is in the `twizzin-be` directory. There is also a private database running on Supabase that is used to questions and answers, as well as points earned by each player.
+We decided to pivot which required some changes to the backend. The refactored code is in the `twizzin-be-v2` directory. This newer version will support SPL tokens, not just native SOL, and wil support more players to participate in each game.
 
 ### Frontend
 
