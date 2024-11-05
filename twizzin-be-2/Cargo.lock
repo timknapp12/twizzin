@@ -1734,7 +1734,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "twizzin-be-v2"
+name = "twizzin-be-2"
 version = "0.1.0"
 dependencies = [
  "anchor-lang",

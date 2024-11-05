@@ -53,13 +53,13 @@
 /twizzin-be/.yarn
 
 # backend-v2
-/twizzin-be-v2/.anchor
-/twizzin-be-v2/.DS_Store
-/twizzin-be-v2/target
-/twizzin-be-v2/**/*.rs.bk
-/twizzin-be-v2/node_modules
-/twizzin-be-v2/test-ledger
-/twizzin-be-v2/.yarn
+/twizzin-be-2/.anchor
+/twizzin-be-2/.DS_Store
+/twizzin-be-2/target
+/twizzin-be-2/**/*.rs.bk
+/twizzin-be-2/node_modules
+/twizzin-be-2/test-ledger
+/twizzin-be-2/.yarn
 
 *wallet.json
 
