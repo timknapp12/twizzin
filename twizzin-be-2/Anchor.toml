@@ -5,7 +5,7 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-twizzin_be_v2 = "93NgBAT85EuPQgg1RFC4zFTgE5tNLGyX41excF9XhdDT"
+twizzin_be_2 = "FmRELAAURvtc5rn3pt3d8ZfogACZT2m1N3gkhCs2R9qV"
 
 [registry]
 url = "https://api.apr.dev"

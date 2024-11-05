@@ -1,0 +1,62 @@
+name: Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  SOLANA_VERSION: 1.17.0
+  ANCHOR_VERSION: 0.28.0
+  NODE_VERSION: 18.x
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'yarn'
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install Solana
+        run: |
+          sh -c "$(curl -sSfL https://release.solana.com/v${{ env.SOLANA_VERSION }}/install)"
+          echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+
+      - name: Install Anchor CLI
+        run: |
+          cargo install --git https://github.com/coral-xyz/anchor avm --locked --force
+          avm install ${{ env.ANCHOR_VERSION }}
+          avm use ${{ env.ANCHOR_VERSION }}
+
+      - name: Generate Anchor IDL
+        run: anchor build
+
+      - name: Install Dependencies
+        run: yarn install
+
+      - name: Run Rust Tests
+        run: anchor test --skip-lint tests/rust/
+
+      - name: Run TypeScript Tests
+        run: anchor test --skip-deploy tests/ts/
+
+      - name: Run Clippy
+        run: cargo clippy -- -D warnings
+
+      - name: Check Formatting
+        run: cargo fmt -- --check
