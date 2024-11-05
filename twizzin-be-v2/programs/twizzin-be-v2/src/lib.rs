@@ -1,16 +1,18 @@
 use anchor_lang::prelude::*;
 
-declare_id!("93NgBAT85EuPQgg1RFC4zFTgE5tNLGyX41excF9XhdDT");
+declare_id!("6tssgoTwAU88td3wXkj2xFj8Q2QpfsBsBGK4HJxrwhYs");
+
+pub mod contexts;
+pub use contexts::*;
+
+pub mod state;
+pub use state::*;
 
 #[program]
 pub mod twizzin_be_v2 {
     use super::*;
 
-    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
-        msg!("Greetings from: {:?}", ctx.program_id);
-        Ok(())
+    pub fn init_config(ctx: Context<InitConfig>, treasury_pubkey: Pubkey) -> Result<()> {
+        ctx.accounts.init_config(treasury_pubkey)
     }
 }
-
-#[derive(Accounts)]
-pub struct Initialize {}
