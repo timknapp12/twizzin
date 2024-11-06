@@ -3,8 +3,14 @@ name: Tests
 on:
   push:
     branches: [main, develop]
+    paths:
+      - 'twizzin-be-2/**'
+      - '.github/workflows/tests.yml'
   pull_request:
     branches: [main, develop]
+    paths:
+      - 'twizzin-be-2/**'
+      - '.github/workflows/tests.yml'
 
 env:
   SOLANA_VERSION: 1.17.0
@@ -15,6 +21,10 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        working-directory: ./twizzin-be-2
+
     steps:
       - uses: actions/checkout@v3
 
@@ -23,6 +33,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'yarn'
+          cache-dependency-path: './twizzin-be-2/yarn.lock'
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -31,6 +42,8 @@ jobs:
 
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: './twizzin-be-2 -> target'
 
       - name: Cache Solana Tool Suite
         uses: actions/cache@v3
@@ -86,5 +99,5 @@ jobs:
         with:
           name: test-logs
           path: |
-            test-ledger/validator.log
-            target/deploy/*.log
+            twizzin-be-2/test-ledger/validator.log
+            twizzin-be-2/target/deploy/*.log
