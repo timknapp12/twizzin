@@ -2,6 +2,7 @@ import * as anchor from '@coral-xyz/anchor';
 import { Program } from '@coral-xyz/anchor';
 import { TwizzinBe2 } from '../target/types/twizzin_be_2';
 import { initializeProgramConfig } from './initConfig';
+import { updateProgramConfig } from './updateConfig';
 import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 
 let configPubkey: PublicKey;
@@ -50,5 +51,15 @@ describe('twizzin-be-2', () => {
     treasuryPubkey = result.treasuryPubkey;
     authorityPubkey = result.authorityPubkey;
     treasuryFee = result.treasuryFee;
+  });
+
+  it('Updates the program config', async () => {
+    await updateProgramConfig(
+      program,
+      provider,
+      confirm,
+      configPubkey,
+      treasuryPubkey
+    );
   });
 });

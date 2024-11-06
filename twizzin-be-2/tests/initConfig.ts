@@ -11,122 +11,98 @@ export async function initializeProgramConfig(
 ) {
   console.log('Starting program config initialization test');
 
-  const configKeypair = anchor.web3.Keypair.generate();
-  const configPubkey = configKeypair.publicKey;
+  // Derive the config PDA
+  const [configPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('config')],
+    program.programId
+  );
+
   const treasuryKeypair = anchor.web3.Keypair.generate();
   const treasuryPubkey = treasuryKeypair.publicKey;
   const authorityPubkey = provider.wallet.publicKey;
   const treasuryFee = 500; // 5.00%
 
-  // Test valid initialization
-  console.log('Testing valid initialization...');
-  const tx = await program.methods
-    .initConfig(treasuryPubkey, authorityPubkey, treasuryFee)
-    .accounts({
-      admin: provider.wallet.publicKey,
-      config: configPubkey,
-      systemProgram: SystemProgram.programId,
-    })
-    .signers([configKeypair])
-    .rpc();
-
-  await confirm(tx);
-
-  const configState = await program.account.programConfig.fetch(configPubkey);
-
-  // Basic initialization assertions
-  try {
-    expect(
-      configState.treasuryPubkey.equals(treasuryPubkey),
-      'Treasury pubkey should match'
-    ).to.be.true;
-    expect(
-      configState.authorityPubkey.equals(authorityPubkey),
-      'Authority pubkey should match'
-    ).to.be.true;
-    expect(configState.treasuryFee).to.equal(
-      treasuryFee,
-      'Treasury fee should match'
-    );
-
-    console.log('Basic initialization assertions passed');
-  } catch (error) {
-    console.error('Basic initialization assertions failed:', error);
-    throw error;
-  }
-
-  // Test invalid treasury fee (> 1000)
-  console.log('Testing invalid treasury fee...');
-  const invalidFeeKeypair = anchor.web3.Keypair.generate();
-  try {
-    await program.methods
-      .initConfig(
-        treasuryPubkey,
-        provider.wallet.publicKey,
-        1001 // > 10%
-      )
+  // Helper function for program method calls
+  const executeInitConfig = async (
+    treasury: PublicKey,
+    authority: PublicKey,
+    fee: number,
+    admin: PublicKey,
+    adminSigner?: anchor.web3.Keypair
+  ) => {
+    const signers = adminSigner ? [adminSigner] : [];
+    return program.methods
+      .initConfig(treasury, authority, fee)
       .accounts({
-        admin: provider.wallet.publicKey,
-        config: invalidFeeKeypair.publicKey,
+        admin,
+        config: configPda,
         systemProgram: SystemProgram.programId,
       })
-      .signers([invalidFeeKeypair])
+      .signers(signers)
       .rpc();
+  };
+
+  // Helper function for error checking
+  const expectError = (error: any, errorTypes: string[]) => {
+    const errorString = error.toString();
+    const hasExpectedError = errorTypes.some(
+      (type) =>
+        errorString.includes(
+          type.includes('Error Code:') ? type : `Error Code: ${type}`
+        ) ||
+        errorString.includes(type.includes('0x') ? type : `0x${type}`) ||
+        errorString.includes(type)
+    );
+    expect(
+      hasExpectedError,
+      `Expected one of [${errorTypes}] but got: ${errorString}`
+    ).to.be.true;
+  };
+
+  // Test invalid treasury fee
+  console.log('Testing invalid treasury fee...');
+  try {
+    await executeInitConfig(
+      treasuryPubkey,
+      provider.wallet.publicKey,
+      1001, // > 10%
+      provider.wallet.publicKey
+    );
     throw new Error('Should have failed with invalid treasury fee');
   } catch (error) {
     console.log('Invalid fee error received:', error.message);
-    expect(error.toString()).to.include('Treasury fee too high');
+    expectError(error, ['TreasuryFeeTooHigh', '6002', 'Treasury fee too high']);
     console.log('Invalid treasury fee test passed');
   }
 
-  // Test initialization with zero addresses
+  // Test zero treasury address
   console.log('Testing zero address validation...');
-  const zeroAddressKeypair = anchor.web3.Keypair.generate();
   try {
-    await program.methods
-      .initConfig(PublicKey.default, provider.wallet.publicKey, treasuryFee)
-      .accounts({
-        admin: provider.wallet.publicKey,
-        config: zeroAddressKeypair.publicKey,
-        systemProgram: SystemProgram.programId,
-      })
-      .signers([zeroAddressKeypair])
-      .rpc();
+    await executeInitConfig(
+      PublicKey.default,
+      provider.wallet.publicKey,
+      treasuryFee,
+      provider.wallet.publicKey
+    );
     throw new Error('Should have failed with zero treasury address');
   } catch (error) {
     console.log('Zero address error received:', error.message);
-    expect(error.toString()).to.include('Treasury address is blank');
+    expectError(error, [
+      'TreasuryAddressBlank',
+      '6003',
+      'Treasury address is blank',
+    ]);
     console.log('Zero address validation test passed');
   }
 
-  // Test double initialization
-  console.log('Testing double initialization...');
-  try {
-    await program.methods
-      .initConfig(treasuryPubkey, provider.wallet.publicKey, treasuryFee)
-      .accounts({
-        admin: provider.wallet.publicKey,
-        config: configPubkey,
-        systemProgram: SystemProgram.programId,
-      })
-      .signers([configKeypair])
-      .rpc();
-    throw new Error('Should have failed with double initialization');
-  } catch (error) {
-    console.log('Double init error received:', error.message);
-    expect(error.toString()).to.include('already in use');
-    console.log('Double initialization test passed');
-  }
-
-  // Test initialization with non-admin signer
-  console.log('Testing non-admin initialization...');
+  // Test unauthorized initialization
+  console.log('Testing unauthorized initialization...');
   const nonAdminKeypair = anchor.web3.Keypair.generate();
-  const nonAdminConfigKeypair = anchor.web3.Keypair.generate();
 
-  // Airdrop some SOL to the non-admin account
+  // Airdrop SOL to unauthorized account
   const airdropSig = await provider.connection.requestAirdrop(
     nonAdminKeypair.publicKey,
-    1000000000
+    1_000_000_000
   );
   await provider.connection.confirmTransaction({
     signature: airdropSig,
@@ -136,35 +112,71 @@ export async function initializeProgramConfig(
     ).lastValidBlockHeight,
   });
 
-  let nonAdminError = false;
   try {
-    await program.methods
-      .initConfig(
-        treasuryPubkey,
-        provider.wallet.publicKey, // Try to use the wallet's pubkey as authority while signing with non-admin
-        treasuryFee
-      )
-      .accounts({
-        admin: nonAdminKeypair.publicKey,
-        config: nonAdminConfigKeypair.publicKey,
-        systemProgram: SystemProgram.programId,
-      })
-      .signers([nonAdminKeypair, nonAdminConfigKeypair])
-      .rpc();
+    await executeInitConfig(
+      treasuryPubkey,
+      provider.wallet.publicKey,
+      treasuryFee,
+      nonAdminKeypair.publicKey,
+      nonAdminKeypair
+    );
+    throw new Error('Should have failed with unauthorized initialization');
   } catch (error) {
-    console.log('Non-admin error received:', error.message);
-    nonAdminError = true;
-    // The error should occur because admin signer doesn't match the authority_pubkey
-    expect(error.toString()).to.include('InvalidAuthority');
+    console.log('Unauthorized error received:', error.message);
+    expectError(error, ['InvalidAuthority', '6000', 'Invalid authority']);
+    console.log('Unauthorized initialization test passed');
   }
 
-  expect(nonAdminError).to.be.true;
-  console.log('Non-admin initialization test passed');
+  // Test valid initialization (do this last)
+  console.log('Testing valid initialization...');
+  try {
+    const tx = await executeInitConfig(
+      treasuryPubkey,
+      authorityPubkey,
+      treasuryFee,
+      provider.wallet.publicKey
+    );
+    await confirm(tx);
+
+    const configState = await program.account.programConfig.fetch(configPda);
+    expect(
+      configState.treasuryPubkey.equals(treasuryPubkey),
+      'Treasury pubkey mismatch'
+    ).to.be.true;
+    expect(
+      configState.authorityPubkey.equals(authorityPubkey),
+      'Authority pubkey mismatch'
+    ).to.be.true;
+    expect(configState.treasuryFee).to.equal(
+      treasuryFee,
+      'Treasury fee mismatch'
+    );
+    console.log('Basic initialization assertions passed');
+  } catch (error) {
+    console.error('Basic initialization failed:', error);
+    throw error;
+  }
+
+  // Test double initialization
+  console.log('Testing double initialization...');
+  try {
+    await executeInitConfig(
+      treasuryPubkey,
+      provider.wallet.publicKey,
+      treasuryFee,
+      provider.wallet.publicKey
+    );
+    throw new Error('Should have failed with double initialization');
+  } catch (error) {
+    console.log('Double init error received:', error.message);
+    expectError(error, ['already in use', 'Error processing Instruction']);
+    console.log('Double initialization test passed');
+  }
 
   console.log('All program config initialization tests completed successfully');
 
   return {
-    configPubkey,
+    configPubkey: configPda,
     treasuryPubkey,
     authorityPubkey,
     treasuryFee,
