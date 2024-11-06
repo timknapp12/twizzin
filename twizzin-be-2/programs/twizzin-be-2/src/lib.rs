@@ -24,4 +24,12 @@ pub mod twizzin_be_2 {
         ctx.accounts
             .init_config(treasury_pubkey, authority_pubkey, treasury_fee)
     }
+
+    pub fn update_config(
+        ctx: Context<UpdateConfig>,
+        new_treasury: Option<Pubkey>,
+        new_treasury_fee: Option<u16>,
+    ) -> Result<()> {
+        ctx.accounts.update_config(new_treasury, new_treasury_fee)
+    }
 }

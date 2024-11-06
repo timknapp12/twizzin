@@ -1,17 +1,21 @@
-use anchor_lang::prelude::*;
-
 use crate::errors::ErrorCode;
 use crate::state::config::ProgramConfig;
+use anchor_lang::prelude::*;
+
 #[derive(Accounts)]
 pub struct InitConfig<'info> {
     #[account(mut)]
     pub admin: Signer<'info>,
+
     #[account(
         init,
         payer = admin,
         space = ProgramConfig::INIT_SPACE,
+        seeds = [b"config"],
+        bump
     )]
     pub config: Account<'info, ProgramConfig>,
+
     pub system_program: Program<'info, System>,
 }
 
