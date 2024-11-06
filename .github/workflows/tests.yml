@@ -16,6 +16,7 @@ env:
   SOLANA_VERSION: 1.17.0
   ANCHOR_VERSION: 0.28.0
   NODE_VERSION: 18.x
+  RUST_VERSION: 1.75.0
 
 jobs:
   test:
@@ -38,6 +39,7 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
+        toolchain: ${{ env.RUST_VERSION }}
           components: rustfmt, clippy
 
       - name: Cache Rust dependencies
