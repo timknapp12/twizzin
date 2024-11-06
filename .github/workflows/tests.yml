@@ -3,17 +3,28 @@ name: Tests
 on:
   push:
     branches: [main, develop]
+    paths:
+      - 'twizzin-be-2/**'
+      - '.github/workflows/tests.yml'
   pull_request:
     branches: [main, develop]
+    paths:
+      - 'twizzin-be-2/**'
+      - '.github/workflows/tests.yml'
 
 env:
   SOLANA_VERSION: 1.17.0
   ANCHOR_VERSION: 0.28.0
   NODE_VERSION: 18.x
+  RUST_VERSION: 1.75.0
 
 jobs:
   test:
     runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./twizzin-be-2
 
     steps:
       - uses: actions/checkout@v3
@@ -23,16 +34,30 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'yarn'
+          cache-dependency-path: './twizzin-be-2/yarn.lock'
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
+        toolchain: ${{ env.RUST_VERSION }}
           components: rustfmt, clippy
 
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: './twizzin-be-2 -> target'
+
+      - name: Cache Solana Tool Suite
+        uses: actions/cache@v3
+        id: cache-solana
+        with:
+          path: |
+            ~/.cache/solana
+            ~/.local/share/solana/install
+          key: solana-${{ runner.os }}-v${{ env.SOLANA_VERSION }}
 
       - name: Install Solana
+        if: steps.cache-solana.outputs.cache-hit != 'true'
         run: |
           sh -c "$(curl -sSfL https://release.solana.com/v${{ env.SOLANA_VERSION }}/install)"
           echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
@@ -49,14 +74,32 @@ jobs:
       - name: Install Dependencies
         run: yarn install
 
-      - name: Run Rust Tests
-        run: anchor test --skip-lint tests/rust/
+      - name: Start Local Validator
+        run: solana-test-validator --reset --quiet &
 
-      - name: Run TypeScript Tests
-        run: anchor test --skip-deploy tests/ts/
+      - name: Wait for Validator
+        run: sleep 5
+
+      - name: Run Tests
+        run: |
+          anchor test
+          if [ $? -ne 0 ]; then
+            echo "Tests failed. Displaying validator logs:"
+            cat test-ledger/validator.log
+            exit 1
+          fi
 
       - name: Run Clippy
         run: cargo clippy -- -D warnings
 
       - name: Check Formatting
         run: cargo fmt -- --check
+
+      - name: Upload Test Logs
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-logs
+          path: |
+            twizzin-be-2/test-ledger/validator.log
+            twizzin-be-2/target/deploy/*.log
