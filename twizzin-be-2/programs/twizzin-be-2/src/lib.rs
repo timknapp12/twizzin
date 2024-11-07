@@ -32,4 +32,28 @@ pub mod twizzin_be_2 {
     ) -> Result<()> {
         ctx.accounts.update_config(new_treasury, new_treasury_fee)
     }
+
+    pub fn init_game(
+        ctx: Context<InitGame>,
+        name: String,
+        game_code: String,
+        entry_fee: u64,
+        commission: u8,
+        start_time: i64,
+        end_time: i64,
+        max_winners: u8,
+        answer_hash: [u8; 32],
+    ) -> Result<()> {
+        ctx.accounts.init_game(
+            name,
+            game_code,
+            entry_fee,
+            commission,
+            start_time,
+            end_time,
+            max_winners,
+            answer_hash,
+            &ctx.bumps,
+        )
+    }
 }
