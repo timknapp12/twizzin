@@ -3,6 +3,7 @@ import { Program } from '@coral-xyz/anchor';
 import { TwizzinBe2 } from '../target/types/twizzin_be_2';
 import { initializeProgramConfig } from './initConfig';
 import { updateProgramConfig } from './updateConfig';
+import { initializeGame } from './initGame';
 import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 
 let configPubkey: PublicKey;
@@ -61,5 +62,8 @@ describe('twizzin-be-2', () => {
       configPubkey,
       treasuryPubkey
     );
+  });
+  it('Initializes a game', async () => {
+    await initializeGame(program, provider, confirm);
   });
 });
