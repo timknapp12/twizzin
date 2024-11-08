@@ -56,4 +56,25 @@ pub mod twizzin_be_2 {
             &ctx.bumps,
         )
     }
+
+    pub fn update_game(
+        ctx: Context<UpdateGame>,
+        new_name: Option<String>,
+        new_entry_fee: Option<u64>,
+        new_commission: Option<u8>,
+        new_start_time: Option<i64>,
+        new_end_time: Option<i64>,
+        new_max_winners: Option<u8>,
+        new_answer_hash: Option<[u8; 32]>,
+    ) -> Result<()> {
+        ctx.accounts.update_game(
+            new_name,
+            new_entry_fee,
+            new_commission,
+            new_start_time,
+            new_end_time,
+            new_max_winners,
+            new_answer_hash,
+        )
+    }
 }

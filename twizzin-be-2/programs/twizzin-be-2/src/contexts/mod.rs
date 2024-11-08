@@ -6,3 +6,6 @@ pub use update_config::*;
 
 pub mod init_game;
 pub use init_game::*;
+
+pub mod update_game;
+pub use update_game::*;
