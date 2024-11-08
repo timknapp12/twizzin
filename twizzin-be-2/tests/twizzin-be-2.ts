@@ -4,6 +4,7 @@ import { TwizzinBe2 } from '../target/types/twizzin_be_2';
 import { initializeProgramConfig } from './initConfig';
 import { updateProgramConfig } from './updateConfig';
 import { initializeGame } from './initGame';
+import { updateGame } from './updateGame';
 import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 
 let configPubkey: PublicKey;
@@ -65,5 +66,8 @@ describe('twizzin-be-2', () => {
   });
   it('Initializes a game', async () => {
     await initializeGame(program, provider, confirm);
+  });
+  it('Updates a game', async () => {
+    await updateGame(program, provider, confirm);
   });
 });
