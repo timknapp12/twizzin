@@ -43,6 +43,7 @@ pub mod twizzin_be_2 {
         end_time: i64,
         max_winners: u8,
         answer_hash: [u8; 32],
+        donation_amount: u64,
     ) -> Result<()> {
         ctx.accounts.init_game(
             name,
@@ -53,6 +54,7 @@ pub mod twizzin_be_2 {
             end_time,
             max_winners,
             answer_hash,
+            donation_amount,
             &ctx.bumps,
         )
     }

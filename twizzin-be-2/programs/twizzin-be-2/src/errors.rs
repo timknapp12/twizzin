@@ -24,4 +24,6 @@ pub enum ErrorCode {
     TokenMintRequired,
     #[msg("Vault is required")]
     VaultRequired,
+    #[msg("Admin token account not provided")]
+    AdminTokenAccountNotProvided,
 }

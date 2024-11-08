@@ -3,7 +3,15 @@ import { Program } from '@coral-xyz/anchor';
 import { TwizzinBe2 } from '../target/types/twizzin_be_2';
 import { expect } from 'chai';
 import { SystemProgram, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { TOKEN_PROGRAM_ID, NATIVE_MINT, createMint } from '@solana/spl-token';
+import {
+  TOKEN_PROGRAM_ID,
+  NATIVE_MINT,
+  createMint,
+  getOrCreateAssociatedTokenAccount,
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  mintTo,
+  getAccount,
+} from '@solana/spl-token';
 
 export async function initializeGame(
   program: Program<TwizzinBe2>,
@@ -15,13 +23,14 @@ export async function initializeGame(
   // Test parameters
   const validName = 'Test Game';
   const validGameCode = 'GAME1';
-  const validEntryFee = new anchor.BN(0.1 * LAMPORTS_PER_SOL); // 0.1 SOL
-  const validCommission = 5; // 5%
+  const validEntryFee = new anchor.BN(0.1 * LAMPORTS_PER_SOL);
+  const validCommission = 5;
   const now = Math.floor(Date.now() / 1000);
-  const validStartTime = new anchor.BN(now + 3600); // 1 hour from now
-  const validEndTime = new anchor.BN(now + 7200); // 2 hours from now
+  const validStartTime = new anchor.BN(now + 3600);
+  const validEndTime = new anchor.BN(now + 7200);
   const validMaxWinners = 5;
-  const validAnswerHash = Array(32).fill(1); // Example hash
+  const validAnswerHash = Array(32).fill(1);
+  const validDonationAmount = new anchor.BN(0.5 * LAMPORTS_PER_SOL);
 
   // Helper function for program method calls
   const executeInitGame = async (params: {
@@ -34,15 +43,15 @@ export async function initializeGame(
     maxWinners: number;
     answerHash: number[];
     tokenMint: PublicKey;
+    donationAmount?: anchor.BN;
     admin?: anchor.web3.Keypair;
+    adminTokenAccount?: PublicKey;
   }) => {
-    // Get the public key whether it's from a keypair or the wallet
     const adminPubkey = params.admin
       ? params.admin.publicKey
       : provider.wallet.publicKey;
     const adminSigner = params.admin ? [params.admin] : [];
 
-    // Derive PDAs
     const [gamePda] = PublicKey.findProgramAddressSync(
       [
         Buffer.from('game'),
@@ -61,6 +70,25 @@ export async function initializeGame(
       program.programId
     );
 
+    // For non-donation cases or native SOL, create a dummy token account that won't be used
+    const dummyTokenAccount = await getOrCreateAssociatedTokenAccount(
+      provider.connection,
+      (provider.wallet as anchor.Wallet).payer,
+      params.tokenMint,
+      provider.wallet.publicKey
+    );
+
+    const accounts = {
+      admin: adminPubkey,
+      game: gamePda,
+      tokenMint: params.tokenMint,
+      vault: vaultPda,
+      adminTokenAccount: params.adminTokenAccount || dummyTokenAccount.address,
+      tokenProgram: TOKEN_PROGRAM_ID,
+      associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+      systemProgram: SystemProgram.programId,
+    };
+
     return program.methods
       .initGame(
         params.name,
@@ -70,16 +98,10 @@ export async function initializeGame(
         params.startTime,
         params.endTime,
         params.maxWinners,
-        params.answerHash
+        params.answerHash,
+        params.donationAmount || new anchor.BN(0)
       )
-      .accounts({
-        admin: adminPubkey,
-        game: gamePda,
-        tokenMint: params.tokenMint,
-        vault: vaultPda,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        systemProgram: SystemProgram.programId,
-      })
+      .accounts(accounts)
       .signers(adminSigner)
       .rpc();
   };
@@ -204,6 +226,13 @@ export async function initializeGame(
       9
     );
 
+    const adminTokenAccount = await getOrCreateAssociatedTokenAccount(
+      provider.connection,
+      (provider.wallet as anchor.Wallet).payer,
+      mint,
+      provider.wallet.publicKey
+    );
+
     const newGameCode = 'GAME2';
     const tx = await executeInitGame({
       name: validName,
@@ -215,6 +244,7 @@ export async function initializeGame(
       maxWinners: validMaxWinners,
       answerHash: validAnswerHash,
       tokenMint: mint,
+      adminTokenAccount: adminTokenAccount.address,
     });
     await confirm(tx);
 
@@ -269,6 +299,139 @@ export async function initializeGame(
     throw new Error('Should have failed with double initialization');
   } catch (error) {
     expectError(error, ['already in use', 'Error processing Instruction']);
+  }
+
+  // Test 7: Native SOL game creation with donation
+  console.log('Testing native SOL game creation with donation...');
+  try {
+    const newGameCode = 'GAME3';
+
+    // Get minimum rent for token account
+    const rentExemption =
+      await provider.connection.getMinimumBalanceForRentExemption(165); // 165 is the size of a token account
+
+    const tx = await executeInitGame({
+      name: validName,
+      gameCode: newGameCode,
+      entryFee: validEntryFee,
+      commission: validCommission,
+      startTime: validStartTime,
+      endTime: validEndTime,
+      maxWinners: validMaxWinners,
+      answerHash: validAnswerHash,
+      tokenMint: NATIVE_MINT,
+      donationAmount: validDonationAmount,
+    });
+    await confirm(tx);
+
+    const [gamePda] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from('game'),
+        provider.wallet.publicKey.toBuffer(),
+        Buffer.from(newGameCode),
+      ],
+      program.programId
+    );
+
+    const [vaultPda] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from('vault'),
+        provider.wallet.publicKey.toBuffer(),
+        Buffer.from(newGameCode),
+      ],
+      program.programId
+    );
+
+    const gameState = await program.account.game.fetch(gamePda);
+    expect(gameState.donationAmount.eq(validDonationAmount)).to.be.true;
+
+    // Verify vault balance, including rent exemption
+    const vaultBalance = await provider.connection.getBalance(vaultPda);
+    expect(vaultBalance).to.equal(
+      validDonationAmount.toNumber() + rentExemption
+    );
+
+    console.log('Native SOL game creation with donation test passed');
+  } catch (error) {
+    console.error('Native SOL game creation with donation failed:', error);
+    throw error;
+  }
+
+  // Test 9: SPL token game creation with donation
+  console.log('Testing SPL token game creation with donation...');
+  try {
+    // Create a new SPL token mint
+    const mint = await createMint(
+      provider.connection,
+      (provider.wallet as anchor.Wallet).payer,
+      provider.wallet.publicKey,
+      provider.wallet.publicKey, // Setting mint authority
+      9
+    );
+
+    // Create admin's token account
+    const adminTokenAccount = await getOrCreateAssociatedTokenAccount(
+      provider.connection,
+      (provider.wallet as anchor.Wallet).payer,
+      mint,
+      provider.wallet.publicKey
+    );
+
+    // Mint tokens to admin's account
+    await mintTo(
+      provider.connection,
+      (provider.wallet as anchor.Wallet).payer,
+      mint,
+      adminTokenAccount.address,
+      provider.wallet.publicKey,
+      validDonationAmount.toNumber()
+    );
+
+    const newGameCode = 'GAME4';
+    const tx = await executeInitGame({
+      name: validName,
+      gameCode: newGameCode,
+      entryFee: validEntryFee,
+      commission: validCommission,
+      startTime: validStartTime,
+      endTime: validEndTime,
+      maxWinners: validMaxWinners,
+      answerHash: validAnswerHash,
+      tokenMint: mint,
+      donationAmount: validDonationAmount,
+      adminTokenAccount: adminTokenAccount.address,
+    });
+    await confirm(tx);
+
+    const [gamePda] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from('game'),
+        provider.wallet.publicKey.toBuffer(),
+        Buffer.from(newGameCode),
+      ],
+      program.programId
+    );
+
+    const [vaultPda] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from('vault'),
+        provider.wallet.publicKey.toBuffer(),
+        Buffer.from(newGameCode),
+      ],
+      program.programId
+    );
+
+    const gameState = await program.account.game.fetch(gamePda);
+    expect(gameState.donationAmount.eq(validDonationAmount)).to.be.true;
+
+    // Get the vault's token account
+    const vaultToken = await getAccount(provider.connection, vaultPda);
+    expect(Number(vaultToken.amount)).to.equal(validDonationAmount.toNumber());
+
+    console.log('SPL token game creation with donation test passed');
+  } catch (error) {
+    console.error('SPL token game creation with donation failed:', error);
+    throw error;
   }
 
   console.log('All game initialization tests completed successfully');
