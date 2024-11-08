@@ -134,8 +134,8 @@ export async function initializeGame(
     expectError(error, ['InvalidTimeRange']);
   }
 
-  // Test 3: Invalid max winners
-  console.log('Testing invalid max winners...');
+  // Test 3: Max winners too low
+  console.log('Testing max winners too low...');
   try {
     await executeInitGame({
       name: validName,
@@ -144,13 +144,13 @@ export async function initializeGame(
       commission: validCommission,
       startTime: validStartTime,
       endTime: validEndTime,
-      maxWinners: 11,
+      maxWinners: 0,
       answerHash: validAnswerHash,
       tokenMint: NATIVE_MINT,
     });
-    throw new Error('Should have failed with invalid max winners');
+    throw new Error('Should have failed with max winners too low');
   } catch (error) {
-    expectError(error, ['MaxWinnersTooHigh']);
+    expectError(error, ['MaxWinnersTooLow']);
   }
 
   // Test 4: Successful native SOL game creation

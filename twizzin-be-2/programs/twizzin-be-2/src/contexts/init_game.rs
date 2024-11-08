@@ -65,10 +65,7 @@ impl<'info> InitGame<'info> {
             game_code.len() > 0 && game_code.len() <= MAX_GAME_CODE_LENGTH,
             ErrorCode::GameCodeTooLong
         );
-        require!(
-            max_winners > 0 && max_winners < 11,
-            ErrorCode::MaxWinnersTooHigh
-        );
+        require!(max_winners > 0, ErrorCode::MaxWinnersTooLow);
         require!(start_time < end_time, ErrorCode::InvalidTimeRange);
 
         // Emit the event before initializing the game
