@@ -2,14 +2,12 @@ use anchor_lang::prelude::*;
 
 declare_id!("35V3AqBVBuUVczUxULiZ7eoXbCwVZcNZAN4otDeD4K2F");
 
-pub mod errors;
-pub use errors::ErrorCode;
-
 pub mod contexts;
 pub use contexts::*;
 
+pub mod constants;
+pub mod errors;
 pub mod state;
-pub use state::*;
 
 #[program]
 pub mod twizzin_be_2 {
@@ -68,6 +66,7 @@ pub mod twizzin_be_2 {
         new_end_time: Option<i64>,
         new_max_winners: Option<u8>,
         new_answer_hash: Option<[u8; 32]>,
+        new_donation_amount: Option<u64>,
     ) -> Result<()> {
         ctx.accounts.update_game(
             new_name,
@@ -77,6 +76,7 @@ pub mod twizzin_be_2 {
             new_end_time,
             new_max_winners,
             new_answer_hash,
+            new_donation_amount,
         )
     }
 }

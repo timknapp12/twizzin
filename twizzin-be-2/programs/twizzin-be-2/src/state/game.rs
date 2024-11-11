@@ -1,6 +1,5 @@
 use anchor_lang::prelude::*;
 
-// Constants for space calculation
 pub const MAX_NAME_LENGTH: usize = 32;
 pub const MAX_GAME_CODE_LENGTH: usize = 16;
 

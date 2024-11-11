@@ -1,3 +1,4 @@
+use crate::constants::SOL_ADDRESS;
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
@@ -83,9 +84,7 @@ impl<'info> InitGame<'info> {
 
         // Handle initial donation if provided
         if donation_amount > 0 {
-            if self.token_mint.key()
-                == Pubkey::from_str("So11111111111111111111111111111111111111112").unwrap()
-            {
+            if self.token_mint.key() == Pubkey::from_str(SOL_ADDRESS).unwrap() {
                 // Transfer SOL
                 let cpi_context = CpiContext::new(
                     self.system_program.to_account_info(),
