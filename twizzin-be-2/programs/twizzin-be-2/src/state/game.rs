@@ -19,6 +19,7 @@ pub struct Game {
     pub total_players: u32,
     pub answer_hash: [u8; 32], // Single merkle root of all answers
     pub donation_amount: u64,
+    pub is_native: bool,
 }
 
 impl Space for Game {
@@ -36,7 +37,8 @@ impl Space for Game {
         1 +                        // max winners
         4 +                        // total players
         32 +                       // answer hash (merkle root)
-        8; // donation_amount
+        8 +                        // donation_amount
+        1; // is_native
 }
 
 // For processing inputs when creating the game

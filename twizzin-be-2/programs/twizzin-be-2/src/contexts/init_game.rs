@@ -35,20 +35,27 @@ pub struct InitGame<'info> {
 
     pub token_mint: Account<'info, Mint>,
 
+    /// CHECK: This is either a TokenAccount for SPL tokens or a SystemAccount for SOL
     #[account(
         init,
         payer = admin,
         seeds = [b"vault", admin.key().as_ref(), game_code.as_bytes()],
         bump,
-        token::mint = token_mint,
-        token::authority = game,
+        space = if token_mint.key() == Pubkey::from_str(SOL_ADDRESS).unwrap() { 0 } else { 165 },
+        owner = if token_mint.key() == Pubkey::from_str(SOL_ADDRESS).unwrap() { 
+            system_program.key() 
+        } else { 
+            token_program.key() 
+        }
     )]
-    pub vault: Account<'info, TokenAccount>,
+    pub vault: UncheckedAccount<'info>,
 
     #[account(
         mut,
-        constraint = admin_token_account.owner == admin.key(),
-        constraint = admin_token_account.mint == token_mint.key()
+        constraint = (token_mint.key() == Pubkey::from_str(SOL_ADDRESS).unwrap()) || 
+            (admin_token_account.to_account_info().key() != Pubkey::default() && 
+             admin_token_account.owner == admin.key() &&
+             admin_token_account.mint == token_mint.key())
     )]
     pub admin_token_account: Option<Account<'info, TokenAccount>>,
 
@@ -82,9 +89,38 @@ impl<'info> InitGame<'info> {
         require!(max_winners > 0, ErrorCode::MaxWinnersTooLow);
         require!(start_time < end_time, ErrorCode::InvalidTimeRange);
 
+        let is_native = self.token_mint.key() == Pubkey::from_str(SOL_ADDRESS).unwrap();
+
+        // Initialize vault as token account if using SPL tokens
+        if !is_native {
+            // Store the admin key to avoid temporary value being dropped
+            let admin_key = self.admin.key();
+            
+            // Create signer seeds for the vault PDA
+            let vault_seeds = &[
+                b"vault" as &[u8],
+                admin_key.as_ref(),
+                game_code.as_bytes(),
+                &[bumps.vault],
+            ];
+            let signer_seeds = &[&vault_seeds[..]];
+
+            // Initialize token account with CPI
+            let cpi_context = CpiContext::new_with_signer(
+                self.token_program.to_account_info(),
+                anchor_spl::token::InitializeAccount3 {
+                    account: self.vault.to_account_info(),
+                    mint: self.token_mint.to_account_info(),
+                    authority: self.game.to_account_info(),
+                },
+                signer_seeds,
+            );
+            anchor_spl::token::initialize_account3(cpi_context)?;
+        }
+
         // Handle initial donation if provided
         if donation_amount > 0 {
-            if self.token_mint.key() == Pubkey::from_str(SOL_ADDRESS).unwrap() {
+            if is_native {
                 // Transfer SOL
                 let cpi_context = CpiContext::new(
                     self.system_program.to_account_info(),
@@ -140,6 +176,7 @@ impl<'info> InitGame<'info> {
             total_players: 0,
             answer_hash,
             donation_amount,
+            is_native,
         });
 
         Ok(())

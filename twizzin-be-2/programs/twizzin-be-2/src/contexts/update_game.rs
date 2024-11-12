@@ -1,4 +1,3 @@
-use crate::constants::SOL_ADDRESS;
 use crate::errors::ErrorCode;
 use crate::state::{Game, GameUpdated, MAX_NAME_LENGTH};
 use anchor_lang::prelude::*;
@@ -6,9 +5,7 @@ use anchor_spl::{
     associated_token::AssociatedToken,
     token::{Mint, Token, TokenAccount},
 };
-use std::str::FromStr;
 
-// game_code and token_mint are immutable and therefore not included in the context
 #[derive(Accounts)]
 pub struct UpdateGame<'info> {
     #[account(
@@ -24,19 +21,22 @@ pub struct UpdateGame<'info> {
     )]
     pub game: Account<'info, Game>,
 
+    /// CHECK: This is either a TokenAccount for SPL tokens or a SystemAccount for SOL
     #[account(
         mut,
         seeds = [b"vault", admin.key().as_ref(), game.game_code.as_bytes()],
         bump = game.vault_bump,
     )]
-    pub vault: Account<'info, TokenAccount>,
+    pub vault: UncheckedAccount<'info>,
 
     pub token_mint: Account<'info, Mint>,
 
     #[account(
         mut,
-        constraint = admin_token_account.owner == admin.key(),
-        constraint = admin_token_account.mint == token_mint.key()
+        constraint = game.is_native || 
+            (admin_token_account.to_account_info().key() != Pubkey::default() && 
+             admin_token_account.owner == admin.key() &&
+             admin_token_account.mint == token_mint.key())
     )]
     pub admin_token_account: Option<Account<'info, TokenAccount>>,
 
@@ -104,14 +104,11 @@ impl<'info> UpdateGame<'info> {
         // Handle donation amount changes if provided
         if let Some(new_amount) = new_donation_amount {
             if new_amount != game.donation_amount {
-                // Calculate the difference
-                let is_native = self.token_mint.key() == Pubkey::from_str(SOL_ADDRESS).unwrap();
-
                 if new_amount > game.donation_amount {
                     // Admin needs to deposit more
                     let additional_amount = new_amount - game.donation_amount;
 
-                    if is_native {
+                    if game.is_native {
                         // Transfer additional SOL
                         let cpi_context = CpiContext::new(
                             self.system_program.to_account_info(),
@@ -142,7 +139,7 @@ impl<'info> UpdateGame<'info> {
                     // Vault needs to return tokens to admin
                     let return_amount = game.donation_amount - new_amount;
 
-                    if is_native {
+                    if game.is_native {
                         // Transfer SOL back to admin
                         let admin_key = self.admin.key();
                         let seeds = &[
@@ -152,6 +149,7 @@ impl<'info> UpdateGame<'info> {
                             &[game.vault_bump],
                         ];
                         let signer_seeds = &[&seeds[..]];
+                        
                         let transfer_ctx = CpiContext::new_with_signer(
                             self.system_program.to_account_info(),
                             anchor_lang::system_program::Transfer {
@@ -176,6 +174,7 @@ impl<'info> UpdateGame<'info> {
                             &[game.vault_bump],
                         ];
                         let signer_seeds = &[&seeds[..]];
+                        
                         let transfer_ctx = CpiContext::new_with_signer(
                             self.token_program.to_account_info(),
                             anchor_spl::token::Transfer {
