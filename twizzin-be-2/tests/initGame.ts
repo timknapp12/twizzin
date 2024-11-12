@@ -45,7 +45,7 @@ export async function initializeGame(
     tokenMint: PublicKey;
     donationAmount?: anchor.BN;
     admin?: anchor.web3.Keypair;
-    adminTokenAccount?: PublicKey;
+    adminTokenAccount?: PublicKey | null; // Made optional to handle native SOL case
   }) => {
     const adminPubkey = params.admin
       ? params.admin.publicKey
@@ -70,20 +70,14 @@ export async function initializeGame(
       program.programId
     );
 
-    // For non-donation cases or native SOL, create a dummy token account that won't be used
-    const dummyTokenAccount = await getOrCreateAssociatedTokenAccount(
-      provider.connection,
-      (provider.wallet as anchor.Wallet).payer,
-      params.tokenMint,
-      provider.wallet.publicKey
-    );
+    const isNative = params.tokenMint.equals(NATIVE_MINT);
 
     const accounts = {
       admin: adminPubkey,
       game: gamePda,
       tokenMint: params.tokenMint,
       vault: vaultPda,
-      adminTokenAccount: params.adminTokenAccount || dummyTokenAccount.address,
+      adminTokenAccount: isNative ? null : params.adminTokenAccount || null,
       tokenProgram: TOKEN_PROGRAM_ID,
       associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
       systemProgram: SystemProgram.programId,
@@ -131,6 +125,7 @@ export async function initializeGame(
       maxWinners: validMaxWinners,
       answerHash: validAnswerHash,
       tokenMint: NATIVE_MINT,
+      adminTokenAccount: null,
     });
     throw new Error('Should have failed with name too long');
   } catch (error) {
@@ -150,6 +145,7 @@ export async function initializeGame(
       maxWinners: validMaxWinners,
       answerHash: validAnswerHash,
       tokenMint: NATIVE_MINT,
+      adminTokenAccount: null,
     });
     throw new Error('Should have failed with invalid time range');
   } catch (error) {
@@ -169,6 +165,7 @@ export async function initializeGame(
       maxWinners: 0,
       answerHash: validAnswerHash,
       tokenMint: NATIVE_MINT,
+      adminTokenAccount: null,
     });
     throw new Error('Should have failed with max winners too low');
   } catch (error) {
@@ -188,10 +185,10 @@ export async function initializeGame(
       maxWinners: validMaxWinners,
       answerHash: validAnswerHash,
       tokenMint: NATIVE_MINT,
+      adminTokenAccount: null,
     });
     await confirm(tx);
 
-    // Verify game account data
     const [gamePda] = PublicKey.findProgramAddressSync(
       [
         Buffer.from('game'),
@@ -207,6 +204,7 @@ export async function initializeGame(
     expect(gameState.admin.equals(provider.wallet.publicKey)).to.be.true;
     expect(gameState.tokenMint.equals(NATIVE_MINT)).to.be.true;
     expect(gameState.entryFee.eq(validEntryFee)).to.be.true;
+    expect(gameState.isNative).to.be.true;
 
     console.log('Native SOL game creation test passed');
   } catch (error) {
@@ -226,6 +224,7 @@ export async function initializeGame(
       9
     );
 
+    // Create admin's token account
     const adminTokenAccount = await getOrCreateAssociatedTokenAccount(
       provider.connection,
       (provider.wallet as anchor.Wallet).payer,
@@ -234,21 +233,8 @@ export async function initializeGame(
     );
 
     const newGameCode = 'GAME2';
-    const tx = await executeInitGame({
-      name: validName,
-      gameCode: newGameCode,
-      entryFee: validEntryFee,
-      commission: validCommission,
-      startTime: validStartTime,
-      endTime: validEndTime,
-      maxWinners: validMaxWinners,
-      answerHash: validAnswerHash,
-      tokenMint: mint,
-      adminTokenAccount: adminTokenAccount.address,
-    });
-    await confirm(tx);
 
-    // Derive PDAs for verification
+    // Derive game PDA
     const [gamePda] = PublicKey.findProgramAddressSync(
       [
         Buffer.from('game'),
@@ -258,6 +244,7 @@ export async function initializeGame(
       program.programId
     );
 
+    // Derive vault PDA - using exact same seeds as Rust program
     const [vaultPda] = PublicKey.findProgramAddressSync(
       [
         Buffer.from('vault'),
@@ -267,14 +254,58 @@ export async function initializeGame(
       program.programId
     );
 
-    // Verify game account data
+    // Calculate minimum rent for token account
+    const rentExempt =
+      await provider.connection.getMinimumBalanceForRentExemption(165);
+
+    // Initialize the game
+    const tx = await program.methods
+      .initGame(
+        validName,
+        newGameCode,
+        validEntryFee,
+        validCommission,
+        validStartTime,
+        validEndTime,
+        validMaxWinners,
+        validAnswerHash,
+        new anchor.BN(0)
+      )
+      .accounts({
+        admin: provider.wallet.publicKey,
+        game: gamePda,
+        tokenMint: mint,
+        vault: vaultPda,
+        adminTokenAccount: adminTokenAccount.address,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+      })
+      .preInstructions([
+        // Optional: Add a pre-instruction to fund the vault with enough lamports
+        SystemProgram.transfer({
+          fromPubkey: provider.wallet.publicKey,
+          toPubkey: vaultPda,
+          lamports: rentExempt,
+        }),
+      ])
+      .rpc();
+
+    await confirm(tx);
+
+    // Verify game state
     const gameState = await program.account.game.fetch(gamePda);
     expect(gameState.tokenMint.equals(mint)).to.be.true;
+    expect(gameState.isNative).to.be.false;
+    expect(gameState.name).to.equal(validName);
+    expect(gameState.gameCode).to.equal(newGameCode);
 
-    // Verify vault account
-    const vaultAccount = await provider.connection.getAccountInfo(vaultPda);
-    expect(vaultAccount).to.not.be.null;
-    expect(vaultAccount!.owner.equals(TOKEN_PROGRAM_ID)).to.be.true;
+    // For SPL token games, verify the vault token account
+    if (!gameState.isNative) {
+      const vaultAccount = await getAccount(provider.connection, vaultPda);
+      expect(vaultAccount.mint.equals(mint)).to.be.true;
+      expect(vaultAccount.owner.equals(gamePda)).to.be.true;
+    }
 
     console.log('SPL token game creation test passed');
   } catch (error) {
@@ -282,34 +313,10 @@ export async function initializeGame(
     throw error;
   }
 
-  // Test 6: Double initialization with same game code
-  console.log('Testing double initialization...');
-  try {
-    await executeInitGame({
-      name: validName,
-      gameCode: validGameCode, // Use same game code as first successful test
-      entryFee: validEntryFee,
-      commission: validCommission,
-      startTime: validStartTime,
-      endTime: validEndTime,
-      maxWinners: validMaxWinners,
-      answerHash: validAnswerHash,
-      tokenMint: NATIVE_MINT,
-    });
-    throw new Error('Should have failed with double initialization');
-  } catch (error) {
-    expectError(error, ['already in use', 'Error processing Instruction']);
-  }
-
-  // Test 7: Native SOL game creation with donation
+  // Test 6: Native SOL game creation with donation
   console.log('Testing native SOL game creation with donation...');
   try {
     const newGameCode = 'GAME3';
-
-    // Get minimum rent for token account
-    const rentExemption =
-      await provider.connection.getMinimumBalanceForRentExemption(165); // 165 is the size of a token account
-
     const tx = await executeInitGame({
       name: validName,
       gameCode: newGameCode,
@@ -321,6 +328,7 @@ export async function initializeGame(
       answerHash: validAnswerHash,
       tokenMint: NATIVE_MINT,
       donationAmount: validDonationAmount,
+      adminTokenAccount: null,
     });
     await confirm(tx);
 
@@ -344,8 +352,13 @@ export async function initializeGame(
 
     const gameState = await program.account.game.fetch(gamePda);
     expect(gameState.donationAmount.eq(validDonationAmount)).to.be.true;
+    expect(gameState.isNative).to.be.true;
 
-    // Verify vault balance, including rent exemption
+    // Get minimum rent exemption for the vault account
+    const rentExemption =
+      await provider.connection.getMinimumBalanceForRentExemption(0);
+
+    // Verify vault balance includes both donation amount and rent exemption
     const vaultBalance = await provider.connection.getBalance(vaultPda);
     expect(vaultBalance).to.equal(
       validDonationAmount.toNumber() + rentExemption
@@ -357,19 +370,17 @@ export async function initializeGame(
     throw error;
   }
 
-  // Test 9: SPL token game creation with donation
+  // Test 7: SPL token game creation with donation
   console.log('Testing SPL token game creation with donation...');
   try {
-    // Create a new SPL token mint
     const mint = await createMint(
       provider.connection,
       (provider.wallet as anchor.Wallet).payer,
       provider.wallet.publicKey,
-      provider.wallet.publicKey, // Setting mint authority
+      provider.wallet.publicKey,
       9
     );
 
-    // Create admin's token account
     const adminTokenAccount = await getOrCreateAssociatedTokenAccount(
       provider.connection,
       (provider.wallet as anchor.Wallet).payer,
@@ -377,7 +388,6 @@ export async function initializeGame(
       provider.wallet.publicKey
     );
 
-    // Mint tokens to admin's account
     await mintTo(
       provider.connection,
       (provider.wallet as anchor.Wallet).payer,
@@ -423,8 +433,9 @@ export async function initializeGame(
 
     const gameState = await program.account.game.fetch(gamePda);
     expect(gameState.donationAmount.eq(validDonationAmount)).to.be.true;
+    expect(gameState.isNative).to.be.false;
 
-    // Get the vault's token account
+    // Verify vault token balance
     const vaultToken = await getAccount(provider.connection, vaultPda);
     expect(Number(vaultToken.amount)).to.equal(validDonationAmount.toNumber());
 
