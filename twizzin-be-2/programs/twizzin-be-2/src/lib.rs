@@ -8,6 +8,9 @@ pub use contexts::*;
 pub mod constants;
 pub mod errors;
 pub mod state;
+pub mod utils;
+
+use crate::state::AnswerInput;
 
 #[program]
 pub mod twizzin_be_2 {
@@ -78,5 +81,17 @@ pub mod twizzin_be_2 {
             new_answer_hash,
             new_donation_amount,
         )
+    }
+
+    pub fn join_game(ctx: Context<JoinGame>) -> Result<()> {
+        ctx.accounts.join_game(&ctx.bumps)
+    }
+
+    pub fn submit_answers(
+        ctx: Context<SubmitAnswers>,
+        answers: Vec<AnswerInput>,
+        client_finish_time: i64,
+    ) -> Result<()> {
+        ctx.accounts.submit_answers(answers, client_finish_time)
     }
 }

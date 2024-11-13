@@ -9,3 +9,9 @@ pub use init_game::*;
 
 pub mod update_game;
 pub use update_game::*;
+
+pub mod join_game;
+pub use join_game::*;
+
+pub mod submit_answers;
+pub use submit_answers::*;
