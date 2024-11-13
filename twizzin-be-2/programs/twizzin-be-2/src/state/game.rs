@@ -41,22 +41,6 @@ impl Space for Game {
         1; // is_native
 }
 
-// For processing inputs when creating the game
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
-pub struct AnswerInput {
-    pub display_order: u8,
-    pub answer: String, // a, b, c, d
-    pub salt: String,   // question_id
-}
-
-// For verifying answers during gameplay
-#[derive(Debug, Clone, AnchorSerialize, AnchorDeserialize)]
-pub struct AnswerProof {
-    pub display_order: u8,
-    pub answer: String,
-    pub proof: Vec<[u8; 32]>, // Merkle proof for this answer
-}
-
 #[event]
 pub struct GameCreated {
     pub admin: Pubkey,
