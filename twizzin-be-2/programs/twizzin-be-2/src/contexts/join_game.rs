@@ -32,14 +32,21 @@ pub struct JoinGame<'info> {
     )]
     pub player_account: Account<'info, PlayerAccount>,
 
-    // Only required if entry_fee > 0
+    /// CHECK: The vault PDA that will own the token account
     #[account(
         mut,
         seeds = [b"vault", game.admin.as_ref(), game.game_code.as_bytes()],
         bump = game.vault_bump,
     )]
-    /// CHECK: This is either a TokenAccount for SPL tokens or a SystemAccount for SOL
     pub vault: UncheckedAccount<'info>,
+
+    /// The vault's associated token account
+    #[account(
+        mut,
+        associated_token::mint = game.token_mint,
+        associated_token::authority = vault
+    )]
+    pub vault_token_account: Option<Account<'info, TokenAccount>>,
 
     // Only needed for SPL token games with entry_fee > 0
     #[account(
@@ -47,7 +54,8 @@ pub struct JoinGame<'info> {
         constraint = 
             (game.entry_fee > 0 && !game.is_native && 
              player_token_account.to_account_info().key() != Pubkey::default() &&
-             player_token_account.owner == player.key())
+             player_token_account.owner == player.key() &&
+             player_token_account.mint == game.token_mint)
             @ ErrorCode::InvalidTokenAccount
     )]
     pub player_token_account: Option<Account<'info, TokenAccount>>,
@@ -81,11 +89,15 @@ impl<'info> JoinGame<'info> {
                     .as_ref()
                     .ok_or(ErrorCode::PlayerTokenAccountNotProvided)?;
 
+                let vault_token_account = self.vault_token_account
+                    .as_ref()
+                    .ok_or(ErrorCode::AdminTokenAccountNotProvided)?;
+
                 let transfer_ctx = CpiContext::new(
                     self.token_program.to_account_info(),
                     anchor_spl::token::Transfer {
                         from: player_token_account.to_account_info(),
-                        to: self.vault.to_account_info(),
+                        to: vault_token_account.to_account_info(),
                         authority: self.player.to_account_info(),
                     },
                 );

@@ -21,13 +21,21 @@ pub struct UpdateGame<'info> {
     )]
     pub game: Account<'info, Game>,
 
-    /// CHECK: This is either a TokenAccount for SPL tokens or a SystemAccount for SOL
+    /// CHECK: The vault PDA that will own the token account
     #[account(
         mut,
         seeds = [b"vault", admin.key().as_ref(), game.game_code.as_bytes()],
         bump = game.vault_bump,
     )]
     pub vault: UncheckedAccount<'info>,
+
+    /// The vault's associated token account
+    #[account(
+        mut,
+        associated_token::mint = token_mint,
+        associated_token::authority = vault
+    )]
+    pub vault_token_account: Option<Account<'info, TokenAccount>>,
 
     pub token_mint: Account<'info, Mint>,
 
@@ -119,9 +127,14 @@ impl<'info> UpdateGame<'info> {
                         );
                         anchor_lang::system_program::transfer(cpi_context, additional_amount)?;
                     } else {
-                        // Transfer additional SPL tokens
+                        // Transfer SPL tokens
                         let admin_token_account = self
                             .admin_token_account
+                            .as_ref()
+                            .ok_or(ErrorCode::AdminTokenAccountNotProvided)?;
+
+                        let vault_token_account = self
+                            .vault_token_account
                             .as_ref()
                             .ok_or(ErrorCode::AdminTokenAccountNotProvided)?;
 
@@ -129,7 +142,7 @@ impl<'info> UpdateGame<'info> {
                             self.token_program.to_account_info(),
                             anchor_spl::token::Transfer {
                                 from: admin_token_account.to_account_info(),
-                                to: self.vault.to_account_info(),
+                                to: vault_token_account.to_account_info(),
                                 authority: self.admin.to_account_info(),
                             },
                         );
@@ -166,23 +179,28 @@ impl<'info> UpdateGame<'info> {
                             .as_ref()
                             .ok_or(ErrorCode::AdminTokenAccountNotProvided)?;
 
+                        let vault_token_account = self
+                            .vault_token_account
+                            .as_ref()
+                            .ok_or(ErrorCode::AdminTokenAccountNotProvided)?;
+
                         let admin_key = self.admin.key();
-                        let seeds = &[
+                        let vault_seeds = &[
                             b"vault",
                             admin_key.as_ref(),
                             game.game_code.as_bytes(),
                             &[game.vault_bump],
                         ];
-                        let signer_seeds = &[&seeds[..]];
-                        
+                        let vault_signer = &[&vault_seeds[..]];
+
                         let transfer_ctx = CpiContext::new_with_signer(
                             self.token_program.to_account_info(),
                             anchor_spl::token::Transfer {
-                                from: self.vault.to_account_info(),
+                                from: vault_token_account.to_account_info(),
                                 to: admin_token_account.to_account_info(),
                                 authority: self.vault.to_account_info(),
                             },
-                            signer_seeds,
+                            vault_signer,
                         );
                         anchor_spl::token::transfer(transfer_ctx, return_amount)?;
                     }

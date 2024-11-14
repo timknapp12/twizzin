@@ -26,6 +26,8 @@ pub enum ErrorCode {
     VaultRequired,
     #[msg("Admin token account not provided")]
     AdminTokenAccountNotProvided,
+    #[msg("Invalid vault account provided")]
+    InvalidVaultAccount,
     #[msg("Invalid token account")]
     InvalidTokenAccount,
     #[msg("Game has ended")]
