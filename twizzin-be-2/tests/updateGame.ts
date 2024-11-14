@@ -2,7 +2,7 @@ import * as anchor from '@coral-xyz/anchor';
 import { Program } from '@coral-xyz/anchor';
 import { TwizzinBe2 } from '../target/types/twizzin_be_2';
 import { expect } from 'chai';
-import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { PublicKey, LAMPORTS_PER_SOL, SystemProgram } from '@solana/web3.js';
 import {
   TOKEN_PROGRAM_ID,
   NATIVE_MINT,
@@ -44,9 +44,9 @@ export async function updateGame(
       answerHash?: number[];
       donationAmount?: anchor.BN;
       admin?: anchor.web3.Keypair;
-      vault?: PublicKey;
       tokenMint?: PublicKey;
       adminTokenAccount?: PublicKey | null;
+      vaultTokenAccount?: PublicKey | null;
     }
   ) => {
     const gameState = await program.account.game.fetch(game);
@@ -55,6 +55,7 @@ export async function updateGame(
       : provider.wallet.publicKey;
     const adminSigner = params.admin ? [params.admin] : [];
 
+    // Always derive vault PDA from game state
     const [vaultPda] = PublicKey.findProgramAddressSync(
       [
         Buffer.from('vault'),
@@ -67,10 +68,25 @@ export async function updateGame(
     const tokenMint = params.tokenMint || gameState.tokenMint;
     const isNative = tokenMint.equals(NATIVE_MINT);
 
+    // Get or create vault token account for SPL tokens
+    let vaultTokenAccount = params.vaultTokenAccount;
+    if (!isNative && !vaultTokenAccount) {
+      const vaultAta = await getOrCreateAssociatedTokenAccount(
+        provider.connection,
+        (provider.wallet as anchor.Wallet).payer,
+        tokenMint,
+        vaultPda,
+        true
+      );
+      vaultTokenAccount = vaultAta.address;
+    }
+
+    // Build accounts object
     const accounts = {
       admin: adminPubkey,
       game,
-      vault: params.vault || vaultPda,
+      vault: vaultPda,
+      vaultTokenAccount: isNative ? null : vaultTokenAccount,
       tokenMint,
       adminTokenAccount: isNative
         ? null
@@ -85,7 +101,7 @@ export async function updateGame(
           ).address,
       tokenProgram: TOKEN_PROGRAM_ID,
       associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-      systemProgram: anchor.web3.SystemProgram.programId,
+      systemProgram: SystemProgram.programId,
     };
 
     return program.methods
@@ -136,6 +152,15 @@ export async function updateGame(
     program.programId
   );
 
+  // Get rent exemption for vault
+  const rentExemption =
+    await provider.connection.getMinimumBalanceForRentExemption(0);
+  const rentTransferIx = SystemProgram.transfer({
+    fromPubkey: provider.wallet.publicKey,
+    toPubkey: vaultPda,
+    lamports: rentExemption,
+  });
+
   // Initialize native SOL game
   const initTx = await program.methods
     .initGame(
@@ -154,16 +179,16 @@ export async function updateGame(
       game: gamePda,
       tokenMint: NATIVE_MINT,
       vault: vaultPda,
+      vaultTokenAccount: null,
       adminTokenAccount: null,
       tokenProgram: TOKEN_PROGRAM_ID,
       associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-      systemProgram: anchor.web3.SystemProgram.programId,
+      systemProgram: SystemProgram.programId,
     })
+    .preInstructions([rentTransferIx])
     .rpc();
 
   await confirm(initTx);
-
-  // Wait a bit to ensure the account is initialized
   await new Promise((resolve) => setTimeout(resolve, 1000));
 
   // Test 1: Name too long
@@ -173,6 +198,7 @@ export async function updateGame(
       name: 'x'.repeat(33),
       tokenMint: NATIVE_MINT,
       adminTokenAccount: null,
+      vaultTokenAccount: null,
     });
     throw new Error('Should have failed with name too long');
   } catch (error) {
@@ -187,6 +213,7 @@ export async function updateGame(
       endTime: newStartTime,
       tokenMint: NATIVE_MINT,
       adminTokenAccount: null,
+      vaultTokenAccount: null,
     });
     throw new Error('Should have failed with invalid time range');
   } catch (error) {
@@ -200,6 +227,7 @@ export async function updateGame(
       maxWinners: 0,
       tokenMint: NATIVE_MINT,
       adminTokenAccount: null,
+      vaultTokenAccount: null,
     });
     throw new Error('Should have failed with max winners too low');
   } catch (error) {
@@ -215,6 +243,7 @@ export async function updateGame(
       admin: unauthorizedUser,
       tokenMint: NATIVE_MINT,
       adminTokenAccount: null,
+      vaultTokenAccount: null,
     });
     throw new Error('Should have failed with unauthorized update');
   } catch (error) {
@@ -236,6 +265,7 @@ export async function updateGame(
       donationAmount: initialDonation,
       tokenMint: NATIVE_MINT,
       adminTokenAccount: null,
+      vaultTokenAccount: null,
     });
     await confirm(tx);
 
@@ -249,11 +279,8 @@ export async function updateGame(
     expect(gameState.answerHash).to.deep.equal(newAnswerHash);
     expect(gameState.donationAmount.eq(initialDonation)).to.be.true;
 
-    // Get minimum rent exemption for the vault account
     const rentExemption =
       await provider.connection.getMinimumBalanceForRentExemption(0);
-
-    // Verify vault balance includes both donation amount and rent exemption
     const vaultBalance = await provider.connection.getBalance(vaultPda);
     expect(vaultBalance).to.equal(initialDonation.toNumber() + rentExemption);
 
@@ -271,17 +298,15 @@ export async function updateGame(
       donationAmount: newDonation,
       tokenMint: NATIVE_MINT,
       adminTokenAccount: null,
+      vaultTokenAccount: null,
     });
     await confirm(tx);
 
     const gameState = await program.account.game.fetch(gamePda);
     expect(gameState.donationAmount.eq(newDonation)).to.be.true;
 
-    // Get minimum rent exemption for the vault account
     const rentExemption =
       await provider.connection.getMinimumBalanceForRentExemption(0);
-
-    // Verify vault balance includes both donation amount and rent exemption
     const vaultBalance = await provider.connection.getBalance(vaultPda);
     expect(vaultBalance).to.equal(newDonation.toNumber() + rentExemption);
 
@@ -291,11 +316,48 @@ export async function updateGame(
     throw error;
   }
 
-  // Test 7: SPL token game update
+  // Test 7: Decrease native SOL donation amount
+  console.log('Testing native SOL donation decrease...');
+  try {
+    const currentGameState = await program.account.game.fetch(gamePda);
+    const decreasedDonation = new anchor.BN(0.1 * LAMPORTS_PER_SOL);
+    const initialVaultBalance = await provider.connection.getBalance(vaultPda);
+
+    const tx = await executeUpdateGame(gamePda, {
+      donationAmount: decreasedDonation,
+      tokenMint: NATIVE_MINT,
+      adminTokenAccount: null,
+      vaultTokenAccount: null,
+    });
+    await confirm(tx);
+
+    const gameState = await program.account.game.fetch(gamePda);
+    expect(gameState.donationAmount.eq(decreasedDonation)).to.be.true;
+
+    const rentExemption =
+      await provider.connection.getMinimumBalanceForRentExemption(0);
+    const finalVaultBalance = await provider.connection.getBalance(vaultPda);
+    expect(finalVaultBalance).to.equal(
+      decreasedDonation.toNumber() + rentExemption
+    );
+    expect(initialVaultBalance - finalVaultBalance).to.equal(
+      currentGameState.donationAmount.sub(decreasedDonation).toNumber()
+    );
+
+    console.log('Native SOL donation decrease test passed');
+  } catch (error) {
+    console.error('Native SOL donation decrease failed:', error);
+    throw error;
+  }
+
+  let mint: PublicKey;
+  let adminTokenAccount: { address: PublicKey };
+
+  // Test 8: SPL token game update
   console.log('Testing SPL token game update...');
   try {
     // Create new SPL token mint and accounts
-    const mint = await createMint(
+    mint = await createMint(
       provider.connection,
       (provider.wallet as anchor.Wallet).payer,
       provider.wallet.publicKey,
@@ -303,14 +365,13 @@ export async function updateGame(
       9
     );
 
-    const adminTokenAccount = await getOrCreateAssociatedTokenAccount(
+    adminTokenAccount = await getOrCreateAssociatedTokenAccount(
       provider.connection,
       (provider.wallet as anchor.Wallet).payer,
       mint,
       provider.wallet.publicKey
     );
 
-    // Create an SPL token game
     const splGameCode = 'SPLGAME1';
     const [splGamePda] = PublicKey.findProgramAddressSync(
       [
@@ -328,6 +389,25 @@ export async function updateGame(
         Buffer.from(splGameCode),
       ],
       program.programId
+    );
+
+    // Create the vault's ATA
+    const vaultAta = await getOrCreateAssociatedTokenAccount(
+      provider.connection,
+      (provider.wallet as anchor.Wallet).payer,
+      mint,
+      splVaultPda,
+      true
+    );
+
+    // Mint tokens for testing
+    await mintTo(
+      provider.connection,
+      (provider.wallet as anchor.Wallet).payer,
+      mint,
+      adminTokenAccount.address,
+      provider.wallet.publicKey,
+      2000000
     );
 
     // Initialize SPL token game
@@ -348,22 +428,15 @@ export async function updateGame(
         game: splGamePda,
         tokenMint: mint,
         vault: splVaultPda,
+        vaultTokenAccount: vaultAta.address,
         adminTokenAccount: adminTokenAccount.address,
         tokenProgram: TOKEN_PROGRAM_ID,
         associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-        systemProgram: anchor.web3.SystemProgram.programId,
+        systemProgram: SystemProgram.programId,
       })
       .rpc();
 
-    // Mint tokens for testing
-    await mintTo(
-      provider.connection,
-      (provider.wallet as anchor.Wallet).payer,
-      mint,
-      adminTokenAccount.address,
-      provider.wallet.publicKey,
-      2000000
-    );
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     // Update SPL token game
     const splDonation = new anchor.BN(1000000);
@@ -372,22 +445,154 @@ export async function updateGame(
       donationAmount: splDonation,
       tokenMint: mint,
       adminTokenAccount: adminTokenAccount.address,
+      vaultTokenAccount: vaultAta.address,
     });
     await confirm(tx);
 
-    // Verify game state
     const gameState = await program.account.game.fetch(splGamePda);
     expect(gameState.name).to.equal('Updated SPL Game');
     expect(gameState.donationAmount.eq(splDonation)).to.be.true;
     expect(gameState.isNative).to.be.false;
 
-    // Verify vault token balance
-    const vaultAccount = await getAccount(provider.connection, splVaultPda);
+    const vaultAccount = await getAccount(
+      provider.connection,
+      vaultAta.address
+    );
     expect(Number(vaultAccount.amount)).to.equal(splDonation.toNumber());
 
     console.log('SPL token game update test passed');
   } catch (error) {
     console.error('SPL token game update failed:', error);
+    throw error;
+  }
+
+  // Test 9: Increase SPL token donation amount
+  console.log('Testing SPL token donation increase...');
+  try {
+    const [splGamePda] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from('game'),
+        provider.wallet.publicKey.toBuffer(),
+        Buffer.from('SPLGAME1'),
+      ],
+      program.programId
+    );
+
+    const [splVaultPda] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from('vault'),
+        provider.wallet.publicKey.toBuffer(),
+        Buffer.from('SPLGAME1'),
+      ],
+      program.programId
+    );
+
+    // Get the vault's ATA
+    const vaultAta = await getOrCreateAssociatedTokenAccount(
+      provider.connection,
+      (provider.wallet as anchor.Wallet).payer,
+      mint,
+      splVaultPda,
+      true
+    );
+
+    const increasedSplDonation = new anchor.BN(1500000);
+    const initialVaultBalance = Number(
+      (await getAccount(provider.connection, vaultAta.address)).amount
+    );
+
+    const tx = await executeUpdateGame(splGamePda, {
+      donationAmount: increasedSplDonation,
+      tokenMint: mint,
+      adminTokenAccount: adminTokenAccount.address,
+      vaultTokenAccount: vaultAta.address,
+    });
+    await confirm(tx);
+
+    // Wait a bit for the transaction to be confirmed
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    const gameState = await program.account.game.fetch(splGamePda);
+    expect(gameState.donationAmount.eq(increasedSplDonation)).to.be.true;
+
+    const vaultAccount = await getAccount(
+      provider.connection,
+      vaultAta.address
+    );
+    console.log('New vault balance:', Number(vaultAccount.amount));
+    expect(Number(vaultAccount.amount)).to.equal(
+      increasedSplDonation.toNumber()
+    );
+    expect(Number(vaultAccount.amount) - initialVaultBalance).to.equal(500000);
+
+    console.log('SPL token donation increase test passed');
+  } catch (error) {
+    console.error('SPL token donation increase failed:', error);
+    throw error;
+  }
+
+  // Test 10: Decrease SPL token donation amount
+  console.log('Testing SPL token donation decrease...');
+  try {
+    const [splGamePda] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from('game'),
+        provider.wallet.publicKey.toBuffer(),
+        Buffer.from('SPLGAME1'),
+      ],
+      program.programId
+    );
+
+    const [splVaultPda] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from('vault'),
+        provider.wallet.publicKey.toBuffer(),
+        Buffer.from('SPLGAME1'),
+      ],
+      program.programId
+    );
+
+    // Get the vault's ATA
+    const vaultAta = await getOrCreateAssociatedTokenAccount(
+      provider.connection,
+      (provider.wallet as anchor.Wallet).payer,
+      mint,
+      splVaultPda,
+      true
+    );
+
+    const decreasedSplDonation = new anchor.BN(750000);
+    const initialVaultBalance = Number(
+      (await getAccount(provider.connection, vaultAta.address)).amount
+    );
+
+    const tx = await executeUpdateGame(splGamePda, {
+      donationAmount: decreasedSplDonation,
+      tokenMint: mint,
+      adminTokenAccount: adminTokenAccount.address,
+      vaultTokenAccount: vaultAta.address,
+    });
+    await confirm(tx);
+
+    // Wait a bit for the transaction to be confirmed
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    const gameState = await program.account.game.fetch(splGamePda);
+    expect(gameState.donationAmount.eq(decreasedSplDonation)).to.be.true;
+
+    const vaultAccount = await getAccount(
+      provider.connection,
+      vaultAta.address
+    );
+    console.log('Final vault balance:', Number(vaultAccount.amount));
+    expect(Number(vaultAccount.amount)).to.equal(
+      decreasedSplDonation.toNumber()
+    );
+    expect(initialVaultBalance - Number(vaultAccount.amount)).to.equal(750000);
+
+    console.log('SPL token donation decrease test passed');
+  } catch (error) {
+    console.error('SPL token donation decrease failed:', error);
     throw error;
   }
 

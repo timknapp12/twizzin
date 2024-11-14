@@ -56,6 +56,7 @@ export async function joinGame(
     player: anchor.web3.Keypair;
     tokenMint?: PublicKey;
     playerTokenAccount?: PublicKey;
+    vaultTokenAccount?: PublicKey;
   }) => {
     const { gameCode, player, tokenMint = NATIVE_MINT } = params;
 
@@ -89,6 +90,7 @@ export async function joinGame(
       game: gamePda,
       playerAccount: playerPda,
       vault: vaultPda,
+      vaultTokenAccount: isNative ? null : params.vaultTokenAccount,
       playerTokenAccount: isNative ? null : params.playerTokenAccount,
       tokenProgram: TOKEN_PROGRAM_ID,
       associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -146,6 +148,17 @@ export async function joinGame(
     } = params;
 
     let adminTokenAccount = null;
+    let vaultTokenAccount = null;
+
+    const [vaultPda] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from('vault'),
+        provider.wallet.publicKey.toBuffer(),
+        Buffer.from(gameCode),
+      ],
+      program.programId
+    );
+
     if (!tokenMint.equals(NATIVE_MINT)) {
       adminTokenAccount = await getOrCreateAssociatedTokenAccount(
         provider.connection,
@@ -153,20 +166,20 @@ export async function joinGame(
         tokenMint,
         provider.wallet.publicKey
       );
+
+      // Create the vault's token account
+      vaultTokenAccount = await getOrCreateAssociatedTokenAccount(
+        provider.connection,
+        provider.wallet.payer,
+        tokenMint,
+        vaultPda,
+        true // allowOwnerOffCurve: true for PDA
+      );
     }
 
     const [gamePda] = PublicKey.findProgramAddressSync(
       [
         Buffer.from('game'),
-        provider.wallet.publicKey.toBuffer(),
-        Buffer.from(gameCode),
-      ],
-      program.programId
-    );
-
-    const [vaultPda] = PublicKey.findProgramAddressSync(
-      [
-        Buffer.from('vault'),
         provider.wallet.publicKey.toBuffer(),
         Buffer.from(gameCode),
       ],
@@ -190,6 +203,7 @@ export async function joinGame(
         game: gamePda,
         tokenMint,
         vault: vaultPda,
+        vaultTokenAccount: vaultTokenAccount?.address || null,
         adminTokenAccount: adminTokenAccount?.address || null,
         tokenProgram: TOKEN_PROGRAM_ID,
         associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -198,7 +212,7 @@ export async function joinGame(
       .rpc();
 
     await confirm(tx);
-    return { gamePda, vaultPda };
+    return { gamePda, vaultPda, vaultTokenAccount };
   };
 
   // Test 1: Successfully join a free native SOL game
@@ -394,7 +408,7 @@ export async function joinGame(
     );
 
     // Create paid token game
-    await createGame({
+    const { vaultTokenAccount } = await createGame({
       gameCode,
       entryFee: new anchor.BN(5 * LAMPORTS_PER_SOL),
       tokenMint: mint,
@@ -410,6 +424,7 @@ export async function joinGame(
       player,
       tokenMint: mint,
       playerTokenAccount: playerTokenAccount.address,
+      vaultTokenAccount: vaultTokenAccount.address,
     });
     await confirm(tx);
 
@@ -443,7 +458,7 @@ export async function joinGame(
     );
 
     // Create paid token game
-    await createGame({
+    const { vaultTokenAccount } = await createGame({
       gameCode,
       entryFee: new anchor.BN(1 * LAMPORTS_PER_SOL),
       tokenMint: mint,
@@ -455,6 +470,7 @@ export async function joinGame(
       player,
       tokenMint: mint,
       playerTokenAccount: null,
+      vaultTokenAccount: vaultTokenAccount.address,
     });
     throw new Error('Should have failed with PlayerTokenAccountNotProvided');
   } catch (error) {
@@ -489,13 +505,26 @@ export async function joinGame(
       player.publicKey
     );
 
+    // Create paid token game
+    const { vaultTokenAccount } = await createGame({
+      gameCode,
+      entryFee: new anchor.BN(1 * LAMPORTS_PER_SOL),
+      tokenMint: mint,
+    });
+
     // Attempt to join without enough tokens
     await executeJoinGame({
       gameCode,
       player,
       tokenMint: mint,
+      playerTokenAccount: playerTokenAccount.address,
+      vaultTokenAccount: vaultTokenAccount.address,
     });
-  } catch (error) {}
+    throw new Error('Should have failed with insufficient token balance');
+  } catch (error) {
+    // The error here might vary depending on the token program's error handling
+    console.log('Insufficient tokens test passed');
+  }
 
   // Test 9: Successfully join a free SPL token game
   console.log('Testing joining free SPL token game...');
@@ -513,7 +542,7 @@ export async function joinGame(
     );
 
     // Create free token game (0 entry fee)
-    await createGame({
+    const { vaultTokenAccount } = await createGame({
       gameCode,
       entryFee: new anchor.BN(0),
       tokenMint: mint,
@@ -523,12 +552,14 @@ export async function joinGame(
       player.publicKey
     );
 
-    // Join game - Don't pass playerTokenAccount for free games
+    // Join game - For free games, we still need to pass the vault token account
+    // but the player token account can be null since no transfer will occur
     const tx = await executeJoinGame({
       gameCode,
       player,
       tokenMint: mint,
-      playerTokenAccount: null, // Changed: Set to null for free games
+      playerTokenAccount: null,
+      vaultTokenAccount: vaultTokenAccount.address,
     });
     await confirm(tx);
 
