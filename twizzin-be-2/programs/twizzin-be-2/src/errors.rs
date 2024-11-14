@@ -16,12 +16,34 @@ pub enum ErrorCode {
     NameTooLong,
     #[msg("Game code has to be between 1 and 6 characters")]
     GameCodeTooLong,
-    #[msg("Max winners has to be between 1 and 10")]
-    MaxWinnersTooHigh,
+    #[msg("Max winners must be at least 1")]
+    MaxWinnersTooLow,
     #[msg("Start time is greater than end time")]
     InvalidTimeRange,
     #[msg("Token mint is required")]
     TokenMintRequired,
     #[msg("Vault is required")]
     VaultRequired,
+    #[msg("Admin token account not provided")]
+    AdminTokenAccountNotProvided,
+    #[msg("Invalid vault account provided")]
+    InvalidVaultAccount,
+    #[msg("Invalid token account")]
+    InvalidTokenAccount,
+    #[msg("Game has ended")]
+    GameEnded,
+    #[msg("Player token account not provided")]
+    PlayerTokenAccountNotProvided,
+    #[msg("Player count overflow")]
+    PlayerCountOverflow,
+    #[msg("Invalid player")]
+    InvalidPlayer,
+    #[msg("Invalid game")]
+    InvalidGame,
+    #[msg("Already submitted")]
+    AlreadySubmitted,
+    #[msg("Game not started")]
+    GameNotStarted,
+    #[msg("Invalid finish time")]
+    InvalidFinishTime,
 }

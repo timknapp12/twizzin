@@ -1,4 +1,3 @@
-use anchor_lang::prelude::*;
 use sha2::{Digest, Sha256};
 
 pub fn verify_merkle_proof(leaf: [u8; 32], proof: &[[u8; 32]], root: [u8; 32]) -> bool {

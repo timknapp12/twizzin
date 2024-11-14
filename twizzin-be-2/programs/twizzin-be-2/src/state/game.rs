@@ -1,6 +1,5 @@
 use anchor_lang::prelude::*;
 
-// Constants for space calculation
 pub const MAX_NAME_LENGTH: usize = 32;
 pub const MAX_GAME_CODE_LENGTH: usize = 16;
 
@@ -19,6 +18,8 @@ pub struct Game {
     pub max_winners: u8,
     pub total_players: u32,
     pub answer_hash: [u8; 32], // Single merkle root of all answers
+    pub donation_amount: u64,
+    pub is_native: bool,
 }
 
 impl Space for Game {
@@ -35,23 +36,9 @@ impl Space for Game {
         8 +                        // end time
         1 +                        // max winners
         4 +                        // total players
-        32; // answer hash (merkle root)
-}
-
-// For processing inputs when creating the game
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
-pub struct AnswerInput {
-    pub display_order: u8,
-    pub answer: String, // a, b, c, d
-    pub salt: String,   // question_id
-}
-
-// For verifying answers during gameplay
-#[derive(Debug, Clone, AnchorSerialize, AnchorDeserialize)]
-pub struct AnswerProof {
-    pub display_order: u8,
-    pub answer: String,
-    pub proof: Vec<[u8; 32]>, // Merkle proof for this answer
+        32 +                       // answer hash (merkle root)
+        8 +                        // donation_amount
+        1; // is_native
 }
 
 #[event]
@@ -60,6 +47,16 @@ pub struct GameCreated {
     pub game: Pubkey,
     pub name: String,
     pub game_code: String,
+    pub entry_fee: u64,
+    pub start_time: i64,
+    pub end_time: i64,
+}
+
+#[event]
+pub struct GameUpdated {
+    pub admin: Pubkey,
+    pub game: Pubkey,
+    pub name: String,
     pub entry_fee: u64,
     pub start_time: i64,
     pub end_time: i64,

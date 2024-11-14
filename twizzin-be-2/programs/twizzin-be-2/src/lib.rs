@@ -2,14 +2,15 @@ use anchor_lang::prelude::*;
 
 declare_id!("35V3AqBVBuUVczUxULiZ7eoXbCwVZcNZAN4otDeD4K2F");
 
-pub mod errors;
-pub use errors::ErrorCode;
-
 pub mod contexts;
 pub use contexts::*;
 
+pub mod constants;
+pub mod errors;
 pub mod state;
-pub use state::*;
+pub mod utils;
+
+use crate::state::AnswerInput;
 
 #[program]
 pub mod twizzin_be_2 {
@@ -43,6 +44,7 @@ pub mod twizzin_be_2 {
         end_time: i64,
         max_winners: u8,
         answer_hash: [u8; 32],
+        donation_amount: u64,
     ) -> Result<()> {
         ctx.accounts.init_game(
             name,
@@ -53,7 +55,43 @@ pub mod twizzin_be_2 {
             end_time,
             max_winners,
             answer_hash,
+            donation_amount,
             &ctx.bumps,
         )
+    }
+
+    pub fn update_game(
+        ctx: Context<UpdateGame>,
+        new_name: Option<String>,
+        new_entry_fee: Option<u64>,
+        new_commission: Option<u8>,
+        new_start_time: Option<i64>,
+        new_end_time: Option<i64>,
+        new_max_winners: Option<u8>,
+        new_answer_hash: Option<[u8; 32]>,
+        new_donation_amount: Option<u64>,
+    ) -> Result<()> {
+        ctx.accounts.update_game(
+            new_name,
+            new_entry_fee,
+            new_commission,
+            new_start_time,
+            new_end_time,
+            new_max_winners,
+            new_answer_hash,
+            new_donation_amount,
+        )
+    }
+
+    pub fn join_game(ctx: Context<JoinGame>) -> Result<()> {
+        ctx.accounts.join_game(&ctx.bumps)
+    }
+
+    pub fn submit_answers(
+        ctx: Context<SubmitAnswers>,
+        answers: Vec<AnswerInput>,
+        client_finish_time: i64,
+    ) -> Result<()> {
+        ctx.accounts.submit_answers(answers, client_finish_time)
     }
 }
