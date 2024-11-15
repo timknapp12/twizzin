@@ -56,4 +56,6 @@ pub enum ErrorCode {
     TreasuryTokenAccountNotProvided,
     #[msg("Invalid treasury")]
     InvalidTreasury,
+    #[msg("Game not ended")]
+    GameNotEnded,
 }
