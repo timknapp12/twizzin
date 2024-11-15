@@ -13,5 +13,11 @@ pub use update_game::*;
 pub mod join_game;
 pub use join_game::*;
 
+pub mod start_game;
+pub use start_game::*;
+
 pub mod submit_answers;
 pub use submit_answers::*;
+
+pub mod end_game;
+pub use end_game::*;

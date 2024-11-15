@@ -112,8 +112,6 @@ impl<'info> JoinGame<'info> {
             join_time: current_time,
             finished_time: 0,
             num_correct: 0,
-            reward_amount: 0,
-            claimed: false,
             answer_hash: [0; 32],
             bump: bumps.player_account,
         });

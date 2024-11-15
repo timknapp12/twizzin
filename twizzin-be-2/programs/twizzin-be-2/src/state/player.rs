@@ -7,8 +7,6 @@ pub struct PlayerAccount {
     pub join_time: i64,
     pub finished_time: i64,
     pub num_correct: u8,
-    pub reward_amount: u64,
-    pub claimed: bool,
     pub answer_hash: [u8; 32], // Hash of their answers (set when submitting)
     pub bump: u8,              // PDA bump
 }
@@ -20,8 +18,6 @@ impl PlayerAccount {
         8 +     // join_time
         8 +     // finished_time
         1 +     // num_correct
-        8 +     // reward_amount
-        1 +     // claimed
         32 +    // answer_hash
         1; // bump
 }

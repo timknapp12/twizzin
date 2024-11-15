@@ -87,11 +87,19 @@ pub mod twizzin_be_2 {
         ctx.accounts.join_game(&ctx.bumps)
     }
 
+    pub fn start_game(ctx: Context<StartGame>) -> Result<()> {
+        ctx.accounts.start_game()
+    }
+
     pub fn submit_answers(
         ctx: Context<SubmitAnswers>,
         answers: Vec<AnswerInput>,
         client_finish_time: i64,
     ) -> Result<()> {
         ctx.accounts.submit_answers(answers, client_finish_time)
+    }
+
+    pub fn end_game(ctx: Context<EndGame>) -> Result<()> {
+        ctx.accounts.end_game()
     }
 }

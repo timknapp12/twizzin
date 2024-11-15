@@ -46,4 +46,14 @@ pub enum ErrorCode {
     GameNotStarted,
     #[msg("Invalid finish time")]
     InvalidFinishTime,
+    #[msg("Invalid admin")]
+    InvalidAdmin,
+    #[msg("Numeric overflow")]
+    NumericOverflow,
+    #[msg("Vault token account not provided")]
+    VaultTokenAccountNotProvided,
+    #[msg("Treasury token account not provided")]
+    TreasuryTokenAccountNotProvided,
+    #[msg("Invalid treasury")]
+    InvalidTreasury,
 }
