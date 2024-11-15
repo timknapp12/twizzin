@@ -6,6 +6,7 @@ import { updateProgramConfig } from './updateConfig';
 import { initializeGame } from './initGame';
 import { updateGame } from './updateGame';
 import { joinGame } from './joinGame';
+import { startGame } from './startGame';
 import { submitAnswers } from './submitAnswers';
 import { endGame } from './endGame';
 import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
@@ -75,6 +76,9 @@ describe('twizzin-be-2', () => {
   });
   it('Joins a game', async () => {
     await joinGame(program, provider, confirm);
+  });
+  it('Starts a game', async () => {
+    await startGame(program, provider, confirm);
   });
   it('Submits answers', async () => {
     await submitAnswers(program, provider, confirm);
