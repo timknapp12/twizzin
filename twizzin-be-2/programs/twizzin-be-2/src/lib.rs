@@ -87,6 +87,10 @@ pub mod twizzin_be_2 {
         ctx.accounts.join_game(&ctx.bumps)
     }
 
+    pub fn start_game(ctx: Context<StartGame>) -> Result<()> {
+        ctx.accounts.start_game()
+    }
+
     pub fn submit_answers(
         ctx: Context<SubmitAnswers>,
         answers: Vec<AnswerInput>,
