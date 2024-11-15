@@ -21,3 +21,6 @@ pub use submit_answers::*;
 
 pub mod end_game;
 pub use end_game::*;
+
+pub mod claim;
+pub use claim::*;
