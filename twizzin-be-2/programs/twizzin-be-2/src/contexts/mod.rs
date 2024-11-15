@@ -15,3 +15,6 @@ pub use join_game::*;
 
 pub mod submit_answers;
 pub use submit_answers::*;
+
+pub mod end_game;
+pub use end_game::*;

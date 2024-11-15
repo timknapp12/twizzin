@@ -94,4 +94,8 @@ pub mod twizzin_be_2 {
     ) -> Result<()> {
         ctx.accounts.submit_answers(answers, client_finish_time)
     }
+
+    pub fn end_game(ctx: Context<EndGame>) -> Result<()> {
+        ctx.accounts.end_game()
+    }
 }
