@@ -16,7 +16,6 @@ import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   mintTo,
   getAccount,
-  createAssociatedTokenAccountInstruction,
 } from '@solana/spl-token';
 
 export async function endGame(
@@ -43,22 +42,21 @@ export async function endGame(
   const answerHash = Array(32).fill(1);
   const donationAmount = new anchor.BN(1 * LAMPORTS_PER_SOL);
 
+  // Get rent exemption for calculations
+  const connection = provider.connection;
+  const rentExemption = await connection.getMinimumBalanceForRentExemption(
+    program.account.game.size
+  );
+
   // Expected amounts for Test 1
   const MARGIN = 100_000_000; // 0.1 SOL margin
-  const totalPot1 =
+  const totalPot =
     donationAmount.toNumber() + entryFee.toNumber() * totalPlayers;
-  const expectedTreasuryFee1 = Math.floor(totalPot1 * 0.1);
-  const expectedCommission1 = Math.floor(totalPot1 * (commission / 100));
-  const expectedPrizePool1 =
-    totalPot1 - expectedTreasuryFee1 - expectedCommission1;
-  const expectedPerWinner1 = Math.floor(expectedPrizePool1 / maxWinners);
-
-  console.log('\nTest 1 Expected Amounts:');
-  console.log('Total Pot:', totalPot1 / LAMPORTS_PER_SOL, 'SOL');
-  console.log('Treasury Fee:', expectedTreasuryFee1 / LAMPORTS_PER_SOL, 'SOL');
-  console.log('Commission:', expectedCommission1 / LAMPORTS_PER_SOL, 'SOL');
-  console.log('Prize Pool:', expectedPrizePool1 / LAMPORTS_PER_SOL, 'SOL');
-  console.log('Per Winner:', expectedPerWinner1 / LAMPORTS_PER_SOL, 'SOL');
+  const distributablePot = totalPot - rentExemption;
+  const expectedTreasuryFee = Math.floor(distributablePot * (600 / 10000));
+  const expectedCommission = Math.floor(distributablePot * (commission / 100));
+  const expectedPrizePool =
+    distributablePot - expectedTreasuryFee - expectedCommission;
 
   // Create and fund players
   const players1 = Array(totalPlayers)
@@ -278,19 +276,11 @@ export async function endGame(
     provider.wallet.publicKey
   );
 
-  console.log('\nTest 1 Results:');
-  console.log('Initial Vault Balance:', initialVaultBalance / LAMPORTS_PER_SOL);
-  console.log('Final Vault Balance:', finalVaultBalance / LAMPORTS_PER_SOL);
-  console.log(
-    'Admin Balance Change:',
-    (finalAdminBalance - initialAdminBalance) / LAMPORTS_PER_SOL
-  );
-
   // Verify amounts accounting for gas fees
-  expect(finalVaultBalance).to.be.approximately(expectedPrizePool1, MARGIN);
+  expect(finalVaultBalance).to.be.approximately(expectedPrizePool, MARGIN);
 
   expect(finalAdminBalance - initialAdminBalance).to.be.approximately(
-    expectedCommission1,
+    expectedCommission,
     MARGIN
   );
 
@@ -302,21 +292,21 @@ export async function endGame(
     .map(() => Keypair.generate());
   const maxWinners2 = 5;
 
+  // Get rent exemption for calculations
+  const rentExemption2 = await connection.getMinimumBalanceForRentExemption(
+    program.account.game.size
+  );
+
   // Expected amounts for Test 2
   const totalPot2 =
     donationAmount.toNumber() + entryFee.toNumber() * players2.length;
-  const expectedTreasuryFee2 = Math.floor(totalPot2 * 0.1);
-  const expectedCommission2 = Math.floor(totalPot2 * (commission / 100));
+  const distributablePot2 = totalPot2 - rentExemption2;
+  const expectedTreasuryFee2 = Math.floor(distributablePot2 * (600 / 10000));
+  const expectedCommission2 = Math.floor(
+    distributablePot2 * (commission / 100)
+  );
   const expectedPrizePool2 =
-    totalPot2 - expectedTreasuryFee2 - expectedCommission2;
-  const expectedPerWinner2 = Math.floor(expectedPrizePool2 / players2.length); // Divided by actual players
-
-  console.log('\nTest 2 Expected Amounts:');
-  console.log('Total Pot:', totalPot2 / LAMPORTS_PER_SOL, 'SOL');
-  console.log('Treasury Fee:', expectedTreasuryFee2 / LAMPORTS_PER_SOL, 'SOL');
-  console.log('Commission:', expectedCommission2 / LAMPORTS_PER_SOL, 'SOL');
-  console.log('Prize Pool:', expectedPrizePool2 / LAMPORTS_PER_SOL, 'SOL');
-  console.log('Per Winner:', expectedPerWinner2 / LAMPORTS_PER_SOL, 'SOL');
+    distributablePot2 - expectedTreasuryFee2 - expectedCommission2;
 
   // Fund players
   for (const player of players2) {
@@ -386,18 +376,7 @@ export async function endGame(
     provider.wallet.publicKey
   );
 
-  console.log('\nTest 2 Results:');
-  console.log(
-    'Initial Vault Balance:',
-    initialVaultBalance2 / LAMPORTS_PER_SOL
-  );
-  console.log('Final Vault Balance:', finalVaultBalance2 / LAMPORTS_PER_SOL);
-  console.log(
-    'Admin Balance Change:',
-    (finalAdminBalance2 - initialAdminBalance2) / LAMPORTS_PER_SOL
-  );
-
-  // Verify amounts (update the margin to match Test 1)
+  // Verify amounts
   expect(finalVaultBalance2).to.be.approximately(expectedPrizePool2, MARGIN);
   expect(finalAdminBalance2 - initialAdminBalance2).to.be.approximately(
     expectedCommission2,
@@ -412,21 +391,21 @@ export async function endGame(
     .map(() => Keypair.generate());
   const futureEndTime = new anchor.BN(now + 7200); // 2 hours in the future
 
+  // Get rent exemption for calculations
+  const rentExemption3 = await connection.getMinimumBalanceForRentExemption(
+    program.account.game.size
+  );
+
   // Expected amounts for Test 3
   const totalPot3 =
     donationAmount.toNumber() + entryFee.toNumber() * players3.length;
-  const expectedTreasuryFee3 = Math.floor(totalPot3 * 0.1);
-  const expectedCommission3 = Math.floor(totalPot3 * (commission / 100));
+  const distributablePot3 = totalPot3 - rentExemption3;
+  const expectedTreasuryFee3 = Math.floor(distributablePot3 * (600 / 10000)); // 6% instead of 10%
+  const expectedCommission3 = Math.floor(
+    distributablePot3 * (commission / 100)
+  );
   const expectedPrizePool3 =
-    totalPot3 - expectedTreasuryFee3 - expectedCommission3;
-  const expectedPerWinner3 = Math.floor(expectedPrizePool3 / players3.length);
-
-  console.log('\nTest 3 Expected Amounts:');
-  console.log('Total Pot:', totalPot3 / LAMPORTS_PER_SOL, 'SOL');
-  console.log('Treasury Fee:', expectedTreasuryFee3 / LAMPORTS_PER_SOL, 'SOL');
-  console.log('Commission:', expectedCommission3 / LAMPORTS_PER_SOL, 'SOL');
-  console.log('Prize Pool:', expectedPrizePool3 / LAMPORTS_PER_SOL, 'SOL');
-  console.log('Per Winner:', expectedPerWinner3 / LAMPORTS_PER_SOL, 'SOL');
+    distributablePot3 - expectedTreasuryFee3 - expectedCommission3;
 
   // Fund players
   for (const player of players3) {
@@ -503,17 +482,6 @@ export async function endGame(
     provider.wallet.publicKey
   );
 
-  console.log('\nTest 3 Results:');
-  console.log(
-    'Initial Vault Balance:',
-    initialVaultBalance3 / LAMPORTS_PER_SOL
-  );
-  console.log('Final Vault Balance:', finalVaultBalance3 / LAMPORTS_PER_SOL);
-  console.log(
-    'Admin Balance Change:',
-    (finalAdminBalance3 - initialAdminBalance3) / LAMPORTS_PER_SOL
-  );
-
   // Verify amounts
   expect(finalVaultBalance3).to.be.approximately(expectedPrizePool3, MARGIN);
   expect(finalAdminBalance3 - initialAdminBalance3).to.be.approximately(
@@ -527,6 +495,7 @@ export async function endGame(
 
   // Test 4: SPL Token game
   console.log('\nTest 4: SPL Token Game');
+  const configState = await program.account.programConfig.fetch(configPda);
   const gameCode4 = getUniqueGameCode('END4');
   const players4 = Array(3)
     .fill(0)
@@ -668,22 +637,13 @@ export async function endGame(
   // Expected amounts for Test 4
   const totalPot4 =
     tokenDonationAmount.toNumber() + tokenEntryFee.toNumber() * players4.length;
-  const expectedTreasuryFee4 = Math.floor(totalPot4 * 0.06); // Adjust to 6% if that's what the program is using
-  const expectedCommission4 = Math.floor(totalPot4 * (commission / 100));
+  const distributablePot4 = totalPot4; // No rent exemption for tokens
+  const expectedTreasuryFee4 = Math.floor(distributablePot4 * (600 / 10000)); // 6% fee (600 basis points)
+  const expectedCommission4 = Math.floor(
+    distributablePot4 * (commission / 100)
+  );
   const expectedPrizePool4 =
-    totalPot4 - expectedTreasuryFee4 - expectedCommission4;
-  const expectedPerWinner4 = Math.floor(expectedPrizePool4 / players4.length);
-
-  console.log('\nTest 4 Calculations:');
-  console.log('Token Entry Fee:', tokenEntryFee.toNumber());
-  console.log('Token Donation Amount:', tokenDonationAmount.toNumber());
-  console.log('Number of Players:', players4.length);
-  console.log('Total Pot:', totalPot4);
-
-  console.log('Expected Treasury Fee:', expectedTreasuryFee4);
-  console.log('Expected Commission:', expectedCommission4);
-  console.log('Expected Prize Pool:', expectedPrizePool4);
-  console.log('Expected Per Winner:', expectedPerWinner4);
+    distributablePot4 - expectedTreasuryFee4 - expectedCommission4;
 
   // Get initial balances
   const initialVaultBalance4 = (
@@ -725,31 +685,22 @@ export async function endGame(
     await getAccount(provider.connection, treasuryTokenAccount.address)
   ).amount;
 
-  console.log('\nTest 4 Actual Results:');
-  console.log('Initial Vault Balance:', initialVaultBalance4.toString());
-  console.log('Final Vault Balance:', finalVaultBalance4.toString());
-  console.log(
-    'Admin Balance Change:',
-    (finalAdminBalance4 - initialAdminBalance4).toString()
-  );
-  console.log(
-    'Treasury Balance Change:',
-    (finalTreasuryBalance4 - initialTreasuryBalance4).toString()
-  );
-
   // Verify amounts
-  const TOKEN_MARGIN = 1000; // Small margin for token calculations
+  const TOKEN_MARGIN = 1000;
   expect(Number(finalVaultBalance4)).to.be.approximately(
-    expectedPrizePool4,
+    expectedPrizePool4, // Should be 7,200,000
     TOKEN_MARGIN
   );
   expect(Number(finalAdminBalance4 - initialAdminBalance4)).to.be.approximately(
-    expectedCommission4,
+    expectedCommission4, // Should be 400,000
     TOKEN_MARGIN
   );
   expect(
     Number(finalTreasuryBalance4 - initialTreasuryBalance4)
-  ).to.be.approximately(expectedTreasuryFee4, TOKEN_MARGIN);
+  ).to.be.approximately(
+    expectedTreasuryFee4, // Should be 400,000
+    TOKEN_MARGIN
+  );
 
   console.log('\nAll end game tests completed successfully');
 }
