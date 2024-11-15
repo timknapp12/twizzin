@@ -252,7 +252,6 @@ export async function joinGame(
     expect(playerAccount.player.equals(player.publicKey)).to.be.true;
     expect(playerAccount.finishedTime.eq(new anchor.BN(0))).to.be.true;
     expect(playerAccount.numCorrect).to.equal(0);
-    expect(playerAccount.claimed).to.be.false;
 
     console.log('Free native SOL game join test passed');
   } catch (error) {

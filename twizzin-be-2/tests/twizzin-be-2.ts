@@ -7,6 +7,7 @@ import { initializeGame } from './initGame';
 import { updateGame } from './updateGame';
 import { joinGame } from './joinGame';
 import { submitAnswers } from './submitAnswers';
+import { endGame } from './endGame';
 import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 
 let configPubkey: PublicKey;
@@ -77,5 +78,8 @@ describe('twizzin-be-2', () => {
   });
   it('Submits answers', async () => {
     await submitAnswers(program, provider, confirm);
+  });
+  it('Ends a game', async () => {
+    await endGame(program, provider, confirm);
   });
 });

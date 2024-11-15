@@ -61,3 +61,14 @@ pub struct GameUpdated {
     pub start_time: i64,
     pub end_time: i64,
 }
+
+#[event]
+pub struct GameEnded {
+    pub game: Pubkey,
+    pub total_pot: u64,
+    pub prize_pool: u64,
+    pub treasury_fee: u64,
+    pub admin_commission: u64,
+    pub per_winner: u64,
+    pub end_time: i64,
+}
