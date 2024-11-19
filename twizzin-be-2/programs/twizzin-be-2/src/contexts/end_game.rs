@@ -6,6 +6,7 @@ use anchor_spl::{
     associated_token::AssociatedToken,
     token::{Token, TokenAccount},
 };
+use solana_program::rent::Rent;
 
 #[derive(Accounts)]
 pub struct EndGame<'info> {
@@ -83,14 +84,26 @@ impl<'info> EndGame<'info> {
             self.game.end_time = current_time;
         }
 
-        // Calculate total pot (entry fees + donations)
-        let total_pot = self
-            .game
-            .entry_fee
-            .checked_mul(self.game.total_players.into())
-            .ok_or(ErrorCode::NumericOverflow)?
-            .checked_add(self.game.donation_amount)
-            .ok_or(ErrorCode::NumericOverflow)?;
+        // Get the actual balance from the vault
+        let total_pot = if self.game.is_native {
+            self.vault.lamports()
+        } else {
+            self.vault_token_account
+                .as_ref()
+                .ok_or(ErrorCode::VaultTokenAccountNotProvided)?
+                .amount
+        };
+
+        // Calculate rent exemption for both Game and TokenAccount if needed
+        let rent = Rent::get()?;
+        let mut rent_exemption = rent.minimum_balance(Game::INIT_SPACE);
+
+        // Add token account rent exemption if it's not a native SOL game
+        if !self.game.is_native {
+            rent_exemption = rent_exemption
+                .checked_add(rent.minimum_balance(TokenAccount::LEN))
+                .ok_or(ErrorCode::NumericOverflow)?;
+        }
 
         // Calculate all payout amounts
         let (treasury_fee, admin_commission, prize_pool, per_winner) = calculate_payouts(
@@ -99,6 +112,8 @@ impl<'info> EndGame<'info> {
             self.game.commission,
             self.game.max_winners,
             self.game.total_players,
+            rent_exemption,
+            self.game.is_native,
         )?;
 
         // Transfer fees and commission
@@ -200,29 +215,3 @@ impl<'info> EndGame<'info> {
         Ok(())
     }
 }
-
-// Client-side winner determination
-// async function determineWinners(gameAddress: PublicKey, maxWinners: number) {
-//     // Find all player accounts for this game
-//     const playerAccounts = await program.account.playerAccount.all([
-//       {
-//         memcmp: {
-//           offset: 8, // after discriminator
-//           bytes: gameAddress.toBase58(),
-//         },
-//       },
-//     ]);
-
-//     // Sort by num_correct (descending) and finish_time (ascending)
-//     const sortedPlayers = playerAccounts
-//       .filter(p => p.account.finishedTime > 0) // Only include players who submitted
-//       .sort((a, b) => {
-//         if (b.account.numCorrect !== a.account.numCorrect) {
-//           return b.account.numCorrect - a.account.numCorrect;
-//         }
-//         return a.account.finishedTime - b.account.finishedTime;
-//       });
-
-//     // Return top winners
-//     return sortedPlayers.slice(0, maxWinners);
-//   }

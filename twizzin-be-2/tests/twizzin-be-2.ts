@@ -9,6 +9,7 @@ import { joinGame } from './joinGame';
 import { startGame } from './startGame';
 import { submitAnswers } from './submitAnswers';
 import { endGame } from './endGame';
+import { claim } from './claim';
 import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 
 let configPubkey: PublicKey;
@@ -85,5 +86,8 @@ describe('twizzin-be-2', () => {
   });
   it('Ends a game', async () => {
     await endGame(program, provider, confirm);
+  });
+  it('Claims a prize', async () => {
+    await claim(program, provider, confirm);
   });
 });
