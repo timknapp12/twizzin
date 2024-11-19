@@ -4,6 +4,13 @@ use anchor_spl::token::{Token, TokenAccount};
 use crate::errors::ErrorCode;
 use crate::state::{Game, PlayerAccount};
 
+#[event]
+pub struct ClaimEvent {
+    pub player: Pubkey,
+    pub game: Pubkey,
+    pub prize_amount: u64,
+}
+
 #[derive(Accounts)]
 pub struct Claim<'info> {
    #[account(mut)]
@@ -99,6 +106,12 @@ impl<'info> Claim<'info> {
                anchor_spl::token::transfer(transfer_ctx, prize_amount)?;
            }
        }
+
+       emit!(ClaimEvent {
+           player: self.player.key(),
+           game: self.game.key(),
+           prize_amount,
+       });
 
        Ok(())
    }
