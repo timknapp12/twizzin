@@ -4,6 +4,7 @@ use crate::utils::prize::calculate_prizes;
 use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
+#[instruction(winner_pubkeys: Vec<Pubkey>)]
 pub struct DeclareWinners<'info> {
     #[account(mut)]
     pub admin: Signer<'info>,
@@ -27,10 +28,6 @@ pub struct DeclareWinners<'info> {
     pub winners: Account<'info, Winners>,
 
     pub system_program: Program<'info, System>,
-
-    // Remaining accounts are player accounts to validate
-    #[account_info]
-    pub player_accounts: Vec<AccountInfo<'info>>,
 }
 
 impl<'info> DeclareWinners<'info> {
@@ -38,6 +35,7 @@ impl<'info> DeclareWinners<'info> {
         &mut self,
         winner_pubkeys: Vec<Pubkey>,
         bumps: &DeclareWinnersBumps,
+        remaining_accounts: &'info [AccountInfo<'info>],
     ) -> Result<()> {
         let game = &self.game;
 
@@ -55,7 +53,7 @@ impl<'info> DeclareWinners<'info> {
 
         // Verify we have the correct number of remaining accounts
         require!(
-            self.player_accounts.len() == winner_pubkeys.len(),
+            remaining_accounts.len() == winner_pubkeys.len(),
             ErrorCode::InvalidWinnerCount
         );
 
@@ -71,22 +69,24 @@ impl<'info> DeclareWinners<'info> {
         let mut prev_score: u8 = u8::MAX;
         let mut prev_time = i64::MIN;
 
+        // Store game key to prevent temporary value issue
+        let game_key = game.key();
+
         // Validate each winner and their ordering
         for (i, (winner_pubkey, account)) in winner_pubkeys
-            .into_iter()
-            .zip(self.player_accounts.to_vec())
+            .iter()
+            .zip(remaining_accounts.iter())
             .enumerate()
         {
             // Verify account PDA
-            let game_key = game.key();
             let seeds = &[b"player", game_key.as_ref(), winner_pubkey.as_ref()];
             let (expected_pda, _) = Pubkey::find_program_address(seeds, &crate::ID);
             require!(account.key() == expected_pda, ErrorCode::WinnerNotPlayer);
 
             // Deserialize and validate player account
-            let player = Account::<PlayerAccount>::try_from(&*account)?;
-            require!(player.game == game.key(), ErrorCode::WinnerNotPlayer);
-            require!(player.player == winner_pubkey, ErrorCode::WinnerNotPlayer);
+            let player = Account::<PlayerAccount>::try_from(account)?;
+            require!(player.game == game_key, ErrorCode::WinnerNotPlayer);
+            require!(player.player == *winner_pubkey, ErrorCode::WinnerNotPlayer);
             require!(player.finished_time > 0, ErrorCode::PlayerNotFinished);
 
             // Verify ordering
@@ -142,7 +142,7 @@ impl<'info> DeclareWinners<'info> {
 
         // Emit event
         emit!(WinnersDeclared {
-            game: game.key(),
+            game: game_key,
             num_winners: expected_winners,
             total_prize_pool,
         });

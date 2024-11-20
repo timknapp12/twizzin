@@ -39,12 +39,14 @@ pub mod twizzin_be_2 {
         name: String,
         game_code: String,
         entry_fee: u64,
-        commission: u8,
+        commission: u16,
         start_time: i64,
         end_time: i64,
         max_winners: u8,
         answer_hash: [u8; 32],
         donation_amount: u64,
+        all_are_winners: bool,
+        even_split: bool,
     ) -> Result<()> {
         ctx.accounts.init_game(
             name,
@@ -56,6 +58,8 @@ pub mod twizzin_be_2 {
             max_winners,
             answer_hash,
             donation_amount,
+            all_are_winners,
+            even_split,
             &ctx.bumps,
         )
     }
@@ -64,12 +68,14 @@ pub mod twizzin_be_2 {
         ctx: Context<UpdateGame>,
         new_name: Option<String>,
         new_entry_fee: Option<u64>,
-        new_commission: Option<u8>,
+        new_commission: Option<u16>,
         new_start_time: Option<i64>,
         new_end_time: Option<i64>,
         new_max_winners: Option<u8>,
         new_answer_hash: Option<[u8; 32]>,
         new_donation_amount: Option<u64>,
+        new_all_are_winners: Option<bool>,
+        new_even_split: Option<bool>,
     ) -> Result<()> {
         ctx.accounts.update_game(
             new_name,
@@ -80,6 +86,8 @@ pub mod twizzin_be_2 {
             new_max_winners,
             new_answer_hash,
             new_donation_amount,
+            new_all_are_winners,
+            new_even_split,
         )
     }
 
@@ -101,6 +109,15 @@ pub mod twizzin_be_2 {
 
     pub fn end_game(ctx: Context<EndGame>) -> Result<()> {
         ctx.accounts.end_game()
+    }
+
+    pub fn declare_winners<'info>(
+        ctx: Context<'_, '_, 'info, 'info, DeclareWinners<'info>>,
+        winner_pubkeys: Vec<Pubkey>,
+    ) -> Result<()> {
+        let remaining_accounts: &'info [AccountInfo<'info>] = ctx.remaining_accounts;
+        ctx.accounts
+            .declare_winners(winner_pubkeys, &ctx.bumps, remaining_accounts)
     }
 
     pub fn claim(ctx: Context<Claim>, prize_amount: u64) -> Result<()> {

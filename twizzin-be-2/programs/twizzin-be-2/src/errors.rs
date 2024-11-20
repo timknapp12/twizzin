@@ -58,4 +58,16 @@ pub enum ErrorCode {
     InvalidTreasury,
     #[msg("Game not ended")]
     GameNotEnded,
+    #[msg("Invalid basis points")]
+    InvalidBasisPoints,
+    #[msg("Invalid winner count - must be greater than 0")]
+    InvalidWinnerCount,
+    #[msg("Invalid winner order - winners must be ordered by score and finish time")]
+    InvalidWinnerOrder,
+    #[msg("Winner has not finished the game")]
+    PlayerNotFinished,
+    #[msg("Duplicate winner in list")]
+    DuplicateWinner,
+    #[msg("Provided winner is not a player in this game")]
+    WinnerNotPlayer,
 }
