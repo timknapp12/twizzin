@@ -30,8 +30,6 @@ export async function updateGame(
   const validMaxWinners = 3;
   const newAnswerHash = Array(32).fill(2);
   const gameCode = 'UPDATEGAME1';
-  const allAreWinners = false;
-  const evenSplit = false;
 
   // Helper function for program method calls
   const executeUpdateGame = async (
