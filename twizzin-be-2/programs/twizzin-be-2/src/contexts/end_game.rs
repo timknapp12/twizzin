@@ -1,6 +1,6 @@
 use crate::errors::ErrorCode;
 use crate::state::{Game, GameEnded, ProgramConfig};
-use crate::utils::payout::calculate_payouts;
+use crate::utils::fees::calculate_fees;
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
@@ -105,13 +105,11 @@ impl<'info> EndGame<'info> {
                 .ok_or(ErrorCode::NumericOverflow)?;
         }
 
-        // Calculate all payout amounts
-        let (treasury_fee, admin_commission, prize_pool, per_winner) = calculate_payouts(
+        // Calculate fees
+        let (treasury_fee, admin_commission) = calculate_fees(
             total_pot,
             self.config.treasury_fee,
             self.game.commission,
-            self.game.max_winners,
-            self.game.total_players,
             rent_exemption,
             self.game.is_native,
         )?;
@@ -201,14 +199,12 @@ impl<'info> EndGame<'info> {
             }
         }
 
-        // Emit game ended event with per_winner amount
+        // Emit game ended event
         emit!(GameEnded {
             game: self.game.key(),
             total_pot,
-            prize_pool,
             treasury_fee,
             admin_commission,
-            per_winner,
             end_time: current_time,
         });
 
