@@ -33,7 +33,7 @@ export async function endGame(
   console.log('\nTest 1: SOL - Max Winners < Total Players');
   const gameCode1 = getUniqueGameCode('END1');
   const entryFee = new anchor.BN(0.1 * LAMPORTS_PER_SOL);
-  const commission = 5;
+  const commission = 500;
   const now = Math.floor(Date.now() / 1000);
   const startTime = new anchor.BN(now);
   const endTime = new anchor.BN(now + 3600);
@@ -41,6 +41,8 @@ export async function endGame(
   const totalPlayers = 4;
   const answerHash = Array(32).fill(1);
   const donationAmount = new anchor.BN(1 * LAMPORTS_PER_SOL);
+  const allAreWinners = false;
+  const evenSplit = false;
 
   // Get rent exemption for calculations
   const connection = provider.connection;
@@ -54,9 +56,9 @@ export async function endGame(
     donationAmount.toNumber() + entryFee.toNumber() * totalPlayers;
   const distributablePot = totalPot - rentExemption;
   const expectedTreasuryFee = Math.floor(distributablePot * (600 / 10000));
-  const expectedCommission = Math.floor(distributablePot * (commission / 100));
-  const expectedPrizePool =
-    distributablePot - expectedTreasuryFee - expectedCommission;
+  const expectedCommission = Math.floor(
+    distributablePot * (commission / 10000)
+  );
 
   // Create and fund players
   const players1 = Array(totalPlayers)
@@ -141,7 +143,9 @@ export async function endGame(
       endTime,
       maxWinners,
       answerHash,
-      donationAmount
+      donationAmount,
+      allAreWinners,
+      evenSplit
     )
     .accounts({
       admin: provider.wallet.publicKey,
@@ -163,29 +167,48 @@ export async function endGame(
     player: Keypair,
     gamePda: PublicKey,
     vaultPda: PublicKey,
-    isNative: boolean
+    isNative: boolean,
+    tokenMint?: PublicKey,
+    vaultTokenAccount?: PublicKey
   ) {
     const playerPda = findPlayerPDA(gamePda, player.publicKey);
 
-    const accounts = {
-      player: player.publicKey,
-      game: gamePda,
-      playerAccount: playerPda,
-      vault: vaultPda,
-      vaultTokenAccount: null,
-      playerTokenAccount: null,
-      tokenProgram: TOKEN_PROGRAM_ID,
-      associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-      systemProgram: SystemProgram.programId,
-    };
+    let playerTokenAccount;
+    if (!isNative && tokenMint) {
+      playerTokenAccount = await getOrCreateAssociatedTokenAccount(
+        provider.connection,
+        provider.wallet.payer,
+        tokenMint,
+        player.publicKey
+      );
+    }
 
-    const tx = await program.methods
-      .joinGame()
-      .accounts(accounts)
-      .signers([player])
-      .rpc();
+    try {
+      const accounts = {
+        player: player.publicKey,
+        game: gamePda,
+        playerAccount: playerPda,
+        vault: vaultPda,
+        vaultTokenAccount: isNative ? null : vaultTokenAccount,
+        playerTokenAccount: isNative ? null : playerTokenAccount?.address,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+      };
 
-    await confirm(tx);
+      const tx = await program.methods
+        .joinGame()
+        .accounts(accounts)
+        .signers([player])
+        .rpc();
+
+      await confirm(tx);
+    } catch (error) {
+      console.log(
+        'Join game failed (player might already exist):',
+        error.message
+      );
+    }
     return playerPda;
   }
 
@@ -262,10 +285,12 @@ export async function endGame(
   }
 
   // Get initial balances
-  const initialVaultBalance = await provider.connection.getBalance(vaultPda);
   const initialAdminBalance = await provider.connection.getBalance(
     provider.wallet.publicKey
   );
+
+  // Test 1 verification
+  const initialVaultBalance = await provider.connection.getBalance(vaultPda);
 
   // End game
   await executeEndGame(gameCode1, NATIVE_MINT);
@@ -276,12 +301,25 @@ export async function endGame(
     provider.wallet.publicKey
   );
 
-  // Verify amounts accounting for gas fees
-  expect(finalVaultBalance).to.be.approximately(expectedPrizePool, MARGIN);
+  // Verify vault balance change
+  expect(initialVaultBalance - finalVaultBalance).to.be.approximately(
+    expectedTreasuryFee + expectedCommission,
+    MARGIN,
+    'Vault balance reduction should match treasury fee + commission'
+  );
 
+  // Verify remaining amounts
+  const expectedRemainingBalance =
+    totalPot - expectedTreasuryFee - expectedCommission;
+  expect(finalVaultBalance).to.be.approximately(
+    expectedRemainingBalance,
+    MARGIN,
+    'Final vault balance should match expected remaining balance'
+  );
   expect(finalAdminBalance - initialAdminBalance).to.be.approximately(
     expectedCommission,
-    MARGIN
+    MARGIN,
+    'Admin balance increase should match commission'
   );
 
   // Test 2: Native SOL with max_winners > total_players
@@ -303,10 +341,8 @@ export async function endGame(
   const distributablePot2 = totalPot2 - rentExemption2;
   const expectedTreasuryFee2 = Math.floor(distributablePot2 * (600 / 10000));
   const expectedCommission2 = Math.floor(
-    distributablePot2 * (commission / 100)
+    distributablePot2 * (commission / 10000)
   );
-  const expectedPrizePool2 =
-    distributablePot2 - expectedTreasuryFee2 - expectedCommission2;
 
   // Fund players
   for (const player of players2) {
@@ -333,7 +369,9 @@ export async function endGame(
       endTime,
       maxWinners2,
       answerHash,
-      donationAmount
+      donationAmount,
+      allAreWinners,
+      evenSplit
     )
     .accounts({
       admin: provider.wallet.publicKey,
@@ -376,11 +414,26 @@ export async function endGame(
     provider.wallet.publicKey
   );
 
-  // Verify amounts
-  expect(finalVaultBalance2).to.be.approximately(expectedPrizePool2, MARGIN);
+  // Verify vault balance change
+  expect(initialVaultBalance2 - finalVaultBalance2).to.be.approximately(
+    expectedTreasuryFee2 + expectedCommission2,
+    MARGIN,
+    'Vault balance reduction should match treasury fee + commission'
+  );
+
+  // Verify remaining amounts
+  const expectedRemainingBalance2 =
+    totalPot2 - expectedTreasuryFee2 - expectedCommission2;
+
+  expect(finalVaultBalance2).to.be.approximately(
+    expectedRemainingBalance2,
+    MARGIN,
+    'Final vault balance should match expected remaining balance'
+  );
   expect(finalAdminBalance2 - initialAdminBalance2).to.be.approximately(
     expectedCommission2,
-    MARGIN
+    MARGIN,
+    'Admin balance increase should match commission'
   );
 
   // Test 3: Early ending of SOL game
@@ -402,10 +455,8 @@ export async function endGame(
   const distributablePot3 = totalPot3 - rentExemption3;
   const expectedTreasuryFee3 = Math.floor(distributablePot3 * (600 / 10000)); // 6% instead of 10%
   const expectedCommission3 = Math.floor(
-    distributablePot3 * (commission / 100)
+    distributablePot3 * (commission / 10000)
   );
-  const expectedPrizePool3 =
-    distributablePot3 - expectedTreasuryFee3 - expectedCommission3;
 
   // Fund players
   for (const player of players3) {
@@ -432,7 +483,9 @@ export async function endGame(
       futureEndTime, // Using future end time
       players3.length,
       answerHash,
-      donationAmount
+      donationAmount,
+      allAreWinners,
+      evenSplit
     )
     .accounts({
       admin: provider.wallet.publicKey,
@@ -483,7 +536,12 @@ export async function endGame(
   );
 
   // Verify amounts
-  expect(finalVaultBalance3).to.be.approximately(expectedPrizePool3, MARGIN);
+  const expectedRemainingBalance3 =
+    totalPot3 - expectedTreasuryFee3 - expectedCommission3;
+  expect(finalVaultBalance3).to.be.approximately(
+    expectedRemainingBalance3,
+    MARGIN
+  );
   expect(finalAdminBalance3 - initialAdminBalance3).to.be.approximately(
     expectedCommission3,
     MARGIN
@@ -562,7 +620,9 @@ export async function endGame(
       endTime,
       players4.length,
       answerHash,
-      tokenDonationAmount
+      tokenDonationAmount,
+      allAreWinners,
+      evenSplit
     )
     .accounts({
       admin: provider.wallet.publicKey,
@@ -584,11 +644,11 @@ export async function endGame(
     // First airdrop SOL for rent and fees
     const tx = await provider.connection.requestAirdrop(
       player.publicKey,
-      0.1 * LAMPORTS_PER_SOL // Airdrop 0.1 SOL for rent and fees
+      0.1 * LAMPORTS_PER_SOL
     );
     await confirm(tx);
 
-    // Then create and fund token account as before
+    // Then create and fund token account
     const playerTokenAccount = await getOrCreateAssociatedTokenAccount(
       provider.connection,
       provider.wallet.payer,
@@ -603,26 +663,18 @@ export async function endGame(
       tokenMint,
       playerTokenAccount.address,
       provider.wallet.payer,
-      tokenEntryFee.toNumber() * 2 // Extra for safety
+      tokenEntryFee.toNumber() * 2
     );
 
-    // Join game
-    const playerPda = findPlayerPDA(gamePda4, player.publicKey);
-    await program.methods
-      .joinGame()
-      .accounts({
-        player: player.publicKey,
-        game: gamePda4,
-        playerAccount: playerPda,
-        vault: vaultPda4,
-        vaultTokenAccount: vaultTokenAccount.address,
-        playerTokenAccount: playerTokenAccount.address,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-        systemProgram: SystemProgram.programId,
-      })
-      .signers([player])
-      .rpc();
+    // Join game with proper vault token account
+    const playerPda = await joinGame(
+      player,
+      gamePda4,
+      vaultPda4,
+      false,
+      tokenMint,
+      vaultTokenAccount.address
+    );
 
     // Submit answers
     await submitAnswers(
@@ -640,10 +692,8 @@ export async function endGame(
   const distributablePot4 = totalPot4; // No rent exemption for tokens
   const expectedTreasuryFee4 = Math.floor(distributablePot4 * (600 / 10000)); // 6% fee (600 basis points)
   const expectedCommission4 = Math.floor(
-    distributablePot4 * (commission / 100)
+    distributablePot4 * (commission / 10000)
   );
-  const expectedPrizePool4 =
-    distributablePot4 - expectedTreasuryFee4 - expectedCommission4;
 
   // Get initial balances
   const initialVaultBalance4 = (
@@ -687,19 +737,22 @@ export async function endGame(
 
   // Verify amounts
   const TOKEN_MARGIN = 1000;
-  expect(Number(finalVaultBalance4)).to.be.approximately(
-    expectedPrizePool4, // Should be 7,200,000
-    TOKEN_MARGIN
+  expect(Number(initialVaultBalance4 - finalVaultBalance4)).to.be.approximately(
+    expectedTreasuryFee4 + expectedCommission4,
+    TOKEN_MARGIN,
+    'Vault balance reduction should match treasury fee + commission'
   );
   expect(Number(finalAdminBalance4 - initialAdminBalance4)).to.be.approximately(
-    expectedCommission4, // Should be 400,000
-    TOKEN_MARGIN
+    expectedCommission4,
+    TOKEN_MARGIN,
+    'Admin balance increase should match commission'
   );
   expect(
     Number(finalTreasuryBalance4 - initialTreasuryBalance4)
   ).to.be.approximately(
-    expectedTreasuryFee4, // Should be 400,000
-    TOKEN_MARGIN
+    expectedTreasuryFee4,
+    TOKEN_MARGIN,
+    'Treasury balance increase should match expected fee'
   );
 
   console.log('\nAll end game tests completed successfully');

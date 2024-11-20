@@ -186,7 +186,9 @@ export async function submitAnswers(
         gameEndTime,
         5,
         validAnswerHash,
-        new anchor.BN(0)
+        new anchor.BN(0),
+        false, // allAreWinners
+        false // evenSplit
       )
       .accounts({
         admin: provider.wallet.publicKey,

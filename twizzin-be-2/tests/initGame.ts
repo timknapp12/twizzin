@@ -25,13 +25,15 @@ export async function initializeGame(
   const validName = 'Test Game';
   const validGameCode = 'GAME1';
   const validEntryFee = new anchor.BN(0.1 * LAMPORTS_PER_SOL);
-  const validCommission = 5;
+  const validCommission = 500;
   const now = Math.floor(Date.now() / 1000);
   const validStartTime = new anchor.BN(now + 3600);
   const validEndTime = new anchor.BN(now + 7200);
   const validMaxWinners = 5;
   const validAnswerHash = Array(32).fill(1);
   const validDonationAmount = new anchor.BN(0.5 * LAMPORTS_PER_SOL);
+  const allAreWinners = false;
+  const evenSplit = false;
 
   // Helper function for program method calls
   const executeInitGame = async (params: {
@@ -47,6 +49,8 @@ export async function initializeGame(
     donationAmount?: anchor.BN;
     admin?: anchor.web3.Keypair;
     adminTokenAccount?: PublicKey | null; // Made optional to handle native SOL case
+    allAreWinners?: boolean;
+    evenSplit?: boolean;
   }) => {
     const adminPubkey = params.admin
       ? params.admin.publicKey
@@ -94,7 +98,9 @@ export async function initializeGame(
         params.endTime,
         params.maxWinners,
         params.answerHash,
-        params.donationAmount || new anchor.BN(0)
+        params.donationAmount || new anchor.BN(0),
+        params.allAreWinners || false,
+        params.evenSplit || false
       )
       .accounts(accounts)
       .signers(adminSigner)
@@ -283,7 +289,9 @@ export async function initializeGame(
         validEndTime,
         validMaxWinners,
         validAnswerHash,
-        new anchor.BN(0)
+        new anchor.BN(0),
+        allAreWinners,
+        evenSplit
       )
       .accounts({
         admin: provider.wallet.publicKey,
@@ -369,7 +377,9 @@ export async function initializeGame(
         validEndTime,
         validMaxWinners,
         validAnswerHash,
-        validDonationAmount
+        validDonationAmount,
+        allAreWinners,
+        evenSplit
       )
       .accounts({
         admin: provider.wallet.publicKey,
@@ -501,7 +511,9 @@ export async function initializeGame(
         validEndTime,
         validMaxWinners,
         validAnswerHash,
-        validDonationAmount
+        validDonationAmount,
+        allAreWinners,
+        evenSplit
       )
       .accounts({
         admin: provider.wallet.publicKey,

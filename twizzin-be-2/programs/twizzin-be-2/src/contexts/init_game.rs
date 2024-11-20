@@ -13,12 +13,6 @@ use crate::state::{Game, GameCreated, MAX_GAME_CODE_LENGTH, MAX_NAME_LENGTH};
 #[instruction(
     name: String,
     game_code: String,
-    entry_fee: u64,
-    commission: u8,
-    start_time: i64,
-    end_time: i64,
-    max_winners: u8,
-    donation_amount: u64
 )]
 pub struct InitGame<'info> {
     #[account(mut)]

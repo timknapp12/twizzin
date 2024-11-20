@@ -21,7 +21,7 @@ impl Winners {
         1 +                              // num_winners
         1 +                              // bump
         4 +                              // vec len
-        (32 + 1 + 8 + 1) * 255; // max possible winners (pub key + rank + amount + claimed)
+        (32 + 1 + 8 + 1) * 100; // max possible winners (pub key + rank + amount + claimed)
 }
 
 #[event]

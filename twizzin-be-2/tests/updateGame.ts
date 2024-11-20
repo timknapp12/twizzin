@@ -23,13 +23,15 @@ export async function updateGame(
   // Test parameters
   const newName = 'Updated Game';
   const newEntryFee = new anchor.BN(0.2 * LAMPORTS_PER_SOL);
-  const newCommission = 7;
+  const newCommission = 700;
   const now = Math.floor(Date.now() / 1000);
   const newStartTime = new anchor.BN(now + 4800);
   const newEndTime = new anchor.BN(now + 9600);
   const validMaxWinners = 3;
   const newAnswerHash = Array(32).fill(2);
   const gameCode = 'UPDATEGAME1';
+  const allAreWinners = false;
+  const evenSplit = false;
 
   // Helper function for program method calls
   const executeUpdateGame = async (
@@ -47,6 +49,8 @@ export async function updateGame(
       tokenMint?: PublicKey;
       adminTokenAccount?: PublicKey | null;
       vaultTokenAccount?: PublicKey | null;
+      allAreWinners?: boolean;
+      evenSplit?: boolean;
     }
   ) => {
     const gameState = await program.account.game.fetch(game);
@@ -113,7 +117,9 @@ export async function updateGame(
         params.endTime === undefined ? null : params.endTime,
         params.maxWinners === undefined ? null : params.maxWinners,
         params.answerHash === undefined ? null : params.answerHash,
-        params.donationAmount === undefined ? null : params.donationAmount
+        params.donationAmount === undefined ? null : params.donationAmount,
+        params.allAreWinners === undefined ? null : params.allAreWinners,
+        params.evenSplit === undefined ? null : params.evenSplit
       )
       .accounts(accounts)
       .signers(adminSigner)
@@ -172,7 +178,9 @@ export async function updateGame(
       new anchor.BN(now + 7200),
       5,
       Array(32).fill(1),
-      new anchor.BN(0)
+      new anchor.BN(0),
+      false, // allAreWinners
+      false // evenSplit
     )
     .accounts({
       admin: provider.wallet.publicKey,
@@ -421,7 +429,9 @@ export async function updateGame(
         new anchor.BN(now + 7200),
         5,
         Array(32).fill(1),
-        new anchor.BN(0)
+        new anchor.BN(0),
+        false, // allAreWinners
+        false // evenSplit
       )
       .accounts({
         admin: provider.wallet.publicKey,

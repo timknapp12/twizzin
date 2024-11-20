@@ -22,7 +22,6 @@ export async function joinGame(
 
   // Test parameters for game creation
   const validName = 'Test Game';
-  const validGameCode = 'GAME1';
   const validEntryFee = new anchor.BN(0.1 * LAMPORTS_PER_SOL);
   const validCommission = 5;
   const now = Math.floor(Date.now() / 1000);
@@ -196,7 +195,9 @@ export async function joinGame(
         endTime,
         validMaxWinners,
         validAnswerHash,
-        new anchor.BN(0)
+        new anchor.BN(0),
+        false, // allAreWinners
+        false // evenSplit
       )
       .accounts({
         admin: provider.wallet.publicKey,

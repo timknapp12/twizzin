@@ -59,7 +59,9 @@ export async function startGame(
       new anchor.BN(now + 7200),
       5,
       Array(32).fill(1),
-      new anchor.BN(0)
+      new anchor.BN(0),
+      false, // allAreWinners
+      false // evenSplit
     )
     .accounts({
       admin: provider.wallet.publicKey,

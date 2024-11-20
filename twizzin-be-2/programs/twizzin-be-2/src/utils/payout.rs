@@ -61,7 +61,6 @@ pub fn calculate_payouts(
     Ok((treasury_fee, admin_commission, prize_pool, per_winner))
 }
 
-// cargo test payout -- --nocapture
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -316,6 +315,8 @@ mod tests {
         assert_eq!(result.3, result_with_different_rent.3);
     }
 }
+
+// cargo test payout -- --nocapture
 
 // Client-side winner determination
 // async function determineWinners(gameAddress: PublicKey, maxWinners: number) {
