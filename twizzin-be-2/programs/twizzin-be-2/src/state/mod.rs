@@ -9,3 +9,6 @@ pub use player::*;
 
 pub mod answers;
 pub use answers::*;
+
+pub mod winners;
+pub use winners::*;

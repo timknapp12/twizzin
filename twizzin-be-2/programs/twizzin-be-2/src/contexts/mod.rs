@@ -24,3 +24,6 @@ pub use end_game::*;
 
 pub mod claim;
 pub use claim::*;
+
+pub mod declare_winners;
+pub use declare_winners::*;
