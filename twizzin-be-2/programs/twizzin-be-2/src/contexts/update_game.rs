@@ -58,12 +58,14 @@ impl<'info> UpdateGame<'info> {
         &mut self,
         new_name: Option<String>,
         new_entry_fee: Option<u64>,
-        new_commission: Option<u8>,
+        new_commission: Option<u16>,
         new_start_time: Option<i64>,
         new_end_time: Option<i64>,
         new_max_winners: Option<u8>,
         new_answer_hash: Option<[u8; 32]>,
         new_donation_amount: Option<u64>,
+        new_all_are_winners: Option<bool>,
+        new_even_split: Option<bool>,
     ) -> Result<()> {
         let game = &mut self.game;
 
@@ -107,6 +109,16 @@ impl<'info> UpdateGame<'info> {
         // Update answer hash if provided
         if let Some(answer_hash) = new_answer_hash {
             game.answer_hash = answer_hash;
+        }
+
+        // Update all are winners if provided
+        if let Some(all_are_winners) = new_all_are_winners {
+            game.all_are_winners = all_are_winners;
+        }
+
+        // Update even split if provided
+        if let Some(even_split) = new_even_split {
+            game.even_split = even_split;
         }
 
         // Handle donation amount changes if provided

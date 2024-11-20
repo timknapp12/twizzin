@@ -10,7 +10,7 @@ pub struct Game {
     pub game_code: String,
     pub token_mint: Pubkey,
     pub entry_fee: u64,
-    pub commission: u8,
+    pub commission: u16, // basis points (bps)
     pub bump: u8,
     pub vault_bump: u8,
     pub start_time: i64,
@@ -20,6 +20,8 @@ pub struct Game {
     pub answer_hash: [u8; 32], // Single merkle root of all answers
     pub donation_amount: u64,
     pub is_native: bool,
+    pub all_are_winners: bool,
+    pub even_split: bool,
 }
 
 impl Space for Game {
@@ -29,7 +31,7 @@ impl Space for Game {
         4 + MAX_GAME_CODE_LENGTH + // game code string
         32 +                       // token mint
         8 +                        // entry fee
-        1 +                        // commission
+        2 +                        // commission
         1 +                        // bump
         1 +                        // vault bump
         8 +                        // start time
@@ -38,7 +40,9 @@ impl Space for Game {
         4 +                        // total players
         32 +                       // answer hash (merkle root)
         8 +                        // donation_amount
-        1; // is_native
+        1 +                        // is_native
+        1 +                        // all_are_winners
+        1; // even_split
 }
 
 #[event]
@@ -73,9 +77,7 @@ pub struct GameStarted {
 pub struct GameEnded {
     pub game: Pubkey,
     pub total_pot: u64,
-    pub prize_pool: u64,
     pub treasury_fee: u64,
     pub admin_commission: u64,
-    pub per_winner: u64,
     pub end_time: i64,
 }

@@ -72,12 +72,14 @@ impl<'info> InitGame<'info> {
         name: String,
         game_code: String,
         entry_fee: u64,
-        commission: u8,
+        commission: u16,
         start_time: i64,
         end_time: i64,
         max_winners: u8,
         answer_hash: [u8; 32],
         donation_amount: u64,
+        all_are_winners: bool,
+        even_split: bool,
         bumps: &InitGameBumps,
     ) -> Result<()> {
         require!(
@@ -157,6 +159,8 @@ impl<'info> InitGame<'info> {
             answer_hash,
             donation_amount,
             is_native,
+            all_are_winners,
+            even_split,
         });
 
         Ok(())
