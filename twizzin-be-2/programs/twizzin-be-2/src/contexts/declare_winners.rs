@@ -1,5 +1,5 @@
 use crate::errors::ErrorCode;
-use crate::state::{Game, PlayerAccount, WinnerInfo, Winners, WinnersDeclared};
+use crate::state::{Game, PlayerAccount, WinnerInfo, Winners, WinnersDeclared, MAX_WINNERS};
 use crate::utils::prize::calculate_prizes;
 use anchor_lang::prelude::*;
 
@@ -41,9 +41,12 @@ impl<'info> DeclareWinners<'info> {
 
         // Validate winner count based on game settings
         let expected_winners = if game.all_are_winners {
-            game.total_players as u8
+            std::cmp::min(game.total_players as u8, MAX_WINNERS)
         } else {
-            std::cmp::min(game.max_winners, game.total_players as u8)
+            std::cmp::min(
+                game.max_winners,
+                std::cmp::min(game.total_players as u8, MAX_WINNERS),
+            )
         };
 
         require!(
