@@ -18,6 +18,8 @@ pub enum ErrorCode {
     GameCodeTooLong,
     #[msg("Max winners must be at least 1")]
     MaxWinnersTooLow,
+    #[msg("Max winners must be less than or equal to 200")]
+    MaxWinnersTooHigh,
     #[msg("Start time is greater than end time")]
     InvalidTimeRange,
     #[msg("Token mint is required")]
