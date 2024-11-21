@@ -226,7 +226,8 @@ export async function updateGame(
     expectError(error, ['InvalidTimeRange']);
   }
 
-  // Test 3: Max winners too low
+  // Test 3: Max winners
+  // Too low
   console.log('Testing max winners too low...');
   try {
     await executeUpdateGame(gamePda, {
@@ -238,6 +239,19 @@ export async function updateGame(
     throw new Error('Should have failed with max winners too low');
   } catch (error) {
     expectError(error, ['MaxWinnersTooLow']);
+  }
+
+  // Max winners too high
+  console.log('Testing max winners too high...');
+  try {
+    await executeUpdateGame(gamePda, {
+      maxWinners: 201, // max is 200
+      tokenMint: NATIVE_MINT,
+      adminTokenAccount: null,
+    });
+    throw new Error('Should have failed with max winners too high');
+  } catch (error) {
+    expectError(error, ['MaxWinnersTooHigh']);
   }
 
   // Test 4: Unauthorized update
