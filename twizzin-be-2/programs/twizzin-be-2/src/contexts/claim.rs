@@ -2,13 +2,14 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::{Token, TokenAccount};
 
 use crate::errors::ErrorCode;
-use crate::state::{Game, PlayerAccount};
+use crate::state::{Game, PlayerAccount, Winners};
 
 #[event]
 pub struct ClaimEvent {
-    pub player: Pubkey,
-    pub game: Pubkey,
-    pub prize_amount: u64,
+   pub player: Pubkey,
+   pub game: Pubkey,
+   pub prize_amount: u64,
+   pub rank: u8,
 }
 
 #[derive(Accounts)]
@@ -22,6 +23,13 @@ pub struct Claim<'info> {
        bump = game.bump
    )]
    pub game: Account<'info, Game>,
+
+   #[account(
+       mut,
+       seeds = [b"winners", game.key().as_ref()],
+       bump = winners.bump
+   )]
+   pub winners: Account<'info, Winners>,
 
    #[account(
        mut,
@@ -64,10 +72,21 @@ pub struct Claim<'info> {
 }
 
 impl<'info> Claim<'info> {
-   pub fn claim(&mut self, prize_amount: u64) -> Result<()> {
+   pub fn claim(&mut self) -> Result<()> {
        // Verify game has ended
        let current_time = Clock::get()?.unix_timestamp;
        require!(current_time >= self.game.end_time, ErrorCode::GameNotEnded);
+
+       // Find winner info and verify not claimed
+       let winner_info = self.winners.winners
+           .iter_mut()
+           .find(|w| w.player == self.player.key())
+           .ok_or(ErrorCode::NotAWinner)?;
+
+       require!(!winner_info.claimed, ErrorCode::PrizeAlreadyClaimed);
+
+       let prize_amount = winner_info.prize_amount;
+       let rank = winner_info.rank;
 
        // Transfer prize
        if prize_amount > 0 {
@@ -105,12 +124,16 @@ impl<'info> Claim<'info> {
                );
                anchor_spl::token::transfer(transfer_ctx, prize_amount)?;
            }
+
+           // Mark as claimed
+           winner_info.claimed = true;
        }
 
        emit!(ClaimEvent {
            player: self.player.key(),
            game: self.game.key(),
            prize_amount,
+           rank,
        });
 
        Ok(())

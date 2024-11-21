@@ -72,4 +72,8 @@ pub enum ErrorCode {
     DuplicateWinner,
     #[msg("Provided winner is not a player in this game")]
     WinnerNotPlayer,
+    #[msg("Player is not a winner")]
+    NotAWinner,
+    #[msg("Prize already claimed")]
+    PrizeAlreadyClaimed,
 }

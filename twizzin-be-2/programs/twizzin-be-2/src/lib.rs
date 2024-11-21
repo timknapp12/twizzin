@@ -120,7 +120,7 @@ pub mod twizzin_be_2 {
             .declare_winners(winner_pubkeys, &ctx.bumps, remaining_accounts)
     }
 
-    pub fn claim(ctx: Context<Claim>, prize_amount: u64) -> Result<()> {
-        ctx.accounts.claim(prize_amount)
+    pub fn claim(ctx: Context<Claim>) -> Result<()> {
+        ctx.accounts.claim()
     }
 }
