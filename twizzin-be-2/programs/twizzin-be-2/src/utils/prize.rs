@@ -215,3 +215,29 @@ mod tests {
 }
 
 // cargo test prize -- --nocapture
+
+// Client-side winner determination
+// async function determineWinners(gameAddress: PublicKey, maxWinners: number) {
+//     // Find all player accounts for this game
+//     const playerAccounts = await program.account.playerAccount.all([
+//       {
+//         memcmp: {
+//           offset: 8, // after discriminator
+//           bytes: gameAddress.toBase58(),
+//         },
+//       },
+//     ]);
+
+//     // Sort by num_correct (descending) and finish_time (ascending)
+//     const sortedPlayers = playerAccounts
+//       .filter(p => p.account.finishedTime > 0) // Only include players who submitted
+//       .sort((a, b) => {
+//         if (b.account.numCorrect !== a.account.numCorrect) {
+//           return b.account.numCorrect - a.account.numCorrect;
+//         }
+//         return a.account.finishedTime - b.account.finishedTime;
+//       });
+
+//     // Return top winners
+//     return sortedPlayers.slice(0, maxWinners);
+//   }

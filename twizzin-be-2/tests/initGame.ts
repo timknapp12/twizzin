@@ -179,6 +179,26 @@ export async function initializeGame(
     expectError(error, ['MaxWinnersTooLow']);
   }
 
+  // Test: Max winners too high
+  console.log('Testing max winners too high...');
+  try {
+    await executeInitGame({
+      name: validName,
+      gameCode: validGameCode,
+      entryFee: validEntryFee,
+      commission: validCommission,
+      startTime: validStartTime,
+      endTime: validEndTime,
+      maxWinners: 201, // max is 200
+      answerHash: validAnswerHash,
+      tokenMint: NATIVE_MINT,
+      adminTokenAccount: null,
+    });
+    throw new Error('Should have failed with max winners too high');
+  } catch (error) {
+    expectError(error, ['MaxWinnersTooHigh']);
+  }
+
   // Test 4: Successful native SOL game creation
   console.log('Testing successful native SOL game creation...');
   try {

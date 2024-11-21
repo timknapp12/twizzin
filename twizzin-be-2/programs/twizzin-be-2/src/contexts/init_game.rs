@@ -7,7 +7,7 @@ use anchor_spl::{
 use std::str::FromStr;
 
 use crate::errors::ErrorCode;
-use crate::state::{Game, GameCreated, MAX_GAME_CODE_LENGTH, MAX_NAME_LENGTH};
+use crate::state::{Game, GameCreated, MAX_GAME_CODE_LENGTH, MAX_NAME_LENGTH, MAX_WINNERS};
 
 #[derive(Accounts)]
 #[instruction(
@@ -85,6 +85,7 @@ impl<'info> InitGame<'info> {
             ErrorCode::GameCodeTooLong
         );
         require!(max_winners > 0, ErrorCode::MaxWinnersTooLow);
+        require!(max_winners <= MAX_WINNERS, ErrorCode::MaxWinnersTooHigh);
         require!(start_time < end_time, ErrorCode::InvalidTimeRange);
 
         let is_native = self.token_mint.key() == Pubkey::from_str(SOL_ADDRESS).unwrap();
