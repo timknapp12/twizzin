@@ -91,7 +91,7 @@ describe('twizzin-be-2', () => {
   it('Declares winners', async () => {
     await declareWinners(program, provider, confirm);
   });
-  // it('Claims a prize', async () => {
-  //   await claim(program, provider, confirm);
-  // });
+  it('Claims a prize', async () => {
+    await claim(program, provider, confirm);
+  });
 });
