@@ -81,3 +81,10 @@ pub struct GameEnded {
     pub admin_commission: u64,
     pub end_time: i64,
 }
+
+#[event]
+pub struct GameClosed {
+    pub game: Pubkey,
+    pub admin: Pubkey,
+    pub recovered_lamports: u64,
+}

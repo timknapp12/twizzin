@@ -123,4 +123,12 @@ pub mod twizzin_be_2 {
     pub fn claim(ctx: Context<Claim>) -> Result<()> {
         ctx.accounts.claim()
     }
+
+    pub fn close_game(ctx: Context<CloseGame>) -> Result<()> {
+        ctx.accounts.close_game()
+    }
+
+    pub fn close_player_account(ctx: Context<ClosePlayerAccount>) -> Result<()> {
+        ctx.accounts.close_player_account()
+    }
 }

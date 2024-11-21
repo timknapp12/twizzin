@@ -76,4 +76,8 @@ pub enum ErrorCode {
     NotAWinner,
     #[msg("Prize already claimed")]
     PrizeAlreadyClaimed,
+    #[msg("Unclaimed prizes")]
+    UnclaimedPrizes,
+    #[msg("Cannot close winner account")]
+    CannotCloseWinnerAccount,
 }

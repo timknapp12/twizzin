@@ -27,3 +27,9 @@ pub use claim::*;
 
 pub mod declare_winners;
 pub use declare_winners::*;
+
+pub mod close_game;
+pub use close_game::*;
+
+pub mod close_player_account;
+pub use close_player_account::*;

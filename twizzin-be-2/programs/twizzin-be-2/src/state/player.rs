@@ -28,3 +28,9 @@ pub struct PlayerJoined {
     pub player: Pubkey,
     pub join_time: i64,
 }
+
+#[event]
+pub struct PlayerAccountClosed {
+    pub game: Pubkey,
+    pub player: Pubkey,
+}
