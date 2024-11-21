@@ -1,4 +1,7 @@
 use anchor_lang::prelude::*;
+
+pub const MAX_WINNERS: u8 = 200;
+
 #[account]
 pub struct Winners {
     pub game: Pubkey,             // Game this winners account belongs to
@@ -21,7 +24,7 @@ impl Winners {
         1 +                              // num_winners
         1 +                              // bump
         4 +                              // vec len
-        (32 + 1 + 8 + 1) * 100; // max possible winners (pub key + rank + amount + claimed)
+        (32 + 1 + 8 + 1) * MAX_WINNERS as usize; // max possible winners (pub key + rank + amount + claimed)
 }
 
 #[event]

@@ -1,5 +1,5 @@
 use crate::errors::ErrorCode;
-use crate::state::{Game, GameUpdated, MAX_NAME_LENGTH};
+use crate::state::{Game, GameUpdated, MAX_NAME_LENGTH, MAX_WINNERS};
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
@@ -103,6 +103,7 @@ impl<'info> UpdateGame<'info> {
         // Update max winners if provided with enhanced validation
         if let Some(max_winners) = new_max_winners {
             require!(max_winners >= 1, ErrorCode::MaxWinnersTooLow);
+            require!(max_winners <= MAX_WINNERS, ErrorCode::MaxWinnersTooHigh);
             game.max_winners = max_winners;
         }
 
