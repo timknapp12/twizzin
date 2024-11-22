@@ -11,6 +11,8 @@ import { submitAnswers } from './submitAnswers';
 import { endGame } from './endGame';
 import { declareWinners } from './declareWinners';
 import { claim } from './claim';
+import { closeGame } from './closeGame';
+import { closePlayerAccount } from './closePlayerAccount';
 import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 
 let configPubkey: PublicKey;
@@ -93,5 +95,11 @@ describe('twizzin-be-2', () => {
   });
   it('Claims a prize', async () => {
     await claim(program, provider, confirm);
+  });
+  it('Closes a game', async () => {
+    await closeGame(program, provider, confirm);
+  });
+  it('Closes a player account', async () => {
+    await closePlayerAccount(program, provider, confirm);
   });
 });

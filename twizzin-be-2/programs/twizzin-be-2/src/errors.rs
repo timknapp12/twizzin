@@ -14,7 +14,7 @@ pub enum ErrorCode {
     AuthorityAddressBlank,
     #[msg("Name has to be between 1 and 32 characters")]
     NameTooLong,
-    #[msg("Game code has to be between 1 and 6 characters")]
+    #[msg("Game code has to be between 1 and 16 characters")]
     GameCodeTooLong,
     #[msg("Max winners must be at least 1")]
     MaxWinnersTooLow,
@@ -76,4 +76,8 @@ pub enum ErrorCode {
     NotAWinner,
     #[msg("Prize already claimed")]
     PrizeAlreadyClaimed,
+    #[msg("Unclaimed prizes")]
+    UnclaimedPrizes,
+    #[msg("Cannot close winner account")]
+    CannotCloseWinnerAccount,
 }
