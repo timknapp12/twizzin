@@ -9,9 +9,19 @@ export async function updateProgramConfig(
   provider: anchor.AnchorProvider,
   confirm: (signature: string) => Promise<string>,
   configPubkey: PublicKey,
-  currentTreasuryPubkey: PublicKey
+  authorityKeypair: anchor.web3.Keypair
 ) {
   console.log('Starting program config update tests');
+
+  console.log('\nDEBUG: Authority Information');
+  console.log(
+    'Authority Keypair Public Key:',
+    authorityKeypair.publicKey.toBase58()
+  );
+  console.log(
+    'Provider Wallet Public Key:',
+    provider.wallet.publicKey.toBase58()
+  );
 
   // Helper function for error checking
   const expectError = (error: any, errorTypes: string[]) => {
@@ -35,6 +45,11 @@ export async function updateProgramConfig(
     authority: PublicKey,
     additionalSigners: anchor.web3.Keypair[] = []
   ) => {
+    console.log('\nDEBUG: Update Transaction Parameters');
+    console.log('Treasury:', treasury?.toBase58() ?? 'null');
+    console.log('Fee:', fee);
+    console.log('Authority:', authority.toBase58());
+
     const [configPda] = PublicKey.findProgramAddressSync(
       [Buffer.from('config')],
       program.programId
@@ -43,10 +58,10 @@ export async function updateProgramConfig(
     return program.methods
       .updateConfig(treasury, fee)
       .accounts({
-        authority,
+        authority: authorityKeypair.publicKey,
         config: configPda,
       })
-      .signers(additionalSigners)
+      .signers([authorityKeypair, ...additionalSigners])
       .rpc();
   };
 
@@ -79,28 +94,35 @@ export async function updateProgramConfig(
   try {
     // Update fee only
     const newFee = 800;
-    await executeUpdateConfig(null, newFee, provider.wallet.publicKey);
+    const feeUpdateTx = await executeUpdateConfig(
+      null,
+      newFee,
+      authorityKeypair.publicKey
+    );
+    await confirm(feeUpdateTx);
     await verifyConfigState(undefined, newFee);
     console.log('Treasury fee update test passed');
 
     // Update treasury only
     const newTreasuryPubkey = anchor.web3.Keypair.generate().publicKey;
-    await executeUpdateConfig(
+    const treasuryUpdateTx = await executeUpdateConfig(
       newTreasuryPubkey,
       null,
-      provider.wallet.publicKey
+      authorityKeypair.publicKey
     );
+    await confirm(treasuryUpdateTx);
     await verifyConfigState(newTreasuryPubkey, undefined);
     console.log('Treasury address update test passed');
 
     // Update both fields
     const newerTreasuryPubkey = anchor.web3.Keypair.generate().publicKey;
     const newerFee = 600;
-    await executeUpdateConfig(
+    const bothUpdateTx = await executeUpdateConfig(
       newerTreasuryPubkey,
       newerFee,
-      provider.wallet.publicKey
+      authorityKeypair.publicKey
     );
+    await confirm(bothUpdateTx);
     await verifyConfigState(newerTreasuryPubkey, newerFee);
     console.log('Both fields update test passed');
   } catch (error) {
@@ -108,63 +130,66 @@ export async function updateProgramConfig(
     throw error;
   }
 
-  // Test error conditions
-  const testErrorCondition = async (
-    testName: string,
-    treasury: PublicKey | null,
-    fee: number | null,
-    authority: PublicKey,
-    signers: anchor.web3.Keypair[],
-    expectedErrors: string[]
-  ) => {
-    console.log(`Testing ${testName}...`);
-    try {
-      await executeUpdateConfig(treasury, fee, authority, signers);
-      throw new Error(`Should have failed with ${testName}`);
-    } catch (error) {
-      console.log(`${testName} error received:`, error.message);
-      expectError(error, expectedErrors);
-      console.log(`${testName} test passed`);
-    }
-  };
-
   // Test invalid treasury fee
-  await testErrorCondition(
-    'invalid treasury fee',
-    null,
-    1001,
-    provider.wallet.publicKey,
-    [],
-    ['TreasuryFeeTooHigh', '6002', 'Treasury fee too high']
-  );
+  console.log('Testing invalid treasury fee...');
+  try {
+    await executeUpdateConfig(null, 1001, authorityKeypair.publicKey);
+    throw new Error('Should have failed with invalid treasury fee');
+  } catch (error) {
+    console.log('Invalid fee error received:', error.message);
+    expectError(error, ['TreasuryFeeTooHigh', '6002', 'Treasury fee too high']);
+    console.log('Invalid treasury fee test passed');
+  }
 
   // Test zero treasury address
-  await testErrorCondition(
-    'zero treasury address',
-    PublicKey.default,
-    null,
-    provider.wallet.publicKey,
-    [],
-    ['TreasuryAddressBlank', '6003', 'Treasury address is blank']
-  );
+  console.log('Testing zero treasury address...');
+  try {
+    await executeUpdateConfig(
+      PublicKey.default,
+      null,
+      authorityKeypair.publicKey
+    );
+    throw new Error('Should have failed with zero treasury address');
+  } catch (error) {
+    console.log('Zero address error received:', error.message);
+    expectError(error, [
+      'TreasuryAddressBlank',
+      '6003',
+      'Treasury address is blank',
+    ]);
+    console.log('Zero treasury address test passed');
+  }
 
   // Test unauthorized update
+  console.log('Testing unauthorized update...');
   const unauthorizedKeypair = anchor.web3.Keypair.generate();
+
   // Airdrop SOL to unauthorized account
-  const airdropSig = await provider.connection.requestAirdrop(
+  const signature = await provider.connection.requestAirdrop(
     unauthorizedKeypair.publicKey,
     1_000_000_000
   );
-  await provider.connection.confirmTransaction(airdropSig);
+  const latestBlockhash = await provider.connection.getLatestBlockhash();
+  await provider.connection.confirmTransaction({
+    signature,
+    ...latestBlockhash,
+  });
 
-  await testErrorCondition(
-    'unauthorized update',
-    null,
-    500,
-    unauthorizedKeypair.publicKey,
-    [unauthorizedKeypair],
-    ['InvalidAuthority', '6000', 'Invalid authority']
-  );
+  try {
+    await program.methods
+      .updateConfig(null, 500)
+      .accounts({
+        authority: unauthorizedKeypair.publicKey,
+        config: configPubkey,
+      })
+      .signers([unauthorizedKeypair])
+      .rpc();
+    throw new Error('Should have failed with unauthorized update');
+  } catch (error) {
+    console.log('Unauthorized error received:', error.message);
+    expectError(error, ['InvalidAuthority', '6000', 'Invalid authority']);
+    console.log('Unauthorized update test passed');
+  }
 
   console.log('All program config update tests completed successfully');
 }

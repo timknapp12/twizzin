@@ -7,7 +7,8 @@ import { SystemProgram, PublicKey } from '@solana/web3.js';
 export async function initializeProgramConfig(
   program: Program<TwizzinBe2>,
   provider: anchor.AnchorProvider,
-  confirm: (signature: string) => Promise<string>
+  confirm: (signature: string) => Promise<string>,
+  authorityKeypair: anchor.web3.Keypair
 ) {
   console.log('Starting program config initialization test');
 
@@ -32,7 +33,7 @@ export async function initializeProgramConfig(
   ) => {
     const signers = adminSigner ? [adminSigner] : [];
     return program.methods
-      .initConfig(treasury, authority, fee)
+      .initConfig(treasury, fee)
       .accounts({
         admin,
         config: configPda,
@@ -71,6 +72,7 @@ export async function initializeProgramConfig(
     throw new Error('Should have failed with invalid treasury fee');
   } catch (error) {
     console.log('Invalid fee error received:', error.message);
+    console.log('Error details:', error.toString());
     expectError(error, ['TreasuryFeeTooHigh', '6002', 'Treasury fee too high']);
     console.log('Invalid treasury fee test passed');
   }
@@ -134,7 +136,7 @@ export async function initializeProgramConfig(
       treasuryPubkey,
       authorityPubkey,
       treasuryFee,
-      provider.wallet.publicKey
+      authorityKeypair.publicKey
     );
     await confirm(tx);
 

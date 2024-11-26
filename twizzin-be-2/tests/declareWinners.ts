@@ -86,38 +86,11 @@ export async function declareWinners(
     )[0];
   };
 
-  // Create config
-  async function createConfig() {
-    const { configPda } = findPDAs('', provider.wallet.publicKey);
-    try {
-      await program.methods
-        .initConfig(
-          provider.wallet.publicKey,
-          provider.wallet.publicKey,
-          1000 // 10% fee
-        )
-        .accounts({
-          admin: provider.wallet.publicKey,
-          config: configPda,
-          systemProgram: SystemProgram.programId,
-        })
-        .rpc();
-    } catch (error) {
-      console.log(
-        'Config creation failed (might already exist):',
-        error.message
-      );
-    }
-    return configPda;
-  }
-
   // Initialize first game
   const { gamePda, vaultPda, configPda } = findPDAs(
     gameCode1,
     provider.wallet.publicKey
   );
-
-  await createConfig();
 
   const initTx = await program.methods
     .initGame(

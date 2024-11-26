@@ -246,22 +246,6 @@ export async function closePlayerAccount(
     .signers([winningPlayer])
     .rpc();
 
-  // Create config if it doesn't exist
-  console.log('\nEnsuring config exists...');
-  try {
-    await program.methods
-      .initConfig(provider.wallet.publicKey, provider.wallet.publicKey, 1000)
-      .accounts({
-        admin: provider.wallet.publicKey,
-        config: configPda,
-        systemProgram: SystemProgram.programId,
-      })
-      .rpc();
-    console.log('Config initialized');
-  } catch (error) {
-    console.log('Config might already exist:', error.message);
-  }
-
   // End game
   console.log('\nEnding game...');
   await program.methods

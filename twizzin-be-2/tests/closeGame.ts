@@ -178,24 +178,6 @@ export async function closeGame(
     provider.wallet.publicKey
   );
 
-  // Create config if not exists
-  try {
-    await program.methods
-      .initConfig(
-        provider.wallet.publicKey,
-        provider.wallet.publicKey,
-        1000 // 10% fee
-      )
-      .accounts({
-        admin: provider.wallet.publicKey,
-        config: configPda,
-        systemProgram: SystemProgram.programId,
-      })
-      .rpc();
-  } catch (error) {
-    console.log('Config might already exist:', error.message);
-  }
-
   const initTx = await program.methods
     .initGame(
       'Test Game 1',
