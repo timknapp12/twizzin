@@ -2,6 +2,8 @@ use anchor_lang::prelude::*;
 
 #[error_code]
 pub enum ErrorCode {
+    #[msg("Unauthorized program authority")]
+    UnauthorizedProgramAuthority,
     #[msg("Invalid authority")]
     InvalidAuthority,
     #[msg("Invalid fee")]
