@@ -1,6 +1,5 @@
 'use client';
-import { FC, PropsWithChildren, useMemo } from 'react';
-import dynamic from 'next/dynamic';
+import { FC, PropsWithChildren, useMemo, useEffect, useState } from 'react';
 import {
   ConnectionProvider,
   WalletProvider,
@@ -11,6 +10,12 @@ import { PhantomWalletAdapter } from '@solana/wallet-adapter-wallets';
 import { ProgramContextProvider } from '@/contexts/ProgramContext';
 
 const WalletProviders: FC<PropsWithChildren> = ({ children }) => {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const environment = process.env.NEXT_PUBLIC_ENVIRONMENT;
   const isDevnet = environment === 'devnet';
 
@@ -38,6 +43,10 @@ const WalletProviders: FC<PropsWithChildren> = ({ children }) => {
     [endpoint]
   );
 
+  if (!mounted) {
+    return null;
+  }
+
   return (
     <ConnectionProvider endpoint={endpoint} config={connectionConfig}>
       <WalletProvider wallets={wallets} autoConnect>
@@ -49,7 +58,4 @@ const WalletProviders: FC<PropsWithChildren> = ({ children }) => {
   );
 };
 
-// Export with dynamic import to prevent SSR
-export default dynamic(() => Promise.resolve(WalletProviders), {
-  ssr: false,
-});
+export default WalletProviders;
