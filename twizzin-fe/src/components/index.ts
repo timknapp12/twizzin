@@ -11,3 +11,4 @@ export * from './Join';
 // export * from './modals';
 export * from './MenuDropdown';
 export * from './Header';
+export * from './ErrorBoundary';
