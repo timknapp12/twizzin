@@ -2359,22 +2359,18 @@ export const IDL: TwizzinIdl = {
     {
       name: 'Game',
       discriminator: [27, 90, 166, 125, 74, 100, 121, 18],
-      type: 'any',
     },
     {
       name: 'PlayerAccount',
       discriminator: [224, 184, 224, 50, 98, 72, 48, 236],
-      type: 'any',
     },
     {
       name: 'ProgramConfig',
       discriminator: [196, 210, 90, 231, 144, 149, 140, 63],
-      type: 'any',
     },
     {
       name: 'Winners',
       discriminator: [124, 173, 245, 175, 40, 115, 199, 91],
-      type: 'any',
     },
   ],
   events: [
