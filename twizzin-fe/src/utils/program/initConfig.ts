@@ -34,6 +34,7 @@ export const initializeConfig = async (
     );
 
     try {
+      // @ts-ignore
       await program.account.config.fetch(configPda);
       throw new Error('Config has already been initialized');
     } catch (e: any) {
