@@ -2,31 +2,47 @@
 import React, { useEffect, useMemo } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import i18n from '../../i18n';
-import {
-  ConnectionProvider,
-  WalletProvider,
-} from '@solana/wallet-adapter-react';
-import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
+import dynamic from 'next/dynamic';
 import { clusterApiUrl, Commitment } from '@solana/web3.js';
-import { ProgramContextProvider } from '@/contexts/ProgramContext';
 import { PhantomWalletAdapter } from '@solana/wallet-adapter-wallets';
 import { ErrorBoundary } from '@/components';
+import { ProgramContextProvider } from '@/contexts/ProgramContext';
 require('@solana/wallet-adapter-react-ui/styles.css');
+
+// Create separate dynamic components for each provider
+const ConnectionProvider = dynamic(
+  () =>
+    import('@solana/wallet-adapter-react').then(
+      (mod) => mod.ConnectionProvider
+    ),
+  { ssr: false }
+);
+
+const WalletProvider = dynamic(
+  () =>
+    import('@solana/wallet-adapter-react').then((mod) => mod.WalletProvider),
+  { ssr: false }
+);
+
+const WalletModalProvider = dynamic(
+  () =>
+    import('@solana/wallet-adapter-react-ui').then(
+      (mod) => mod.WalletModalProvider
+    ),
+  { ssr: false }
+);
 
 export default function Layout({
   children,
   params,
 }: {
   children: React.ReactNode;
-  params: Promise<{ lang: string }>;
+  params: { lang: string };
 }) {
-  const { lang } = React.use(params);
-
   useEffect(() => {
-    i18n.changeLanguage(lang);
-  }, [lang]);
+    i18n.changeLanguage(params.lang);
+  }, [params.lang]);
 
-  // Add environment check for better debugging
   const environment = process.env.NEXT_PUBLIC_ENVIRONMENT;
   const isDevnet = environment === 'devnet';
 
@@ -46,7 +62,6 @@ export default function Layout({
     [isDevnet]
   );
 
-  // Optional: Add connection config for better reliability
   const connectionConfig = useMemo(
     () => ({
       commitment: 'confirmed' as Commitment,

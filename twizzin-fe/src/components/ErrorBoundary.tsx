@@ -10,6 +10,7 @@ interface Props {
 interface State {
   hasError: boolean;
   error?: Error;
+  isWalletError?: boolean;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
@@ -18,15 +19,30 @@ export class ErrorBoundary extends Component<Props, State> {
   };
 
   public static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error };
+    const isWalletError =
+      error.message.includes('Invalid public key input') ||
+      error.message.includes('wallet adapter') ||
+      error.message.includes('PublicKey');
+
+    return {
+      hasError: true,
+      error,
+      isWalletError,
+    };
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Uncaught error:', error, errorInfo);
+    if (!(typeof window === 'undefined' && this.state.isWalletError)) {
+      console.error('Uncaught error:', error, errorInfo);
+    }
   }
 
   public render() {
     if (this.state.hasError) {
+      if (typeof window === 'undefined' && this.state.isWalletError) {
+        return null;
+      }
+
       return (
         <div className='flex items-center justify-center min-h-screen p-4'>
           <Alert
@@ -46,7 +62,13 @@ export class ErrorBoundary extends Component<Props, State> {
                   )}
                 </div>
                 <Button
-                  onClick={() => this.setState({ hasError: false })}
+                  onClick={() =>
+                    this.setState({
+                      hasError: false,
+                      error: undefined,
+                      isWalletError: false,
+                    })
+                  }
                   className='mt-2'
                 >
                   Try again
