@@ -1,5 +1,6 @@
 'use client';
 import { FC, PropsWithChildren, useMemo } from 'react';
+import dynamic from 'next/dynamic';
 import {
   ConnectionProvider,
   WalletProvider,
@@ -9,7 +10,7 @@ import { clusterApiUrl, Commitment } from '@solana/web3.js';
 import { PhantomWalletAdapter } from '@solana/wallet-adapter-wallets';
 import { ProgramContextProvider } from '@/contexts/ProgramContext';
 
-const SolanaProviders: FC<PropsWithChildren> = ({ children }) => {
+const WalletProviders: FC<PropsWithChildren> = ({ children }) => {
   const environment = process.env.NEXT_PUBLIC_ENVIRONMENT;
   const isDevnet = environment === 'devnet';
 
@@ -48,4 +49,7 @@ const SolanaProviders: FC<PropsWithChildren> = ({ children }) => {
   );
 };
 
-export default SolanaProviders;
+// Export with dynamic import to prevent SSR
+export default dynamic(() => Promise.resolve(WalletProviders), {
+  ssr: false,
+});

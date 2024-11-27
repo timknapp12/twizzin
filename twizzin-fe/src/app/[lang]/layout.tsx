@@ -1,9 +1,13 @@
 'use client';
-import React, { useEffect, Suspense } from 'react';
+import React, { useEffect } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import i18n from '../../i18n';
-import dynamic from 'next/dynamic';
 import { ErrorBoundary } from '@/components';
+import dynamic from 'next/dynamic';
+
+const WalletProviders = dynamic(() => import('@/components/WalletProviders'), {
+  ssr: false,
+});
 
 type LayoutProps = {
   children: React.ReactNode;
@@ -11,11 +15,6 @@ type LayoutProps = {
     lang: string;
   }>;
 };
-
-const SolanaProviders = dynamic(() => import('@/components/SolanaProviders'), {
-  ssr: false,
-  loading: () => <div>Loading wallet...</div>,
-});
 
 export default function Layout({ children, params }: LayoutProps) {
   const resolvedParams = React.use(params);
@@ -29,9 +28,7 @@ export default function Layout({ children, params }: LayoutProps) {
   return (
     <ErrorBoundary>
       <I18nextProvider i18n={i18n} defaultNS='common'>
-        <Suspense fallback={<div>Loading...</div>}>
-          <SolanaProviders>{children}</SolanaProviders>
-        </Suspense>
+        <WalletProviders>{children}</WalletProviders>
       </I18nextProvider>
     </ErrorBoundary>
   );
