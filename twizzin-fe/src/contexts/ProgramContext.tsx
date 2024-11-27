@@ -1,16 +1,16 @@
-import { Program, AnchorProvider, Idl } from '@project-serum/anchor';
+import { Program, AnchorProvider } from '@coral-xyz/anchor';
 import { useAnchorWallet, useConnection } from '@solana/wallet-adapter-react';
-import { createContext, useContext, useMemo, useEffect } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { isDev, PROGRAM_CONSTANTS } from '../config/constants';
-import idl from '../../../twizzin-be-2/target/idl/twizzin_be_2.json';
+import { IDL, TwizzinIdl } from '../types/idl';
 
 interface ProgramContextState {
-  program: Program | null;
+  program: Program<TwizzinIdl> | null;
   provider: AnchorProvider | null;
   isWalletConnected: boolean;
 }
 
-const ProgramContext = createContext<ProgramContextState>({
+export const ProgramContext = createContext<ProgramContextState>({
   program: null,
   provider: null,
   isWalletConnected: false,
@@ -23,49 +23,61 @@ export const ProgramContextProvider = ({
 }) => {
   const { connection } = useConnection();
   const wallet = useAnchorWallet();
-
-  const { program, provider, isWalletConnected } = useMemo(() => {
-    if (!wallet) {
-      return { program: null, provider: null, isWalletConnected: false };
-    }
-
-    try {
-      const provider = new AnchorProvider(connection, wallet, {
-        commitment: 'confirmed',
-        preflightCommitment: 'confirmed',
-      });
-
-      const program = new Program(
-        idl as unknown as Idl,
-        isDev
-          ? PROGRAM_CONSTANTS.DEVNET.PROGRAM_ID
-          : PROGRAM_CONSTANTS.MAINNET.PROGRAM_ID,
-        provider
-      );
-
-      return { program, provider, isWalletConnected: true };
-    } catch (error) {
-      console.error('Error initializing program:', error);
-      return { program: null, provider: null, isWalletConnected: false };
-    }
-  }, [connection, wallet]);
+  const [state, setState] = useState<ProgramContextState>({
+    program: null,
+    provider: null,
+    isWalletConnected: false,
+  });
 
   useEffect(() => {
-    if (!isWalletConnected) {
-      console.warn(
-        'Wallet not connected. Please connect your wallet to continue.'
-      );
-    } else if (!program) {
-      console.error(
-        'Program failed to initialize even though wallet is connected.'
-      );
-    }
-  }, [isWalletConnected, program]);
+    const initProgram = async () => {
+      if (!wallet) {
+        setState({
+          program: null,
+          provider: null,
+          isWalletConnected: false,
+        });
+        return;
+      }
+
+      try {
+        const provider = new AnchorProvider(connection, wallet, {
+          commitment: 'confirmed',
+          preflightCommitment: 'confirmed',
+        });
+
+        const programId = isDev
+          ? PROGRAM_CONSTANTS.DEVNET.PROGRAM_ID
+          : PROGRAM_CONSTANTS.MAINNET.PROGRAM_ID;
+
+        const program = await Program.at<TwizzinIdl>(programId, provider);
+
+        setState({
+          program,
+          provider,
+          isWalletConnected: true,
+        });
+      } catch (error) {
+        console.error('Error initializing program:', error);
+        if (error instanceof Error) {
+          console.error('Error details:', {
+            message: error.message,
+            stack: error.stack,
+          });
+        }
+        setState({
+          program: null,
+          provider: null,
+          isWalletConnected: false,
+        });
+      }
+    };
+
+    initProgram();
+  }, [connection, wallet]);
 
   return (
-    <ProgramContext.Provider value={{ program, provider, isWalletConnected }}>
-      {children}
-    </ProgramContext.Provider>
+    <ProgramContext.Provider value={state}>{children}</ProgramContext.Provider>
   );
 };
 

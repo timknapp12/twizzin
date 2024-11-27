@@ -6,7 +6,7 @@ export default function Home() {
 }
 
 // import { Connection, Keypair, PublicKey } from '@solana/web3.js';
-// import { Program, AnchorProvider, web3 } from '@project-serum/anchor';
+// import { Program, AnchorProvider, web3 } from '@coral-xyz/anchor';
 // import { YourProgramIDL } from './your_program_idl';
 
 // async function initializeConfig() {
