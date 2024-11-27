@@ -23,13 +23,22 @@ export const ProgramContextProvider = ({
 }) => {
   const { connection } = useConnection();
   const wallet = useAnchorWallet();
+  const [mounted, setMounted] = useState(false);
   const [state, setState] = useState<ProgramContextState>({
     program: null,
     provider: null,
     isWalletConnected: false,
   });
 
+  // Add mounting check
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    // Only run on client side
+    if (!mounted) return;
+
     const initProgram = async () => {
       if (!wallet) {
         setState({
@@ -74,7 +83,12 @@ export const ProgramContextProvider = ({
     };
 
     initProgram();
-  }, [connection, wallet]);
+  }, [connection, wallet, mounted]);
+
+  // Don't render anything on server side
+  if (!mounted) {
+    return <>{children}</>;
+  }
 
   return (
     <ProgramContext.Provider value={state}>{children}</ProgramContext.Provider>
