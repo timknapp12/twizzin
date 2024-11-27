@@ -33,8 +33,21 @@ export const initializeConfig = async (
       program.programId
     );
 
-    const tx = await program.methods
-      .initConfig(new PublicKey(treasuryAddress), treasuryFeeBps)
+    try {
+      await program.account.config.fetch(configPda);
+      throw new Error('Config has already been initialized');
+    } catch (e: any) {
+      if (!e.toString().includes('Account does not exist')) {
+        throw e;
+      }
+    }
+
+    const method = program.methods.initConfig(
+      new PublicKey(treasuryAddress),
+      treasuryFeeBps
+    ) as any;
+
+    const tx = await method
       .accounts({
         admin: wallet.publicKey,
         config: configPda,

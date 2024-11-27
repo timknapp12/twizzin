@@ -11,32 +11,602 @@ export type TwizzinIdl = Idl & {
   instructions: [
     {
       name: 'claim';
-      accounts: Array<any>;
+      discriminator: [62, 198, 214, 193, 213, 159, 108, 210];
+      accounts: [
+        {
+          name: 'player';
+          writable: true;
+          signer: true;
+        },
+        {
+          name: 'game';
+          writable: true;
+          pda: {
+            seeds: [
+              {
+                kind: 'const';
+                value: [103, 97, 109, 101];
+              },
+              {
+                kind: 'account';
+                path: 'game.admin';
+                account: 'Game';
+              },
+              {
+                kind: 'account';
+                path: 'game.game_code';
+                account: 'Game';
+              }
+            ];
+          };
+        },
+        {
+          name: 'winners';
+          writable: true;
+          pda: {
+            seeds: [
+              {
+                kind: 'const';
+                value: [119, 105, 110, 110, 101, 114, 115];
+              },
+              {
+                kind: 'account';
+                path: 'game';
+              }
+            ];
+          };
+        },
+        {
+          name: 'player_account';
+          writable: true;
+          pda: {
+            seeds: [
+              {
+                kind: 'const';
+                value: [112, 108, 97, 121, 101, 114];
+              },
+              {
+                kind: 'account';
+                path: 'game';
+              },
+              {
+                kind: 'account';
+                path: 'player';
+              }
+            ];
+          };
+        },
+        {
+          name: 'vault';
+          writable: true;
+          pda: {
+            seeds: [
+              {
+                kind: 'const';
+                value: [118, 97, 117, 108, 116];
+              },
+              {
+                kind: 'account';
+                path: 'game.admin';
+                account: 'Game';
+              },
+              {
+                kind: 'account';
+                path: 'game.game_code';
+                account: 'Game';
+              }
+            ];
+          };
+        },
+        {
+          name: 'vault_token_account';
+          writable: true;
+          optional: true;
+          pda: {
+            seeds: [
+              {
+                kind: 'account';
+                path: 'vault';
+              },
+              {
+                kind: 'const';
+                value: [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ];
+              },
+              {
+                kind: 'account';
+                path: 'game.token_mint';
+                account: 'Game';
+              }
+            ];
+            program: {
+              kind: 'const';
+              value: [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ];
+            };
+          };
+        },
+        {
+          name: 'player_token_account';
+          writable: true;
+          optional: true;
+        },
+        {
+          name: 'token_program';
+          address: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA';
+        },
+        {
+          name: 'system_program';
+          address: '11111111111111111111111111111111';
+        }
+      ];
       args: [];
     },
     {
       name: 'closeGame';
-      accounts: Array<any>;
+      discriminator: [237, 236, 157, 201, 253, 20, 248, 67];
+      accounts: [
+        {
+          name: 'admin';
+          writable: true;
+          signer: true;
+        },
+        {
+          name: 'game';
+          writable: true;
+          pda: {
+            seeds: [
+              { kind: 'const'; value: [103, 97, 109, 101] },
+              { kind: 'account'; path: 'admin' },
+              { kind: 'account'; path: 'game.game_code'; account: 'Game' }
+            ];
+          };
+        },
+        {
+          name: 'winners';
+          writable: true;
+          pda: {
+            seeds: [
+              { kind: 'const'; value: [119, 105, 110, 110, 101, 114, 115] },
+              { kind: 'account'; path: 'game' }
+            ];
+          };
+        },
+        {
+          name: 'vault';
+          writable: true;
+          pda: {
+            seeds: [
+              { kind: 'const'; value: [118, 97, 117, 108, 116] },
+              { kind: 'account'; path: 'admin' },
+              { kind: 'account'; path: 'game.game_code'; account: 'Game' }
+            ];
+          };
+        },
+        {
+          name: 'vault_token_account';
+          writable: true;
+          optional: true;
+          pda: {
+            seeds: [
+              { kind: 'account'; path: 'vault' },
+              {
+                kind: 'const';
+                value: [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ];
+              },
+              { kind: 'account'; path: 'game.token_mint'; account: 'Game' }
+            ];
+            program: {
+              kind: 'const';
+              value: [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ];
+            };
+          };
+        },
+        {
+          name: 'token_program';
+          address: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA';
+        },
+        {
+          name: 'associated_token_program';
+          address: 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL';
+        },
+        {
+          name: 'system_program';
+          address: '11111111111111111111111111111111';
+        }
+      ];
       args: [];
     },
     {
       name: 'closePlayerAccount';
-      accounts: Array<any>;
+      discriminator: [244, 181, 162, 146, 184, 133, 216, 95];
+      accounts: [
+        {
+          name: 'player';
+          writable: true;
+          signer: true;
+        },
+        {
+          name: 'game';
+          pda: {
+            seeds: [
+              { kind: 'const'; value: [103, 97, 109, 101] },
+              { kind: 'account'; path: 'game.admin'; account: 'Game' },
+              { kind: 'account'; path: 'game.game_code'; account: 'Game' }
+            ];
+          };
+        },
+        {
+          name: 'winners';
+          optional: true;
+          pda: {
+            seeds: [
+              { kind: 'const'; value: [119, 105, 110, 110, 101, 114, 115] },
+              { kind: 'account'; path: 'game' }
+            ];
+          };
+        },
+        {
+          name: 'player_account';
+          writable: true;
+          pda: {
+            seeds: [
+              { kind: 'const'; value: [112, 108, 97, 121, 101, 114] },
+              { kind: 'account'; path: 'game' },
+              { kind: 'account'; path: 'player' }
+            ];
+          };
+        },
+        {
+          name: 'system_program';
+          address: '11111111111111111111111111111111';
+        }
+      ];
       args: [];
     },
     {
       name: 'declareWinners';
-      accounts: Array<any>;
+      discriminator: [42, 228, 213, 39, 88, 35, 143, 71];
+      accounts: [
+        {
+          name: 'admin';
+          writable: true;
+          signer: true;
+        },
+        {
+          name: 'game';
+          writable: true;
+          pda: {
+            seeds: [
+              { kind: 'const'; value: [103, 97, 109, 101] },
+              { kind: 'account'; path: 'game.admin'; account: 'Game' },
+              { kind: 'account'; path: 'game.game_code'; account: 'Game' }
+            ];
+          };
+        },
+        {
+          name: 'winners';
+          writable: true;
+          pda: {
+            seeds: [
+              { kind: 'const'; value: [119, 105, 110, 110, 101, 114, 115] },
+              { kind: 'account'; path: 'game' }
+            ];
+          };
+        },
+        {
+          name: 'system_program';
+          address: '11111111111111111111111111111111';
+        }
+      ];
       args: [{ name: 'winner_pubkeys'; type: { vec: 'pubkey' } }];
     },
     {
       name: 'endGame';
-      accounts: Array<any>;
+      discriminator: [224, 135, 245, 99, 67, 175, 121, 252];
+      accounts: [
+        {
+          name: 'admin';
+          writable: true;
+          signer: true;
+        },
+        {
+          name: 'game';
+          writable: true;
+          pda: {
+            seeds: [
+              { kind: 'const'; value: [103, 97, 109, 101] },
+              { kind: 'account'; path: 'game.admin'; account: 'Game' },
+              { kind: 'account'; path: 'game.game_code'; account: 'Game' }
+            ];
+          };
+        },
+        {
+          name: 'vault';
+          writable: true;
+          pda: {
+            seeds: [
+              { kind: 'const'; value: [118, 97, 117, 108, 116] },
+              { kind: 'account'; path: 'game.admin'; account: 'Game' },
+              { kind: 'account'; path: 'game.game_code'; account: 'Game' }
+            ];
+          };
+        },
+        {
+          name: 'vault_token_account';
+          writable: true;
+          optional: true;
+          pda: {
+            seeds: [
+              { kind: 'account'; path: 'vault' },
+              {
+                kind: 'const';
+                value: [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ];
+              },
+              {
+                kind: 'account';
+                path: 'game.token_mint';
+                account: 'Game';
+              }
+            ];
+            program: {
+              kind: 'const';
+              value: [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ];
+            };
+          };
+        },
+        {
+          name: 'admin_token_account';
+          writable: true;
+          optional: true;
+        },
+        {
+          name: 'treasury_token_account';
+          writable: true;
+          optional: true;
+        },
+        {
+          name: 'config';
+          pda: {
+            seeds: [{ kind: 'const'; value: [99, 111, 110, 102, 105, 103] }];
+          };
+        },
+        {
+          name: 'token_program';
+          address: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA';
+        },
+        {
+          name: 'associated_token_program';
+          address: 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL';
+        },
+        {
+          name: 'system_program';
+          address: '11111111111111111111111111111111';
+        },
+        {
+          name: 'treasury';
+          writable: true;
+        }
+      ];
       args: [];
     },
     {
       name: 'initConfig';
-      accounts: Array<any>;
+      discriminator: [23, 235, 115, 232, 168, 96, 1, 231];
+      accounts: [
+        {
+          name: 'admin';
+          writable: true;
+          signer: true;
+        },
+        {
+          name: 'config';
+          writable: true;
+          pda: {
+            seeds: [{ kind: 'const'; value: [99, 111, 110, 102, 105, 103] }];
+          };
+        },
+        {
+          name: 'system_program';
+          address: '11111111111111111111111111111111';
+        }
+      ];
       args: [
         { name: 'treasury_pubkey'; type: 'pubkey' },
         { name: 'treasury_fee'; type: 'u16' }
@@ -44,7 +614,142 @@ export type TwizzinIdl = Idl & {
     },
     {
       name: 'initGame';
-      accounts: Array<any>;
+      discriminator: [251, 46, 12, 208, 184, 148, 157, 73];
+      accounts: [
+        {
+          name: 'admin';
+          writable: true;
+          signer: true;
+        },
+        {
+          name: 'game';
+          writable: true;
+          pda: {
+            seeds: [
+              { kind: 'const'; value: [103, 97, 109, 101] },
+              { kind: 'account'; path: 'admin' },
+              { kind: 'arg'; path: 'game_code' }
+            ];
+          };
+        },
+        {
+          name: 'token_mint';
+        },
+        {
+          name: 'vault';
+          writable: true;
+          pda: {
+            seeds: [
+              { kind: 'const'; value: [118, 97, 117, 108, 116] },
+              { kind: 'account'; path: 'admin' },
+              { kind: 'arg'; path: 'game_code' }
+            ];
+          };
+        },
+        {
+          name: 'vault_token_account';
+          docs: ["The vault's associated token account"];
+          writable: true;
+          optional: true;
+          pda: {
+            seeds: [
+              { kind: 'account'; path: 'vault' },
+              {
+                kind: 'const';
+                value: [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ];
+              },
+              { kind: 'account'; path: 'token_mint' }
+            ];
+            program: {
+              kind: 'const';
+              value: [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ];
+            };
+          };
+        },
+        {
+          name: 'admin_token_account';
+          writable: true;
+          optional: true;
+        },
+        {
+          name: 'token_program';
+          address: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA';
+        },
+        {
+          name: 'associated_token_program';
+          address: 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL';
+        },
+        {
+          name: 'system_program';
+          address: '11111111111111111111111111111111';
+        }
+      ];
       args: [
         { name: 'name'; type: 'string' },
         { name: 'game_code'; type: 'string' },
@@ -61,17 +766,209 @@ export type TwizzinIdl = Idl & {
     },
     {
       name: 'joinGame';
-      accounts: Array<any>;
+      discriminator: [107, 112, 18, 38, 56, 173, 60, 128];
+      accounts: [
+        {
+          name: 'player';
+          writable: true;
+          signer: true;
+        },
+        {
+          name: 'game';
+          writable: true;
+          pda: {
+            seeds: [
+              { kind: 'const'; value: [103, 97, 109, 101] },
+              { kind: 'account'; path: 'game.admin'; account: 'Game' },
+              { kind: 'account'; path: 'game.game_code'; account: 'Game' }
+            ];
+          };
+        },
+        {
+          name: 'player_account';
+          writable: true;
+          pda: {
+            seeds: [
+              { kind: 'const'; value: [112, 108, 97, 121, 101, 114] },
+              { kind: 'account'; path: 'game' },
+              { kind: 'account'; path: 'player' }
+            ];
+          };
+        },
+        {
+          name: 'vault';
+          writable: true;
+          pda: {
+            seeds: [
+              { kind: 'const'; value: [118, 97, 117, 108, 116] },
+              { kind: 'account'; path: 'game.admin'; account: 'Game' },
+              { kind: 'account'; path: 'game.game_code'; account: 'Game' }
+            ];
+          };
+        },
+        {
+          name: 'vault_token_account';
+          docs: ["The vault's associated token account"];
+          writable: true;
+          optional: true;
+          pda: {
+            seeds: [
+              { kind: 'account'; path: 'vault' },
+              {
+                kind: 'const';
+                value: [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ];
+              },
+              { kind: 'account'; path: 'game.token_mint'; account: 'Game' }
+            ];
+            program: {
+              kind: 'const';
+              value: [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ];
+            };
+          };
+        },
+        {
+          name: 'player_token_account';
+          writable: true;
+          optional: true;
+        },
+        {
+          name: 'token_program';
+          address: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA';
+        },
+        {
+          name: 'associated_token_program';
+          address: 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL';
+        },
+        {
+          name: 'system_program';
+          address: '11111111111111111111111111111111';
+        }
+      ];
       args: [];
     },
     {
       name: 'startGame';
-      accounts: Array<any>;
+      discriminator: [249, 47, 252, 172, 184, 162, 245, 14];
+      accounts: [
+        {
+          name: 'admin';
+          signer: true;
+        },
+        {
+          name: 'game';
+          writable: true;
+          pda: {
+            seeds: [
+              { kind: 'const'; value: [103, 97, 109, 101] },
+              { kind: 'account'; path: 'admin' },
+              { kind: 'account'; path: 'game.game_code'; account: 'Game' }
+            ];
+          };
+        }
+      ];
       args: [];
     },
     {
       name: 'submitAnswers';
-      accounts: Array<any>;
+      discriminator: [142, 178, 58, 248, 113, 129, 119, 142];
+      accounts: [
+        {
+          name: 'player';
+          writable: true;
+          signer: true;
+        },
+        {
+          name: 'game';
+          pda: {
+            seeds: [
+              { kind: 'const'; value: [103, 97, 109, 101] },
+              { kind: 'account'; path: 'game.admin'; account: 'Game' },
+              { kind: 'account'; path: 'game.game_code'; account: 'Game' }
+            ];
+          };
+        },
+        {
+          name: 'player_account';
+          writable: true;
+          pda: {
+            seeds: [
+              { kind: 'const'; value: [112, 108, 97, 121, 101, 114] },
+              { kind: 'account'; path: 'game' },
+              { kind: 'account'; path: 'player' }
+            ];
+          };
+        },
+        {
+          name: 'system_program';
+          address: '11111111111111111111111111111111';
+        }
+      ];
       args: [
         {
           name: 'answers';
@@ -82,7 +979,21 @@ export type TwizzinIdl = Idl & {
     },
     {
       name: 'updateConfig';
-      accounts: Array<any>;
+      discriminator: [29, 158, 252, 191, 10, 83, 219, 99];
+      accounts: [
+        {
+          name: 'authority';
+          writable: true;
+          signer: true;
+        },
+        {
+          name: 'config';
+          writable: true;
+          pda: {
+            seeds: [{ kind: 'const'; value: [99, 111, 110, 102, 105, 103] }];
+          };
+        }
+      ];
       args: [
         { name: 'new_treasury'; type: { option: 'pubkey' } },
         { name: 'new_treasury_fee'; type: { option: 'u16' } }
@@ -90,7 +1001,145 @@ export type TwizzinIdl = Idl & {
     },
     {
       name: 'updateGame';
-      accounts: Array<any>;
+      discriminator: [159, 61, 132, 131, 3, 234, 209, 220];
+      accounts: [
+        {
+          name: 'admin';
+          writable: true;
+          signer: true;
+        },
+        {
+          name: 'game';
+          writable: true;
+          pda: {
+            seeds: [
+              { kind: 'const'; value: [103, 97, 109, 101] },
+              { kind: 'account'; path: 'admin' },
+              { kind: 'account'; path: 'game.game_code'; account: 'Game' }
+            ];
+          };
+        },
+        {
+          name: 'vault';
+          writable: true;
+          pda: {
+            seeds: [
+              { kind: 'const'; value: [118, 97, 117, 108, 116] },
+              { kind: 'account'; path: 'admin' },
+              { kind: 'account'; path: 'game.game_code'; account: 'Game' }
+            ];
+          };
+        },
+        {
+          name: 'vault_token_account';
+          docs: ["The vault's associated token account"];
+          writable: true;
+          optional: true;
+          pda: {
+            seeds: [
+              { kind: 'account'; path: 'vault' },
+              {
+                kind: 'const';
+                value: [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ];
+              },
+              {
+                kind: 'account';
+                path: 'token_mint';
+              }
+            ];
+            program: {
+              kind: 'const';
+              value: [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ];
+            };
+          };
+        },
+        {
+          name: 'token_mint';
+        },
+        {
+          name: 'admin_token_account';
+          writable: true;
+          optional: true;
+        },
+        {
+          name: 'token_program';
+          address: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA';
+        },
+        {
+          name: 'associated_token_program';
+          address: 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL';
+        },
+        {
+          name: 'system_program';
+          address: '11111111111111111111111111111111';
+        }
+      ];
       args: [
         { name: 'new_name'; type: { option: 'string' } },
         { name: 'new_entry_fee'; type: { option: 'u64' } },
@@ -106,10 +1155,26 @@ export type TwizzinIdl = Idl & {
     }
   ];
   accounts: [
-    { name: 'Game'; type: any },
-    { name: 'PlayerAccount'; type: any },
-    { name: 'ProgramConfig'; type: any },
-    { name: 'Winners'; type: any }
+    {
+      name: 'Game';
+      discriminator: [27, 90, 166, 125, 74, 100, 121, 18];
+      type: any;
+    },
+    {
+      name: 'PlayerAccount';
+      discriminator: [224, 184, 224, 50, 98, 72, 48, 236];
+      type: any;
+    },
+    {
+      name: 'ProgramConfig';
+      discriminator: [196, 210, 90, 231, 144, 149, 140, 63];
+      type: any;
+    },
+    {
+      name: 'Winners';
+      discriminator: [124, 173, 245, 175, 40, 115, 199, 91];
+      type: any;
+    }
   ];
   events: [
     { name: 'AnswersSubmitted'; type: any },
@@ -283,7 +1348,7 @@ export const IDL: TwizzinIdl = {
       args: [],
     },
     {
-      name: 'close_game',
+      name: 'closeGame',
       discriminator: [237, 236, 157, 201, 253, 20, 248, 67],
       accounts: [
         {
@@ -399,7 +1464,7 @@ export const IDL: TwizzinIdl = {
       args: [],
     },
     {
-      name: 'close_player_account',
+      name: 'closePlayerAccount',
       discriminator: [244, 181, 162, 146, 184, 133, 216, 95],
       accounts: [
         {
@@ -472,7 +1537,7 @@ export const IDL: TwizzinIdl = {
       args: [],
     },
     {
-      name: 'declare_winners',
+      name: 'declareWinners',
       discriminator: [42, 228, 213, 39, 88, 35, 143, 71],
       accounts: [
         {
@@ -533,7 +1598,7 @@ export const IDL: TwizzinIdl = {
       ],
     },
     {
-      name: 'end_game',
+      name: 'endGame',
       discriminator: [224, 135, 245, 99, 67, 175, 121, 252],
       accounts: [
         {
@@ -660,7 +1725,7 @@ export const IDL: TwizzinIdl = {
       args: [],
     },
     {
-      name: 'init_config',
+      name: 'initConfig',
       discriminator: [23, 235, 115, 232, 168, 96, 1, 231],
       accounts: [
         {
@@ -697,7 +1762,7 @@ export const IDL: TwizzinIdl = {
       ],
     },
     {
-      name: 'init_game',
+      name: 'initGame',
       discriminator: [251, 46, 12, 208, 184, 148, 157, 73],
       accounts: [
         {
@@ -850,7 +1915,7 @@ export const IDL: TwizzinIdl = {
       ],
     },
     {
-      name: 'join_game',
+      name: 'joinGame',
       discriminator: [107, 112, 18, 38, 56, 173, 60, 128],
       accounts: [
         {
@@ -978,7 +2043,7 @@ export const IDL: TwizzinIdl = {
       args: [],
     },
     {
-      name: 'start_game',
+      name: 'startGame',
       discriminator: [249, 47, 252, 172, 184, 162, 245, 14],
       accounts: [
         {
@@ -1010,7 +2075,7 @@ export const IDL: TwizzinIdl = {
       args: [],
     },
     {
-      name: 'submit_answers',
+      name: 'submitAnswers',
       discriminator: [142, 178, 58, 248, 113, 129, 119, 142],
       accounts: [
         {
@@ -1082,7 +2147,7 @@ export const IDL: TwizzinIdl = {
       ],
     },
     {
-      name: 'update_config',
+      name: 'updateConfig',
       discriminator: [29, 158, 252, 191, 10, 83, 219, 99],
       accounts: [
         {
@@ -1119,7 +2184,7 @@ export const IDL: TwizzinIdl = {
       ],
     },
     {
-      name: 'update_game',
+      name: 'updateGame',
       discriminator: [159, 61, 132, 131, 3, 234, 209, 220],
       accounts: [
         {
@@ -1294,18 +2359,22 @@ export const IDL: TwizzinIdl = {
     {
       name: 'Game',
       discriminator: [27, 90, 166, 125, 74, 100, 121, 18],
+      type: 'any',
     },
     {
       name: 'PlayerAccount',
       discriminator: [224, 184, 224, 50, 98, 72, 48, 236],
+      type: 'any',
     },
     {
       name: 'ProgramConfig',
       discriminator: [196, 210, 90, 231, 144, 149, 140, 63],
+      type: 'any',
     },
     {
       name: 'Winners',
       discriminator: [124, 173, 245, 175, 40, 115, 199, 91],
+      type: 'any',
     },
   ],
   events: [
