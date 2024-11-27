@@ -7,9 +7,15 @@ import { clusterApiUrl, Commitment } from '@solana/web3.js';
 import { PhantomWalletAdapter } from '@solana/wallet-adapter-wallets';
 import { ErrorBoundary } from '@/components';
 import { ProgramContextProvider } from '@/contexts/ProgramContext';
-require('@solana/wallet-adapter-react-ui/styles.css');
 
-// Create separate dynamic components for each provider
+// Update the type definition
+interface LayoutProps {
+  children: React.ReactNode;
+  params: {
+    lang: string;
+  };
+}
+
 const ConnectionProvider = dynamic(
   () =>
     import('@solana/wallet-adapter-react').then(
@@ -32,13 +38,7 @@ const WalletModalProvider = dynamic(
   { ssr: false }
 );
 
-export default function Layout({
-  children,
-  params,
-}: {
-  children: React.ReactNode;
-  params: { lang: string };
-}) {
+export default function Layout({ children, params }: LayoutProps) {
   useEffect(() => {
     i18n.changeLanguage(params.lang);
   }, [params.lang]);
