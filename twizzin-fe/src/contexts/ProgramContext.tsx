@@ -2,7 +2,7 @@ import { Program, AnchorProvider } from '@coral-xyz/anchor';
 import { useAnchorWallet, useConnection } from '@solana/wallet-adapter-react';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { isDev, PROGRAM_CONSTANTS } from '../config/constants';
-import { IDL, TwizzinIdl } from '../types/idl';
+import { TwizzinIdl } from '../types/idl';
 
 interface ProgramContextState {
   program: Program<TwizzinIdl> | null;
