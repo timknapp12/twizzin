@@ -5,7 +5,7 @@
     "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check",
     "build-dev": "anchor build -- --features devnet",
     "test-dev": "anchor test -- --features devnet",
-    "deploy-dev": "anchor deploy --features devnet --provider.cluster devnet",
+    "deploy-dev": "anchor deploy --provider.cluster devnet",
     "build-main": "anchor build",
     "test-main": "anchor test",
     "deploy-main": "anchor deploy --provider.cluster mainnet"
