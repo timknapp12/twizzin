@@ -8,13 +8,12 @@ import { PhantomWalletAdapter } from '@solana/wallet-adapter-wallets';
 import { ErrorBoundary } from '@/components';
 import { ProgramContextProvider } from '@/contexts/ProgramContext';
 
-// Update the type definition
-interface LayoutProps {
+type LayoutProps = {
   children: React.ReactNode;
-  params: {
+  params: Promise<{
     lang: string;
-  };
-}
+  }>;
+};
 
 const ConnectionProvider = dynamic(
   () =>
@@ -39,9 +38,13 @@ const WalletModalProvider = dynamic(
 );
 
 export default function Layout({ children, params }: LayoutProps) {
+  const resolvedParams = React.use(params);
+
   useEffect(() => {
-    i18n.changeLanguage(params.lang);
-  }, [params.lang]);
+    if (resolvedParams.lang) {
+      i18n.changeLanguage(resolvedParams.lang);
+    }
+  }, [resolvedParams.lang]);
 
   const environment = process.env.NEXT_PUBLIC_ENVIRONMENT;
   const isDevnet = environment === 'devnet';
