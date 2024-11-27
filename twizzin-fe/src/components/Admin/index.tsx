@@ -9,7 +9,7 @@ import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { initializeConfig } from '@/utils/program/initConfig';
 import { useAppContext } from '@/contexts/AppContext';
 
-export const InitConfig = () => {
+export const AdminComponent = () => {
   const { t } = useAppContext();
   const { program, isWalletConnected } = useProgram();
   const wallet = useWallet();
@@ -159,5 +159,3 @@ export const InitConfig = () => {
     </main>
   );
 };
-
-export default InitConfig;
