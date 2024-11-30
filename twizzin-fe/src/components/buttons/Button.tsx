@@ -1,7 +1,6 @@
 'use client';
 
 import { ReactNode } from 'react';
-import { ButtonText } from '../texts';
 import { FaSpinner } from 'react-icons/fa6';
 
 interface ButtonProps
@@ -26,22 +25,23 @@ export const Button = ({
   <button
     className={`
         w-full
-        px-4 py-2
-        rounded-tl-2xl rounded-br-2xl
-        rounded-tr-2xl rounded-bl-2xl
-        text-xl sm:text-2xl
-        transition-all
+        px-[14px] py-[10px]
         flex items-center justify-center
-        text-white
+        gap-2.5
+        self-stretch
+        transition-all
+        text-[16px]
+        font-[600]
+        rounded-lg
         ${
           secondary
-            ? 'bg-transparent border-2 border-lightPurple text-lightPurple'
-            : 'bg-gradient-to-br from-lightPurple to-darkPurple text-dark-background dark:text-light-background'
+            ? 'bg-transparent border-[1px] border-black/10 text-primaryText hover:border-disabledText active:border-secondaryText active:text-disabledText shadow-[0px_1px_2px_0px_rgba(9,8,23,0.05)]'
+            : 'text-white bg-primary border-r-[1px] border-b-[3px] border-l-[1px] border-darkPurple shadow-[0px_1px_2px_0px_rgba(9,8,23,0.05)] hover:bg-lightPurple hover:border-mediumPurple active:bg-primary active:border-darkPurple'
         }
         ${
           isLoading || disabled
             ? 'opacity-70 cursor-not-allowed'
-            : 'cursor-pointer hover:opacity-90'
+            : 'cursor-pointer'
         }
         ${className || ''}
       `}
@@ -52,7 +52,7 @@ export const Button = ({
     {isLoading ? (
       <FaSpinner className='animate-spin' size={28} />
     ) : (
-      <ButtonText>{children}</ButtonText>
+      <>{children}</>
     )}
   </button>
 );
