@@ -76,12 +76,6 @@ export const H5Brand = ({ children, className, ...props }: TextProps) => (
   </span>
 );
 
-export const ButtonText = ({ children, className, ...props }: TextProps) => (
-  <span className={`text-sm sm:text-base md:text-xl ${className}`} {...props}>
-    {children}
-  </span>
-);
-
 export const Label = ({ children, className, ...props }: TextProps) => (
   <label
     className={`block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300 ${className}`}
@@ -102,4 +96,31 @@ export const LabelSecondary = ({
   >
     {children}
   </label>
+);
+
+export const PrimaryText = ({ children, className, ...props }: TextProps) => (
+  <span
+    className={`text-primaryText text-xl font-['Open_Runde',sans-serif] font-semibold leading-normal ${className}`}
+    {...props}
+  >
+    {children}
+  </span>
+);
+
+export const SecondaryText = ({ children, className, ...props }: TextProps) => (
+  <span
+    className={`text-secondaryText text-center font-[500] text-xs font-['Open_Runde',sans-serif] ${className}`}
+    {...props}
+  >
+    {children}
+  </span>
+);
+
+export const DisabledText = ({ children, className, ...props }: TextProps) => (
+  <span
+    className={`text-disabledText text-center font-[500] text-xs font-['Open_Runde',sans-serif] ${className}`}
+    {...props}
+  >
+    {children}
+  </span>
 );
