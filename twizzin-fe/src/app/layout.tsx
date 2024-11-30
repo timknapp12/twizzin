@@ -29,6 +29,14 @@ export default function RootLayout({
             gtag('config', 'G-1SM9WJYQXX');
           `}
         </Script>
+        <Script id='theme-init' strategy='beforeInteractive'>
+          {`
+            if (!localStorage.getItem('theme')) {
+              localStorage.setItem('theme', 'light');
+              document.documentElement.setAttribute('data-theme', 'light');
+            }
+          `}
+        </Script>
       </head>
       <body className={inter.className}>
         <AppProvider>{children}</AppProvider>

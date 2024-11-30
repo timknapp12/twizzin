@@ -14,14 +14,21 @@ const config: Config = {
       xl: '1440px',
     },
     colors: {
+      // Theme-aware colors (these will change with theme)
+      primary: 'var(--color-primary)',
+      secondary: 'var(--color-secondary)',
+      background: 'var(--color-background)',
+      foreground: 'var(--color-foreground)',
+      surface: 'var(--color-surface)',
+      // Static colors (these won't change with theme)
       lightPurple: '#AA76FF',
       darkPurple: '#680CFF',
       black: '#1A1A1A',
       lightBlack: '#2A2A2A',
       white: '#FFFFFF',
       offWhite: '#F5F5F5',
-      gray: 'rbga(189,186,186, 0.75)',
-      disabled: 'rbga(189,186,186, 0.5)',
+      gray: 'rgba(189,186,186, 0.75)',
+      disabled: 'rgba(189,186,186, 0.5)',
       pink: '#EF1BA3',
       red: '#FF3366',
       blue: '#4169E1',
@@ -77,14 +84,20 @@ const config: Config = {
       96: '24rem',
     },
     extend: {
-      colors: {
+      themes: {
         light: {
+          primary: '#680CFF', // darkPurple
+          secondary: '#AA76FF', // lightPurple
           background: '#FFFFFF',
-          foreground: '#1A1A1A ',
+          foreground: '#1A1A1A',
+          surface: '#F5F5F5',
         },
         dark: {
-          background: '#1A1A1A ',
+          primary: '#AA76FF', // lightPurple
+          secondary: '#680CFF', // darkPurple
+          background: '#1A1A1A',
           foreground: '#FFFFFF',
+          surface: '#2A2A2A',
         },
       },
     },

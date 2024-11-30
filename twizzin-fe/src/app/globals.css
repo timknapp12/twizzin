@@ -2,21 +2,38 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Default light theme */
 :root {
-  --foreground-color: theme('colors.light.foreground');
-  --background-color: theme('colors.light.background');
+  --color-primary: theme('themes.light.primary');
+  --color-secondary: theme('themes.light.secondary');
+  --color-background: theme('themes.light.background');
+  --color-foreground: theme('themes.light.foreground');
+  --color-surface: theme('themes.light.surface');
 }
 
+/* System preference dark mode */
 @media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-color: theme('colors.dark.foreground');
-    --background-color: theme('colors.dark.background');
+  :root:not([data-theme='light']) {
+    --color-primary: theme('themes.dark.primary');
+    --color-secondary: theme('themes.dark.secondary');
+    --color-background: theme('themes.dark.background');
+    --color-foreground: theme('themes.dark.foreground');
+    --color-surface: theme('themes.dark.surface');
   }
 }
 
+/* Manual dark mode */
+[data-theme='dark'] {
+  --color-primary: theme('themes.dark.primary');
+  --color-secondary: theme('themes.dark.secondary');
+  --color-background: theme('themes.dark.background');
+  --color-foreground: theme('themes.dark.foreground');
+  --color-surface: theme('themes.dark.surface');
+}
+
 body {
-  color: var(--foreground-color);
-  background-color: var(--background-color);
+  color: var(--color-foreground);
+  background-color: var(--color-background);
 }
 
 .atma {
