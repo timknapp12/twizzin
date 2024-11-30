@@ -2,9 +2,8 @@
 
 import React, { useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { Button } from './Button';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
-import { FaSignOutAlt } from 'react-icons/fa';
+import { FaSignOutAlt, FaWallet, FaSpinner } from 'react-icons/fa';
 import { useAppContext } from '@/contexts/AppContext';
 
 interface WalletButtonProps {
@@ -27,36 +26,54 @@ export const WalletButton: React.FC<WalletButtonProps> = ({ className }) => {
 
   const getButtonContent = () => {
     if (connecting) {
-      return t('Connecting');
+      return (
+        <div className='flex items-center justify-center w-full gap-2'>
+          <FaSpinner className='animate-spin' />
+          <span>{t('Connecting')}</span>
+        </div>
+      );
     }
     if (connected && publicKey) {
       if (isHovering) {
         return (
-          <div className='flex items-center justify-center w-full'>
+          <div className='flex items-center justify-center w-full gap-2'>
             <span>{t('Disconnect')}</span>
-            <FaSignOutAlt className='ml-2' />
+            <FaSignOutAlt />
           </div>
         );
       }
       const address = publicKey.toBase58();
       const shortAddress = `${address.slice(0, 4)}...${address.slice(-4)}`;
-      return t(`Connected: ${shortAddress}`);
+      return (
+        <div className='flex items-center justify-center w-full gap-2'>
+          <span>{shortAddress}</span>
+          <FaSignOutAlt />
+        </div>
+      );
     }
-    return t('Connect Wallet');
+    return (
+      <div className='flex items-center justify-center w-full gap-2'>
+        <FaWallet />
+        <span>{t('Connect Wallet')}</span>
+      </div>
+    );
   };
 
   return (
-    <Button
+    <button
       className={`${className} ${
-        connected ? 'hover:bg-red-500 transition-colors duration-300' : ''
+        connected
+          ? 'bg-background text-foreground border border-foreground hover:bg-foreground hover:text-background'
+          : 'bg-foreground text-background hover:bg-background hover:text-foreground'
+      } px-4 py-2 rounded-full shadow-sm border border-black/[0.06] transition-colors duration-200 min-w-[172px] ${
+        connecting ? 'opacity-70 cursor-not-allowed' : ''
       }`}
       onClick={handleClick}
-      isLoading={connecting}
       disabled={connecting}
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
     >
       {getButtonContent()}
-    </Button>
+    </button>
   );
 };
