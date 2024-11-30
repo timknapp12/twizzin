@@ -3,7 +3,6 @@
 import React, { useState, FormEvent } from 'react';
 import {
   ScreenContainer,
-  GradientContainer,
   TwizzinLogo,
   Button,
   Column,
@@ -51,7 +50,7 @@ export const JoinComponent = () => {
     <ScreenContainer>
       <form className='w-full' onSubmit={handleSubmit}>
         <Column className='gap-4 w-full lg:w-1/2 mx-auto'>
-          <GradientContainer>
+          <div>
             <Column className='gap-2'>
               <H3Brand>TWIZZIN</H3Brand>
               <TwizzinLogo />
@@ -68,7 +67,7 @@ export const JoinComponent = () => {
                 disabled={isLoading}
               />
             </Column>
-          </GradientContainer>
+          </div>
           <Button type='submit' isLoading={isLoading}>
             {t('Join')}
           </Button>

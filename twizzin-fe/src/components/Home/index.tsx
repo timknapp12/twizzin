@@ -3,7 +3,6 @@
 import {
   ScreenContainer,
   TwizzinLogo,
-  GradientContainer,
   Column,
   H3,
   H3Brand,
@@ -18,13 +17,11 @@ export const HomeComponent = () => {
   return (
     <ScreenContainer>
       <Column className='gap-4 w-full lg:w-1/2 mx-auto'>
-        <GradientContainer>
-          <H3Brand>TWIZZIN</H3Brand>
-          <TwizzinLogo />
-          <H3>Proof of Learn</H3>
-          <H3>{t('The Web3 trivia game built on Solana')}</H3>
-          <Landing />
-        </GradientContainer>
+        <H3Brand>TWIZZIN</H3Brand>
+        <TwizzinLogo />
+        <H3>Proof of Learn</H3>
+        <H3>{t('The Web3 trivia game built on Solana')}</H3>
+        <Landing />
         <MoreInfo />
       </Column>
     </ScreenContainer>

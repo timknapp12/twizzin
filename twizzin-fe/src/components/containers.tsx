@@ -10,33 +10,14 @@ interface ScreenContainerProps {
 
 export const ScreenContainer = ({ children }: ScreenContainerProps) => {
   return (
-    <main className='flex min-h-screen flex-col items-center justify-start'>
+    <main className='bg-background flex min-h-screen flex-col items-center justify-start'>
       <Header />
       <div className='flex-grow w-full p-6 sm:pl-8 sm:pr-16 sm:pb-16'>
-        <BorderedContainer>{children}</BorderedContainer>
+        {children}
       </div>
     </main>
   );
 };
-
-// This container is used to wrap the content of the screen with 2 borders, which is hidden on mobile
-export const BorderedContainer = ({
-  children,
-  className,
-}: ScreenContainerProps & { className?: string }) => (
-  <div
-    className={`flex-grow w-full sm:p-4 rounded-tl-2xl rounded-br-2xl bg-gradient-to-br from-lightPurple to-darkPurple flex ${
-      className || ''
-    }`}
-  >
-    <div className='relative w-full'>
-      <div className='absolute sm:-top-12 sm:-right-12 sm:w-[calc(100%+24px)] sm:h-[calc(100%+24px)] sm:border border-dark-background dark:border-light-background rounded-tl-2xl rounded-br-2xl pointer-events-none'></div>
-      <div className='bg-light-background dark:bg-dark-background w-full h-full rounded-tl-2xl rounded-br-2xl p-6 sm:pt-6 sm:pr-6 sm:pb-12 sm:pl-14 flex flex-col'>
-        <Column>{children}</Column>
-      </div>
-    </div>
-  </div>
-);
 
 // use tailwind props to set the justify and align of Column and Row Components
 const justifyClassMap = {
@@ -103,19 +84,6 @@ export const Row = ({
     {...props}
   >
     {children}
-  </div>
-);
-
-export const GradientContainer = ({
-  children,
-  className,
-}: ScreenContainerProps) => (
-  <div
-    className={`w-full p-4 rounded-tl-2xl rounded-br-2xl bg-gradient-to-br from-lightPurple to-darkPurple text-white ${
-      className || ''
-    }`}
-  >
-    <Column>{children}</Column>
   </div>
 );
 
