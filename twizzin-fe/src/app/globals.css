@@ -7,10 +7,12 @@
   --color-primary: theme('themes.light.primary');
   --color-secondary: theme('themes.light.secondary');
   --color-background: theme('themes.light.background');
-  --color-foreground: theme('themes.light.foreground');
+  --color-primaryText: theme('themes.light.primaryText');
   --color-surface: theme('themes.light.surface');
   --color-languageIcon: theme('themes.light.languageIcon');
   --color-languageIconHover: theme('themes.light.languageIconHover');
+  --color-secondaryText: theme('themes.light.secondaryText');
+  --color-disabledText: theme('themes.light.disabledText');
 }
 
 /* System preference dark mode */
@@ -19,10 +21,12 @@
     --color-primary: theme('themes.dark.primary');
     --color-secondary: theme('themes.dark.secondary');
     --color-background: theme('themes.dark.background');
-    --color-foreground: theme('themes.dark.foreground');
+    --color-primaryText: theme('themes.dark.primaryText');
     --color-surface: theme('themes.dark.surface');
     --color-languageIcon: theme('themes.dark.languageIcon');
     --color-languageIconHover: theme('themes.dark.languageIconHover');
+    --color-secondaryText: theme('themes.dark.secondaryText');
+    --color-disabledText: theme('themes.dark.disabledText');
   }
 } */
 
@@ -31,14 +35,16 @@
   --color-primary: theme('themes.dark.primary');
   --color-secondary: theme('themes.dark.secondary');
   --color-background: theme('themes.dark.background');
-  --color-foreground: theme('themes.dark.foreground');
+  --color-primaryText: theme('themes.dark.primaryText');
   --color-surface: theme('themes.dark.surface');
   --color-languageIcon: theme('themes.dark.languageIcon');
   --color-languageIconHover: theme('themes.dark.languageIconHover');
+  --color-secondaryText: theme('themes.dark.secondaryText');
+  --color-disabledText: theme('themes.dark.disabledText');
 }
 
 body {
-  color: var(--color-foreground);
+  color: var(--color-primaryText);
   background-color: var(--color-background);
 }
 

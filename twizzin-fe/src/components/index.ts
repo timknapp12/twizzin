@@ -12,3 +12,4 @@ export * from './Join';
 export * from './MenuDropdown';
 export * from './Header';
 export * from './ErrorBoundary';
+export * from './Footer';

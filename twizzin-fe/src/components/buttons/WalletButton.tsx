@@ -63,8 +63,8 @@ export const WalletButton: React.FC<WalletButtonProps> = ({ className }) => {
     <button
       className={`${className} ${
         connected
-          ? 'bg-background text-foreground border border-foreground hover:bg-foreground hover:text-background'
-          : 'bg-foreground text-background hover:bg-background hover:text-foreground'
+          ? 'bg-background text-primaryText border border-primaryText hover:bg-primaryText hover:text-background active:text-gray'
+          : 'bg-primaryText text-background hover:bg-background hover:text-primaryText  active:text-black/60'
       } px-4 py-2 rounded-full shadow-sm border border-black/[0.06] transition-colors duration-200 min-w-[172px] ${
         connecting ? 'opacity-70 cursor-not-allowed' : ''
       }`}

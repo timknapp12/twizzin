@@ -63,3 +63,10 @@ export interface GameData {
   maxWinners: number;
   answers: AnswerToBeHashed[];
 }
+
+export interface CarouselItem {
+  title: string;
+  description: string;
+  image: string;
+  order: number;
+}

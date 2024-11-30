@@ -1,8 +1,5 @@
 {
   "The Web3 trivia game built on Solana": "The Web3 trivia game built on Solana",
-  "Twizzin is currently in development. Follow us on X and Telegram to stay updated on our progress.": "Twizzin is currently in development. Follow us on X and Telegram to stay updated on our progress.",
-  "Gimme less info": "Gimme less info",
-  "Gimme more info": "Gimme more info",
   "verb, informal": "verb, informal",
   "To be in a state of heightened mental acuity and knowledge recall, particularly while answering trivia questions.": "To be in a state of heightened mental acuity and knowledge recall, particularly while answering trivia questions.",
   "To perform exceptionally well in a quiz or trivia competition, as if possessing expert-level knowledge or magical, wizzard-like abilities.": "To perform exceptionally well in a quiz or trivia competition, as if possessing expert-level knowledge or magical, wizzard-like abilities.",
@@ -68,16 +65,10 @@
   "Please connect your wallet": "Please connect your wallet",
   "Connecting": "Connecting",
   "Disconnect": "Disconnect",
-  "Connected: {{shortAddress}}": "Connected: {{shortAddress}}",
   "Connect Wallet": "Connect Wallet",
-  "Join": "Join",
-  "Game code must be 6 characters": "Game code must be 6 characters",
-  "Enter a game code provided by your host": "Enter a game code provided by your host",
-  "Change language": "Change language",
-  "Change currency": "Change currency",
-  "Select Language": "Select Language",
-  "English": "English",
-  "Deutsch": "Deutsch",
-  "Español": "Español",
-  "Close": "Close"
+  "Connect your wallet to claim rewards": "Connect your wallet to claim rewards",
+  "Create a new game": "Create a new game",
+  "2024 Twizzin. All rights reserved.": "2024 Twizzin. All rights reserved.",
+  "Privacy Policy": "Privacy Policy",
+  "Cookie Policy": "Cookie Policy"
 }
