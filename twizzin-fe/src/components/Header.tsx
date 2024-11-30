@@ -1,34 +1,18 @@
 'use client';
-
-import React, { useState } from 'react';
-import { FiMenu } from 'react-icons/fi';
-import { MenuDropdown } from './MenuDropdown';
+import { LanguageIconButton } from './buttons/LanguageIconButton';
+import { WalletButton } from './buttons/WalletButton';
+import sol from '../assets/sol.png';
+import uk from '../assets/uk.png';
 
 export const Header: React.FC = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const menuButtonRef = React.useRef<HTMLButtonElement>(null);
-
-  const handleMenuClick = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
-
   return (
-    <header className='w-full flex justify-between items-center p-4 sm:px-8 relative z-50'>
-      <div />
-      <button
-        ref={menuButtonRef}
-        onClick={handleMenuClick}
-        className='p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors'
-        aria-label='Open menu'
-      >
-        <FiMenu size={24} />
-      </button>
-      {isMenuOpen && (
-        <MenuDropdown
-          anchorEl={menuButtonRef}
-          onClose={() => setIsMenuOpen(false)}
-        />
-      )}
+    <header className='bg-background w-full flex justify-between items-center p-4 sm:px-8 relative z-50'>
+      <div>Twizzin</div>
+      <div className='flex items-center gap-2'>
+        <LanguageIconButton imageSrc={sol.src} alt='Solana' disabled />
+        <LanguageIconButton imageSrc={uk.src} alt='English' disabled />
+        <WalletButton />
+      </div>
     </header>
   );
 };
