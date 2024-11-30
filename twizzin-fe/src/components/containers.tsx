@@ -1,7 +1,6 @@
 'use client';
 
 import React, { ReactNode } from 'react';
-import { Header } from './Header';
 
 interface ScreenContainerProps {
   children: ReactNode;
@@ -10,9 +9,8 @@ interface ScreenContainerProps {
 
 export const ScreenContainer = ({ children }: ScreenContainerProps) => {
   return (
-    <main className='bg-background flex min-h-screen flex-col items-center justify-start'>
-      <Header />
-      <div className='flex-grow w-full p-6 sm:pl-8 sm:pr-16 sm:pb-16'>
+    <main className='bg-background flex min-h-screen flex-col items-center'>
+      <div className='flex flex-col justify-between w-full h-full min-h-screen p-4'>
         {children}
       </div>
     </main>
@@ -115,3 +113,7 @@ export const Grid: React.FC<GridProps> = ({
     </div>
   );
 };
+
+export const Gap = ({ size = '1rem' }: { size?: string }) => (
+  <div style={{ height: size }} />
+);

@@ -6,7 +6,7 @@ import uk from '../assets/uk.png';
 
 export const Header: React.FC = () => {
   return (
-    <header className='bg-background w-full flex justify-between items-center p-4 sm:px-8 relative z-50'>
+    <header className='bg-background w-full flex justify-between items-center relative z-50'>
       <div>Twizzin</div>
       <div className='flex items-center gap-2'>
         <LanguageIconButton imageSrc={sol.src} alt='Solana' disabled />
