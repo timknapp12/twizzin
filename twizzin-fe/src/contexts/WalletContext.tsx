@@ -1,30 +1,70 @@
-import { useMemo } from 'react';
+'use client';
+import { FC, PropsWithChildren, useMemo, useEffect, useState } from 'react';
 import {
   ConnectionProvider,
   WalletProvider,
 } from '@solana/wallet-adapter-react';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
+import { clusterApiUrl, Commitment } from '@solana/web3.js';
 import {
   PhantomWalletAdapter,
   SolflareWalletAdapter,
 } from '@solana/wallet-adapter-wallets';
-import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
-import * as web3 from '@solana/web3.js';
+import { ProgramContextProvider } from '@/contexts/ProgramContext';
 import '@solana/wallet-adapter-react-ui/styles.css';
+import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 
-const WalletContextProvider = ({ children }: { children: React.ReactNode }) => {
-  const network = WalletAdapterNetwork.Devnet;
-  const endpoint = useMemo(() => web3.clusterApiUrl(network), [network]);
+const WalletContextProvider: FC<PropsWithChildren> = ({ children }) => {
+  const [mounted, setMounted] = useState(false);
 
-  const wallets = useMemo(
-    () => [new PhantomWalletAdapter(), new SolflareWalletAdapter({ network })],
-    [network]
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const environment = process.env.NEXT_PUBLIC_ENVIRONMENT;
+  const isDevnet = environment === 'devnet';
+
+  const endpoint = useMemo(
+    () =>
+      process.env.NEXT_PUBLIC_RPC_URL ||
+      clusterApiUrl(isDevnet ? 'devnet' : 'mainnet-beta'),
+    [isDevnet]
   );
 
+  const wallets = useMemo(
+    () => [
+      new PhantomWalletAdapter({
+        network: isDevnet
+          ? WalletAdapterNetwork.Devnet
+          : WalletAdapterNetwork.Mainnet,
+      }),
+      new SolflareWalletAdapter({
+        network: isDevnet
+          ? WalletAdapterNetwork.Devnet
+          : WalletAdapterNetwork.Mainnet,
+      }),
+    ],
+    [isDevnet]
+  );
+
+  const connectionConfig = useMemo(
+    () => ({
+      commitment: 'confirmed' as Commitment,
+      wsEndpoint: endpoint.replace('https', 'wss'),
+    }),
+    [endpoint]
+  );
+
+  if (!mounted) {
+    return null;
+  }
+
   return (
-    <ConnectionProvider endpoint={endpoint}>
+    <ConnectionProvider endpoint={endpoint} config={connectionConfig}>
       <WalletProvider wallets={wallets} autoConnect>
-        <WalletModalProvider>{children}</WalletModalProvider>
+        <WalletModalProvider>
+          <ProgramContextProvider>{children}</ProgramContextProvider>
+        </WalletModalProvider>
       </WalletProvider>
     </ConnectionProvider>
   );
