@@ -5,7 +5,7 @@ import i18n from '../../i18n';
 import { ErrorBoundary } from '@/components';
 import dynamic from 'next/dynamic';
 
-const WalletProviders = dynamic(() => import('@/components/WalletProviders'), {
+const WalletProviders = dynamic(() => import('@/contexts/WalletContext'), {
   ssr: false,
   // TODO add loading state
   loading: () => <div>Loading...</div>,
