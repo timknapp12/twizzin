@@ -9,18 +9,22 @@
   --color-background: theme('themes.light.background');
   --color-foreground: theme('themes.light.foreground');
   --color-surface: theme('themes.light.surface');
+  --color-languageIcon: theme('themes.light.languageIcon');
+  --color-languageIconHover: theme('themes.light.languageIconHover');
 }
 
 /* System preference dark mode */
-@media (prefers-color-scheme: dark) {
+/* @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
     --color-primary: theme('themes.dark.primary');
     --color-secondary: theme('themes.dark.secondary');
     --color-background: theme('themes.dark.background');
     --color-foreground: theme('themes.dark.foreground');
     --color-surface: theme('themes.dark.surface');
+    --color-languageIcon: theme('themes.dark.languageIcon');
+    --color-languageIconHover: theme('themes.dark.languageIconHover');
   }
-}
+} */
 
 /* Manual dark mode */
 [data-theme='dark'] {
@@ -29,6 +33,8 @@
   --color-background: theme('themes.dark.background');
   --color-foreground: theme('themes.dark.foreground');
   --color-surface: theme('themes.dark.surface');
+  --color-languageIcon: theme('themes.dark.languageIcon');
+  --color-languageIconHover: theme('themes.dark.languageIconHover');
 }
 
 body {

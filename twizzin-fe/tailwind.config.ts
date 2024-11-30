@@ -20,6 +20,8 @@ const config: Config = {
       background: 'var(--color-background)',
       foreground: 'var(--color-foreground)',
       surface: 'var(--color-surface)',
+      languageIcon: 'var(--color-languageIcon)',
+      languageIconHover: 'var(--color-languageIconHover)',
       // Static colors (these won't change with theme)
       lightPurple: '#AA76FF',
       darkPurple: '#680CFF',
@@ -91,6 +93,8 @@ const config: Config = {
           background: '#FFFFFF',
           foreground: '#1A1A1A',
           surface: '#F5F5F5',
+          languageIcon: '#F5F5F5',
+          languageIconHover: '#E5E5E5',
         },
         dark: {
           primary: '#AA76FF', // lightPurple
@@ -98,6 +102,8 @@ const config: Config = {
           background: '#1A1A1A',
           foreground: '#FFFFFF',
           surface: '#2A2A2A',
+          languageIcon: '#2A2A2A',
+          languageIconHover: '#3A3A3A',
         },
       },
     },
