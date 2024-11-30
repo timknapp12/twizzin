@@ -1,29 +1,20 @@
 'use client';
 
-import {
-  ScreenContainer,
-  TwizzinLogo,
-  Column,
-  H3,
-  H3Brand,
-} from '@/components';
-import MoreInfo from './MoreInfo';
-import { Landing } from './Landing';
+import { ScreenContainer, Footer, Header, Gap } from '@/components';
 import { useAppContext } from '@/contexts/AppContext';
+import HomeTile from './HomeTile';
 
 export const HomeComponent = () => {
   const { t } = useAppContext();
 
   return (
     <ScreenContainer>
-      <Column className='gap-4 w-full lg:w-1/2 mx-auto'>
-        <H3Brand>TWIZZIN</H3Brand>
-        <TwizzinLogo />
-        <H3>Proof of Learn</H3>
-        <H3>{t('The Web3 trivia game built on Solana')}</H3>
-        <Landing />
-        <MoreInfo />
-      </Column>
+      <Header />
+      <div className='flex-grow'>
+        <Gap size='2.5rem' />
+        <HomeTile />
+      </div>
+      <Footer />
     </ScreenContainer>
   );
 };
