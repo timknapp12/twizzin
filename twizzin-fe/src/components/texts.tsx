@@ -100,7 +100,7 @@ export const LabelSecondary = ({
 
 export const PrimaryText = ({ children, className, ...props }: TextProps) => (
   <span
-    className={`text-primaryText text-xl font-['Open_Runde',sans-serif] font-semibold leading-normal ${className}`}
+    className={`text-primaryText text-[16px] md:text-[20px] font-['Open_Runde',sans-serif] font-semibold leading-normal ${className}`}
     {...props}
   >
     {children}
@@ -109,7 +109,7 @@ export const PrimaryText = ({ children, className, ...props }: TextProps) => (
 
 export const SecondaryText = ({ children, className, ...props }: TextProps) => (
   <span
-    className={`text-secondaryText text-center font-[500] text-xs font-['Open_Runde',sans-serif] ${className}`}
+    className={`text-secondaryText text-center font-[500] text-[12px] md:text-[14px] font-['Open_Runde',sans-serif] ${className}`}
     {...props}
   >
     {children}
