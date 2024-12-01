@@ -37,11 +37,11 @@ const Carousel = ({
         className='text-gray active:text-black/10'
       />
       <Column className='gap-2 items-center'>
-        <div className='h-[200px]'>
+        <div className='md:min-h-[200px]'>
           <Image src={image} alt={title} width={200} height={100} />
         </div>
-        <PrimaryText>{t(title)}</PrimaryText>
-        <div className='h-[50px] text-center'>
+        <PrimaryText className='text-center'>{t(title)}</PrimaryText>
+        <div className='min-h-[50px] text-center'>
           <SecondaryText>{t(description)}</SecondaryText>
         </div>
       </Column>
