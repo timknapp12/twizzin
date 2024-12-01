@@ -5,6 +5,7 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 import { FaSignOutAlt, FaWallet, FaSpinner } from 'react-icons/fa';
 import { useAppContext } from '@/contexts/AppContext';
+import { useScreenSize } from '@/hooks/useScreenSize';
 
 interface WalletButtonProps {
   className?: string;
@@ -15,6 +16,9 @@ export const WalletButton: React.FC<WalletButtonProps> = ({ className }) => {
   const { setVisible } = useWalletModal();
   const { t } = useAppContext();
   const [isHovering, setIsHovering] = useState(false);
+  const screenSize = useScreenSize();
+
+  const shouldShowIcons = screenSize === 'large' || screenSize === 'medium';
 
   const handleClick = () => {
     if (connected) {
@@ -28,7 +32,7 @@ export const WalletButton: React.FC<WalletButtonProps> = ({ className }) => {
     if (connecting) {
       return (
         <div className='flex items-center justify-center w-full gap-2'>
-          <FaSpinner className='animate-spin' />
+          {shouldShowIcons && <FaSpinner className='animate-spin' />}
           <span>{t('Connecting')}</span>
         </div>
       );
@@ -38,7 +42,7 @@ export const WalletButton: React.FC<WalletButtonProps> = ({ className }) => {
         return (
           <div className='flex items-center justify-center w-full gap-2'>
             <span>{t('Disconnect')}</span>
-            <FaSignOutAlt />
+            {shouldShowIcons && <FaSignOutAlt />}
           </div>
         );
       }
@@ -47,13 +51,13 @@ export const WalletButton: React.FC<WalletButtonProps> = ({ className }) => {
       return (
         <div className='flex items-center justify-center w-full gap-2'>
           <span>{shortAddress}</span>
-          <FaSignOutAlt />
+          {shouldShowIcons && <FaSignOutAlt />}
         </div>
       );
     }
     return (
       <div className='flex items-center justify-center w-full gap-2'>
-        <FaWallet />
+        {shouldShowIcons && <FaWallet />}
         <span>{t('Connect Wallet')}</span>
       </div>
     );
@@ -65,7 +69,7 @@ export const WalletButton: React.FC<WalletButtonProps> = ({ className }) => {
         connected
           ? 'bg-background text-primaryText border border-primaryText hover:bg-primaryText hover:text-background active:text-gray'
           : 'bg-primaryText text-background hover:bg-background hover:text-primaryText  active:text-black/60'
-      } px-4 py-2 rounded-full shadow-sm border border-black/[0.06] transition-colors duration-200 min-w-[172px] ${
+      } px-4 py-2 rounded-full shadow-sm border border-black/[0.06] transition-colors duration-200 md:min-w-[172px] text-[12px] md:text-[14px] ${
         connecting ? 'opacity-70 cursor-not-allowed' : ''
       }`}
       onClick={handleClick}
