@@ -2,13 +2,12 @@
 import React, { useEffect } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import i18n from '../../i18n';
-import { ErrorBoundary } from '@/components';
+import { ErrorBoundary, MainSkeleton } from '@/components';
 import dynamic from 'next/dynamic';
 
 const WalletProviders = dynamic(() => import('@/contexts/WalletContext'), {
   ssr: false,
-  // TODO add loading state
-  loading: () => <div>Loading...</div>,
+  loading: () => <MainSkeleton />,
 });
 
 type LayoutProps = {

@@ -42,7 +42,7 @@ const HomeTile = () => {
   const [selectedItem, setSelectedItem] = useState<number>(0);
 
   return (
-    <Column className='gap-4 w-full lg:w-1/2 mx-auto max-w-[520px]'>
+    <Column className='gap-4 w-full lg:w-1/2 mx-auto max-w-[520px] mb-2'>
       <ConnectWalletForRewardsButton />
       <Carousel
         items={items}
