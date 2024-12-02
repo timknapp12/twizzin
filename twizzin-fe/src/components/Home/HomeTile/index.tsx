@@ -1,9 +1,10 @@
 'use client';
 import { useState } from 'react';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { Button, Column, Row } from '@/components';
-import ConnectWalletForRewardsButton from './ConnectWalletForRewardsButton';
 import { useAppContext } from '@/contexts/AppContext';
 import { CarouselItem } from '@/types';
+import ConnectWalletForRewardsButton from './ConnectWalletForRewardsButton';
 import Carousel from './Corousel';
 import art1 from '../../../assets/illustration1.png';
 import art2 from '../../../assets/illustration2.png';
@@ -38,12 +39,13 @@ const items: CarouselItem[] = [
 
 const HomeTile = () => {
   const { t } = useAppContext();
+  const { connected } = useWallet();
 
   const [selectedItem, setSelectedItem] = useState<number>(0);
 
   return (
     <Column className='gap-4 w-full lg:w-1/2 mx-auto max-w-[520px] mb-2'>
-      <ConnectWalletForRewardsButton />
+      {connected ? <div>connected</div> : <ConnectWalletForRewardsButton />}
       <Carousel
         items={items}
         setSelectedItem={setSelectedItem}
