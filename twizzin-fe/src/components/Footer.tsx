@@ -35,6 +35,7 @@ export const Footer = () => {
         >
           <SecondaryText>{t('Privacy Policy')}</SecondaryText>
         </Link>
+        {' | '}
         <Link
           href='/cookie-policy'
           className='underline decoration-secondaryText flex items-center'

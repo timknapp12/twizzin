@@ -13,3 +13,4 @@ export * from './MenuDropdown';
 export * from './Header';
 export * from './ErrorBoundary';
 export * from './Footer';
+export * from './MainSkeleton';
