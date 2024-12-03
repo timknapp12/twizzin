@@ -1,9 +1,16 @@
 'use client';
 
+import { useState } from 'react';
 import { ScreenContainer, Footer, Header } from '@/components';
-import HomeTile from './HomeTile';
+import HomeView from './HomeView';
+import RewardsView from './RewardsView';
 
 export const HomeComponent = () => {
+  const [view, setView] = useState<'home' | 'rewards' | 'xp'>('home');
+
+  const onSetView = (view: string) =>
+    setView(view as 'home' | 'rewards' | 'xp');
+
   return (
     <ScreenContainer>
       <Header />
@@ -11,7 +18,8 @@ export const HomeComponent = () => {
         className='flex-grow flex flex-col justify-center items-center'
         style={{ marginTop: '-7vh' }}
       >
-        <HomeTile />
+        {view === 'home' && <HomeView onSetView={onSetView} />}
+        {view === 'rewards' && <RewardsView onSetView={onSetView} />}
       </div>
       <Footer />
     </ScreenContainer>

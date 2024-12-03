@@ -8,9 +8,14 @@ import { useAppContext } from '@/contexts/AppContext';
 interface XPCardProps {
   progressPercentage?: number;
   xp?: number;
+  onClick?: () => void;
 }
 
-export const XPCard = ({ progressPercentage = 70, xp = 5 }: XPCardProps) => {
+export const XPCard = ({
+  progressPercentage = 70,
+  xp = 5,
+  onClick,
+}: XPCardProps) => {
   const { t } = useAppContext();
   const [progress, setProgress] = useState(0);
   const [currentLevel, setCurrentLevel] = useState(0);
@@ -48,7 +53,7 @@ export const XPCard = ({ progressPercentage = 70, xp = 5 }: XPCardProps) => {
   }, [progressPercentage, xp]);
 
   return (
-    <RewardsCardsContainer>
+    <RewardsCardsContainer onClick={onClick}>
       <Column align='start'>
         <PiShootingStarFill size={20} color='var(--color-tertiary)' />
         <PrimaryText style={{ fontSize: 16 }}>{t('Your XP')}</PrimaryText>
