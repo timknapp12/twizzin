@@ -14,7 +14,6 @@ interface State {
   isWalletError?: boolean;
 }
 
-// Create a functional component for the error content
 const ErrorContent = ({
   error,
   onReset,

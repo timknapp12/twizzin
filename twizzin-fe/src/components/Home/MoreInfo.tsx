@@ -1,5 +1,5 @@
 import React from 'react';
-import { Column, H5, Row, H5Brand } from '@/components';
+import { Column, H5, Row } from '@/components';
 import { useAppContext } from '@/contexts/AppContext';
 
 const MoreInfo = () => {
@@ -8,7 +8,7 @@ const MoreInfo = () => {
     <div>
       <Column align='start' className='w-full'>
         <Row>
-          <H5Brand className='mr-2'>TWIZZIN</H5Brand>
+          <H5 className='mr-2'>TWIZZIN</H5>
           <p>{` [twi' z' in] ${t('verb, informal')}`}</p>
         </Row>
         <p>
