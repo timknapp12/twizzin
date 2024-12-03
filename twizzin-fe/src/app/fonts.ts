@@ -1,16 +1,18 @@
-import { Atma, Inter, Roboto_Mono } from 'next/font/google';
+import localFont from 'next/font/local';
 
-export const inter = Inter({
-  subsets: ['latin'],
+export const openRunde = localFont({
+  src: [
+    {
+      path: '../assets/fonts/OpenRunde-Medium.otf',
+      weight: '500',
+      style: 'normal',
+    },
+    {
+      path: '../assets/fonts/OpenRunde-Bold.otf',
+      weight: '700',
+      style: 'normal',
+    },
+  ],
   display: 'swap',
-});
-
-export const roboto = Roboto_Mono({
-  subsets: ['latin'],
-  display: 'swap',
-});
-
-export const atma = Atma({
-  weight: '400',
-  subsets: ['latin'],
+  variable: '--font-open-runde', // Optional: useful for CSS variable usage
 });

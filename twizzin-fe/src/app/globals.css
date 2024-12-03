@@ -49,12 +49,7 @@
 body {
   color: var(--color-primaryText);
   background-color: var(--color-background);
-}
-
-.atma {
-  font-family: 'Atma', system-ui;
-  font-weight: 400;
-  font-style: normal;
+  font-family: var(--font-open-runde);
 }
 
 @layer utilities {
