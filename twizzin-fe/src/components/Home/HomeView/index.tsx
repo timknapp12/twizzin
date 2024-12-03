@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { Button, Column, Row } from '@/components';
+import { Button, InnerScreenContainer, Row } from '@/components';
 import { useAppContext } from '@/contexts/AppContext';
 import { CarouselItem } from '@/types';
 import ConnectWalletForRewardsButton from './ConnectWalletForRewardsButton';
@@ -38,15 +38,24 @@ const items: CarouselItem[] = [
   },
 ];
 
-const HomeTile = () => {
+interface HomeViewProps {
+  // eslint-disable-next-line no-unused-vars
+  onSetView: (view: string) => void;
+}
+
+const HomeView = ({ onSetView }: HomeViewProps) => {
   const { t } = useAppContext();
   const { connected } = useWallet();
 
   const [selectedItem, setSelectedItem] = useState<number>(0);
 
   return (
-    <Column className='gap-4 w-full lg:w-1/2 mx-auto max-w-[520px] mb-2'>
-      {connected ? <ClaimRewardsRow /> : <ConnectWalletForRewardsButton />}
+    <InnerScreenContainer>
+      {connected ? (
+        <ClaimRewardsRow onSetView={onSetView} />
+      ) : (
+        <ConnectWalletForRewardsButton />
+      )}
       <Carousel
         items={items}
         setSelectedItem={setSelectedItem}
@@ -63,8 +72,8 @@ const HomeTile = () => {
       </Row>
       <Button>{t('Create a new game')}</Button>
       <Button secondary>{t('Join a game')}</Button>
-    </Column>
+    </InnerScreenContainer>
   );
 };
 
-export default HomeTile;
+export default HomeView;
