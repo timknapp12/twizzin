@@ -11,11 +11,12 @@ const Carousel = ({
   selectedItem,
 }: {
   items: CarouselItem[];
+  // eslint-disable-next-line no-unused-vars
   setSelectedItem: (item: number) => void;
   selectedItem: number;
 }) => {
   const { t } = useAppContext();
-  const { title, description, image, order } = items[selectedItem];
+  const { title, description, image } = items[selectedItem];
 
   const handlePrevious = () => {
     // Loop back to the last item if at the beginning
@@ -38,7 +39,14 @@ const Carousel = ({
       />
       <Column className='gap-2 items-center'>
         <div className='md:min-h-[200px]'>
-          <Image src={image} alt={title} width={200} height={100} />
+          <Image
+            src={image}
+            alt={title}
+            width={200}
+            height={100}
+            style={{ width: 'auto' }}
+            priority
+          />
         </div>
         <PrimaryText className='text-center'>{t(title)}</PrimaryText>
         <div className='min-h-[50px] text-center'>

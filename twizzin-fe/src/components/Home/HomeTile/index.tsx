@@ -5,6 +5,7 @@ import { Button, Column, Row } from '@/components';
 import { useAppContext } from '@/contexts/AppContext';
 import { CarouselItem } from '@/types';
 import ConnectWalletForRewardsButton from './ConnectWalletForRewardsButton';
+import ClaimRewardsRow from './ClaimRewardsRow';
 import Carousel from './Corousel';
 import art1 from '../../../assets/illustration1.png';
 import art2 from '../../../assets/illustration2.png';
@@ -45,7 +46,7 @@ const HomeTile = () => {
 
   return (
     <Column className='gap-4 w-full lg:w-1/2 mx-auto max-w-[520px] mb-2'>
-      {connected ? <div>connected</div> : <ConnectWalletForRewardsButton />}
+      {connected ? <ClaimRewardsRow /> : <ConnectWalletForRewardsButton />}
       <Carousel
         items={items}
         setSelectedItem={setSelectedItem}
