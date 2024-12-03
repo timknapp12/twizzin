@@ -14,6 +14,14 @@ import { ProgramContextProvider } from '@/contexts/ProgramContext';
 import '@solana/wallet-adapter-react-ui/styles.css';
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 
+const originalConsoleWarn = console.warn;
+console.warn = function filterWarnings(msg, ...args) {
+  if (msg.includes('registered as a Standard Wallet')) {
+    return;
+  }
+  originalConsoleWarn.apply(console, [msg, ...args]);
+};
+
 const WalletContextProvider: FC<PropsWithChildren> = ({ children }) => {
   const [mounted, setMounted] = useState(false);
 

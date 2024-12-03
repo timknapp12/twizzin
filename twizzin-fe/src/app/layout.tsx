@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Script from 'next/script';
-import { inter } from './fonts';
+import { openRunde } from './fonts';
 import './globals.css';
 import AppProvider from '@/contexts/AppContext';
 
@@ -15,7 +15,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang='en'>
+    <html lang='en' className={openRunde.variable}>
       <head>
         <Script
           src='https://www.googletagmanager.com/gtag/js?id=G-1SM9WJYQXX'
@@ -38,7 +38,7 @@ export default function RootLayout({
           `}
         </Script>
       </head>
-      <body className={inter.className}>
+      <body>
         <AppProvider>{children}</AppProvider>
       </body>
     </html>

@@ -8,7 +8,6 @@ import {
   Column,
   Input,
   H3,
-  H3Brand,
 } from '@/components';
 import { useAppContext } from '@/contexts/AppContext';
 
@@ -52,7 +51,7 @@ export const JoinComponent = () => {
         <Column className='gap-4 w-full lg:w-1/2 mx-auto'>
           <div>
             <Column className='gap-2'>
-              <H3Brand>TWIZZIN</H3Brand>
+              <H3>TWIZZIN</H3>
               <TwizzinLogo />
               <H3 className='text-center'>
                 {t('Enter a game code provided by your host')}

@@ -13,6 +13,7 @@
   --color-languageIconHover: theme('themes.light.languageIconHover');
   --color-secondaryText: theme('themes.light.secondaryText');
   --color-disabledText: theme('themes.light.disabledText');
+  --color-tertiary: theme('themes.light.tertiary');
 }
 
 /* System preference dark mode */
@@ -27,6 +28,7 @@
     --color-languageIconHover: theme('themes.dark.languageIconHover');
     --color-secondaryText: theme('themes.dark.secondaryText');
     --color-disabledText: theme('themes.dark.disabledText');
+    --color-tertiary: theme('themes.dark.tertiary');
   }
 } */
 
@@ -41,17 +43,13 @@
   --color-languageIconHover: theme('themes.dark.languageIconHover');
   --color-secondaryText: theme('themes.dark.secondaryText');
   --color-disabledText: theme('themes.dark.disabledText');
+  --color-tertiary: theme('themes.dark.tertiary');
 }
 
 body {
   color: var(--color-primaryText);
   background-color: var(--color-background);
-}
-
-.atma {
-  font-family: 'Atma', system-ui;
-  font-weight: 400;
-  font-style: normal;
+  font-family: var(--font-open-runde);
 }
 
 @layer utilities {
