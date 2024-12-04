@@ -1,5 +1,7 @@
 import { FaArrowLeft } from 'react-icons/fa6';
 import { IconButton, Column, Row, PrimaryText } from '@/components';
+import { ClaimButton } from '@/components/buttons';
+
 import RewardsBanner from './RewardsBanner';
 import { useAppContext } from '@/contexts/AppContext';
 
@@ -23,6 +25,8 @@ const RewardsView = ({ onSetView }: RewardsViewProps) => {
       </Row>
       <Column className='w-full'>
         <RewardsBanner rewards={2} />
+        <ClaimButton />
+        <ClaimButton disabled />
       </Column>
     </Column>
   );
