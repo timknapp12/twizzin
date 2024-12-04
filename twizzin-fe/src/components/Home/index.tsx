@@ -1,7 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { ScreenContainer, Footer, Header } from '@/components';
+import {
+  ScreenContainer,
+  InnerScreenContainer,
+  Footer,
+  Header,
+} from '@/components';
 import HomeView from './HomeView';
 import RewardsView from './RewardsView';
 
@@ -14,13 +19,15 @@ export const HomeComponent = () => {
   return (
     <ScreenContainer>
       <Header />
-      <div
-        className='flex-grow flex flex-col justify-center items-center'
-        style={{ marginTop: '-7vh' }}
-      >
-        {view === 'home' && <HomeView onSetView={onSetView} />}
-        {view === 'rewards' && <RewardsView onSetView={onSetView} />}
-      </div>
+      <InnerScreenContainer>
+        <div
+          className='flex-grow flex flex-col justify-start items-center w-full'
+          style={{ marginTop: '7vh' }}
+        >
+          {view === 'home' && <HomeView onSetView={onSetView} />}
+          {view === 'rewards' && <RewardsView onSetView={onSetView} />}
+        </div>
+      </InnerScreenContainer>
       <Footer />
     </ScreenContainer>
   );
