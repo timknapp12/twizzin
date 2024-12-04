@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Column } from '@/components/containers';
 import { PrimaryText } from '@/components/texts';
 import { LuPartyPopper } from 'react-icons/lu';
-import RewardsCardsContainer from './Container';
+import RewardsCardsContainer from './RewardsCardsContainer';
 import { useAppContext } from '@/contexts/AppContext';
 
 export const RewardsCard = ({

@@ -120,7 +120,7 @@ export const Gap = ({ size = '1rem' }: { size?: string }) => (
 
 // this has the max width for centering content in the middle of the screen
 export const InnerScreenContainer = ({ children }: { children: ReactNode }) => (
-  <Column className='gap-4 w-full lg:w-1/2 mx-auto max-w-[520px] mb-2'>
+  <Column className='gap-4 w-full lg:w-1/2 mx-auto max-w-med mb-2 flex-grow flex flex-col justify-start items-center'>
     {children}
   </Column>
 );
