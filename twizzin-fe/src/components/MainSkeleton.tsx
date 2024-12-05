@@ -22,7 +22,7 @@ export const MainSkeleton = () => {
       <div className='flex-grow flex justify-center p-4'>
         <div className='w-full max-w-med flex flex-col gap-4 mt-[7vh] items-center'>
           {/* Connect wallet button placeholder */}
-          <div className='h-16 bg-gray animate-pulse rounded-lg w-full  max-w-small' />
+          <div className='h-16 bg-gray animate-pulse rounded-lg w-full' />
 
           {/* Carousel placeholder */}
           <div className='h-64 bg-gray animate-pulse rounded-lg w-full' />

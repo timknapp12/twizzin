@@ -1,10 +1,10 @@
 'use client';
 import { LanguageIconButton } from './buttons/LanguageIconButton';
 import { WalletButton } from './buttons/WalletButton';
-import sol from '../assets/sol.png';
-import uk from '../assets/uk.png';
+import sol from '../assets/svgs/sol.svg';
+import ukFlag from '../assets/svgs/uk-flag.svg';
 import twizzin from '../assets/svgs/twizzin.svg';
-import twizzinLogo from '../assets/twizzin-logo.png';
+import twizzinLogo from '../assets/images/twizzin-logo.png';
 import Image from 'next/image';
 
 export const Header: React.FC = () => {
@@ -26,7 +26,7 @@ export const Header: React.FC = () => {
           className='scale-90 md:scale-100'
         />
         <LanguageIconButton
-          imageSrc={uk.src}
+          imageSrc={ukFlag}
           alt='English'
           disabled
           className='scale-90 md:scale-100'
