@@ -18,7 +18,7 @@ export const Input: React.FC<InputProps> = ({
       {label && <Label htmlFor={id}>{label}</Label>}
       <input
         id={id}
-        className={`w-full px-4 py-2 border border-lightPurple rounded-md focus:outline-none focus:ring-2 focus:ring-darkPurple focus:border-transparent bg-light-background dark:bg-dark-background ${
+        className={`w-full px-4 py-1 border border-disabledText rounded-md focus:outline-none focus:ring-2 focus:ring-secondaryText focus:border-transparent ${
           className || ''
         }`}
         {...props}
@@ -46,7 +46,7 @@ export const TextArea: React.FC<TextAreaProps> = ({
       {label && <Label htmlFor={id}>{label}</Label>}
       <textarea
         id={id}
-        className={`w-full px-4 py-2 border border-lightPurple rounded-md focus:outline-none focus:ring-2 focus:ring-darkPurple focus:border-transparent bg-light-background dark:bg-dark-background resize-y ${
+        className={`w-full px-4 py-1 border border-disabledText rounded-md focus:outline-none focus:ring-2 focus:ring-secondaryText focus:border-transparent resize-y ${
           className || ''
         }`}
         style={style}
