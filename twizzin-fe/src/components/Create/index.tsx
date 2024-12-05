@@ -1,11 +1,14 @@
 'use client';
+
 import AddUpdateGame from './AddUpdateGame';
 import { Header } from '../Header';
+import { ScreenContainer, InnerScreenContainer } from '../containers';
+
 export const CreateComponent = () => (
-  <>
+  <ScreenContainer>
     <Header />
-    <main className='flex min-h-screen flex-col items-center p-8 pt-0'>
+    <InnerScreenContainer>
       <AddUpdateGame />
-    </main>
-  </>
+    </InnerScreenContainer>
+  </ScreenContainer>
 );
