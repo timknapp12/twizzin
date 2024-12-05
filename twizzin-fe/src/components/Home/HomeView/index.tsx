@@ -6,7 +6,7 @@ import { useAppContext } from '@/contexts/AppContext';
 import { CarouselItem } from '@/types';
 import ConnectWalletForRewardsButton from './ConnectWalletForRewardsButton';
 import ClaimRewardsRow from './ClaimRewardsRow';
-import Carousel from './Corousel';
+import Carousel from './Carousel';
 import art1 from '../../../assets/illustration1.png';
 import art2 from '../../../assets/illustration2.png';
 import Dot from './Dot';
@@ -51,7 +51,7 @@ const HomeView = ({ onSetView }: HomeViewProps) => {
 
   return (
     <Column className='gap-4'>
-      <div className='max-w-small w-full'>
+      <div className='w-full'>
         {connected ? (
           <ClaimRewardsRow onSetView={onSetView} />
         ) : (

@@ -85,9 +85,11 @@ export const XPCard = ({
           />
         </svg>
         <div className='flex justify-center items-center bg-[#EFEFEF] w-[50px] h-[50px] rounded-full'>
-          <Column>
-            <PrimaryText style={{ fontSize: 12 }}>lvl</PrimaryText>
-            <PrimaryText style={{ fontSize: 22, lineHeight: 1 }}>
+          <Column align='start'>
+            <PrimaryText style={{ fontSize: 12, lineHeight: 'normal' }}>
+              lvl
+            </PrimaryText>
+            <PrimaryText style={{ fontSize: 22, lineHeight: 'normal' }}>
               {Math.round(currentLevel)}
             </PrimaryText>
           </Column>

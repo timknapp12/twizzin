@@ -8,7 +8,7 @@ const ClaimRewardsRow = ({
   onSetView: (view: string) => void;
 }) => {
   return (
-    <Row className='gap-[10px] align-center'>
+    <Row className='gap-[10px] align-center w-full'>
       <XPCard progressPercentage={70} xp={5} onClick={() => onSetView('xp')} />
       <RewardsCard rewards={2} onClick={() => onSetView('rewards')} />
     </Row>
