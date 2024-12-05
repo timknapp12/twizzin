@@ -6,7 +6,7 @@ import { useAppContext } from '@/contexts/AppContext';
 import { CarouselItem } from '@/types';
 import ConnectWalletForRewardsButton from './ConnectWalletForRewardsButton';
 import ClaimRewardsRow from './ClaimRewardsRow';
-import Carousel from './Corousel';
+import Carousel from './Carousel';
 import art1 from '../../../assets/illustration1.png';
 import art2 from '../../../assets/illustration2.png';
 import Dot from './Dot';
@@ -38,15 +38,26 @@ const items: CarouselItem[] = [
   },
 ];
 
-const HomeTile = () => {
+interface HomeViewProps {
+  // eslint-disable-next-line no-unused-vars
+  onSetView: (view: string) => void;
+}
+
+const HomeView = ({ onSetView }: HomeViewProps) => {
   const { t } = useAppContext();
   const { connected } = useWallet();
 
   const [selectedItem, setSelectedItem] = useState<number>(0);
 
   return (
-    <Column className='gap-4 w-full lg:w-1/2 mx-auto max-w-[520px] mb-2'>
-      {connected ? <ClaimRewardsRow /> : <ConnectWalletForRewardsButton />}
+    <Column className='gap-4'>
+      <div className='w-full'>
+        {connected ? (
+          <ClaimRewardsRow onSetView={onSetView} />
+        ) : (
+          <ConnectWalletForRewardsButton />
+        )}
+      </div>
       <Carousel
         items={items}
         setSelectedItem={setSelectedItem}
@@ -67,4 +78,4 @@ const HomeTile = () => {
   );
 };
 
-export default HomeTile;
+export default HomeView;

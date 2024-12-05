@@ -1,17 +1,21 @@
 'use client';
 import { LanguageIconButton } from './buttons/LanguageIconButton';
 import { WalletButton } from './buttons/WalletButton';
-import sol from '../assets/sol.png';
-import uk from '../assets/uk.png';
+import sol from '../assets/svgs/sol.svg';
+import ukFlag from '../assets/svgs/uk-flag.svg';
 import twizzin from '../assets/svgs/twizzin.svg';
-import twizzinLogo from '../assets/twizzin-logo.png';
+import twizzinIcon from '../assets/svgs/twizzin-icon.svg';
 import Image from 'next/image';
 
 export const Header: React.FC = () => {
   return (
     <header className='bg-background w-full flex justify-between items-center relative z-50'>
       <div className='flex items-center gap-2'>
-        <Image src={twizzinLogo} alt='Twizzin Logo' className='h-8 w-auto' />
+        <Image
+          src={twizzinIcon}
+          alt='Twizzin Icon'
+          className='h-9 w-auto mt-1'
+        />
         <Image
           src={twizzin}
           alt='Twizzin text'
@@ -26,7 +30,7 @@ export const Header: React.FC = () => {
           className='scale-90 md:scale-100'
         />
         <LanguageIconButton
-          imageSrc={uk.src}
+          imageSrc={ukFlag}
           alt='English'
           disabled
           className='scale-90 md:scale-100'

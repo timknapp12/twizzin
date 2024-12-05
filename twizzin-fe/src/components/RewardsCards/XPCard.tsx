@@ -2,15 +2,20 @@ import { useEffect, useState } from 'react';
 import { Column } from '@/components/containers';
 import { PrimaryText } from '@/components/texts';
 import { PiShootingStarFill } from 'react-icons/pi';
-import RewardsCardsContainer from './Container';
+import RewardsCardsContainer from './RewardsCardsContainer';
 import { useAppContext } from '@/contexts/AppContext';
 
 interface XPCardProps {
   progressPercentage?: number;
   xp?: number;
+  onClick?: () => void;
 }
 
-export const XPCard = ({ progressPercentage = 70, xp = 5 }: XPCardProps) => {
+export const XPCard = ({
+  progressPercentage = 70,
+  xp = 5,
+  onClick,
+}: XPCardProps) => {
   const { t } = useAppContext();
   const [progress, setProgress] = useState(0);
   const [currentLevel, setCurrentLevel] = useState(0);
@@ -48,7 +53,7 @@ export const XPCard = ({ progressPercentage = 70, xp = 5 }: XPCardProps) => {
   }, [progressPercentage, xp]);
 
   return (
-    <RewardsCardsContainer>
+    <RewardsCardsContainer onClick={onClick}>
       <Column align='start'>
         <PiShootingStarFill size={20} color='var(--color-tertiary)' />
         <PrimaryText style={{ fontSize: 16 }}>{t('Your XP')}</PrimaryText>
@@ -80,8 +85,10 @@ export const XPCard = ({ progressPercentage = 70, xp = 5 }: XPCardProps) => {
           />
         </svg>
         <div className='flex justify-center items-center bg-[#EFEFEF] w-[50px] h-[50px] rounded-full'>
-          <Column>
-            <PrimaryText style={{ fontSize: 12 }}>lvl</PrimaryText>
+          <Column align='start'>
+            <PrimaryText style={{ fontSize: 12, lineHeight: 'normal' }}>
+              lvl
+            </PrimaryText>
             <PrimaryText style={{ fontSize: 22, lineHeight: 1 }}>
               {Math.round(currentLevel)}
             </PrimaryText>

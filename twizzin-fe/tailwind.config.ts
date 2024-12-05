@@ -116,6 +116,10 @@ const config: Config = {
           tertiary: '#ECC51E', // mustard
         },
       },
+      maxWidth: {
+        med: '520px',
+        small: '370px',
+      },
     },
   },
   plugins: [],

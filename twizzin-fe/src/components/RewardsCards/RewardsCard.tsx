@@ -2,10 +2,16 @@ import { useEffect, useState } from 'react';
 import { Column } from '@/components/containers';
 import { PrimaryText } from '@/components/texts';
 import { LuPartyPopper } from 'react-icons/lu';
-import RewardsCardsContainer from './Container';
+import RewardsCardsContainer from './RewardsCardsContainer';
 import { useAppContext } from '@/contexts/AppContext';
 
-export const RewardsCard = ({ rewards = 5 }: { rewards: number }) => {
+export const RewardsCard = ({
+  rewards = 5,
+  onClick,
+}: {
+  rewards: number;
+  onClick?: () => void;
+}) => {
   const { t } = useAppContext();
   const [currentRewards, setCurrentRewards] = useState(0);
 
@@ -35,7 +41,7 @@ export const RewardsCard = ({ rewards = 5 }: { rewards: number }) => {
   }, [rewards]);
 
   return (
-    <RewardsCardsContainer>
+    <RewardsCardsContainer onClick={onClick}>
       <Column align='start'>
         <LuPartyPopper size={20} color='var(--color-primary)' />
         <PrimaryText style={{ fontSize: 16 }}>{t('Rewards')}</PrimaryText>
