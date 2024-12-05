@@ -35,8 +35,16 @@ export const Button = ({
         rounded-lg
         ${
           secondary
-            ? 'bg-transparent border-[1px] border-black/10 text-primaryText hover:border-disabledText active:border-secondaryText active:text-disabledText shadow-[0px_1px_2px_0px_rgba(9,8,23,0.05)]'
-            : 'text-white bg-primary border-r-[1px] border-b-[3px] border-l-[1px] border-darkPurple shadow-[0px_1px_2px_0px_rgba(9,8,23,0.05)] hover:bg-lightPurple hover:border-mediumPurple active:bg-primary active:border-darkPurple'
+            ? `bg-transparent border-[1px] border-black/10 text-primaryText ${
+                !disabled && !isLoading
+                  ? 'hover:border-disabledText active:border-secondaryText active:text-disabledText'
+                  : ''
+              } shadow-[0px_1px_2px_0px_rgba(9,8,23,0.05)]`
+            : `text-white bg-primary border-r-[1px] border-b-[3px] border-l-[1px] border-darkPurple shadow-[0px_1px_2px_0px_rgba(9,8,23,0.05)] ${
+                !disabled && !isLoading
+                  ? 'hover:bg-lightPurple hover:border-mediumPurple active:bg-primary active:border-darkPurple'
+                  : ''
+              }`
         }
         ${
           isLoading || disabled
