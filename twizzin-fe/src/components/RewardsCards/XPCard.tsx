@@ -89,7 +89,7 @@ export const XPCard = ({
             <PrimaryText style={{ fontSize: 12, lineHeight: 'normal' }}>
               lvl
             </PrimaryText>
-            <PrimaryText style={{ fontSize: 22, lineHeight: 'normal' }}>
+            <PrimaryText style={{ fontSize: 22, lineHeight: 1 }}>
               {Math.round(currentLevel)}
             </PrimaryText>
           </Column>

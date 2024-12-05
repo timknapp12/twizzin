@@ -63,7 +63,7 @@ export const LabelSecondary = ({
 
 export const PrimaryText = ({ children, className, ...props }: TextProps) => (
   <span
-    className={`text-primaryText text-[16px] md:text-[20px] font-['Open_Runde',sans-serif] font-semibold leading-normal ${className}`}
+    className={`text-primaryText text-[16px] md:text-[20px] font-['Open_Runde',sans-serif] font-semibold ${className}`}
     {...props}
   >
     {children}
