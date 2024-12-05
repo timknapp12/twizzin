@@ -6,7 +6,7 @@ import {
   Input,
   Grid,
   IconButton,
-  H3,
+  PrimaryText,
 } from '@/components';
 import { QuestionForDb, displayOrderMap } from '@/types';
 import { FaTrashCan, FaPlus } from 'react-icons/fa6';
@@ -14,6 +14,7 @@ import { useAppContext } from '@/contexts/AppContext';
 
 interface AddUpdateQuestionProps {
   questionFromParent: QuestionForDb;
+  // eslint-disable-next-line no-unused-vars
   setError: (error: string | null) => void;
 }
 
@@ -95,19 +96,21 @@ const AddUpdateQuestion: React.FC<AddUpdateQuestionProps> = ({
 
   return (
     <Column
-      className='w-full gap-4 bg-offWhite dark:bg-lightBlack p-4 rounded-lg relative'
+      className='w-full gap-4 bg-offWhite p-4 rounded-lg relative'
       align='start'
     >
-      <H3>{`${t('Question')}: ${questionFromParent.displayOrder + 1}`}</H3>
+      <PrimaryText>{`${t('Question')}: ${
+        questionFromParent.displayOrder + 1
+      }`}</PrimaryText>
       <TextArea
         label={t('Enter question')}
         value={questionFromParent.question}
         onChange={handleQuestionChange}
         placeholder={t('Enter question')}
       />
-      <H3 className='-mb-4 mt-2'>
+      <PrimaryText className='-mb-4 mt-2'>
         {t('Add answers and select the correct one')}
-      </H3>
+      </PrimaryText>
       <Grid min='200px' gapSize='1rem' className='w-full'>
         {questionFromParent.answers.map((answer) => (
           <div key={answer.displayOrder} className='flex items-center'>
@@ -115,7 +118,7 @@ const AddUpdateQuestion: React.FC<AddUpdateQuestionProps> = ({
               type='radio'
               name={`correctAnswer-${questionFromParent.displayOrder}`}
               value={answer.displayOrder}
-              className='flex-shrink-0 mr-2'
+              className='flex-shrink-0 mr-2 accent-primary'
               checked={answer.isCorrect}
               onChange={() => handleCorrectAnswerChange(answer.displayOrder)}
             />
@@ -135,7 +138,7 @@ const AddUpdateQuestion: React.FC<AddUpdateQuestionProps> = ({
                   Icon={FaPlus}
                   onClick={handleAddAnswer}
                   title={t('Add answer')}
-                  className='cursor-pointer text-black dark:text-white'
+                  className='cursor-pointer text-foreground'
                   size={16}
                   disabled={questionFromParent.answers.length >= 10}
                 />

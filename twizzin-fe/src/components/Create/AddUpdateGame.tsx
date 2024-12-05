@@ -3,7 +3,7 @@ import { useAppContext } from '@/contexts/AppContext';
 import {
   Column,
   Input,
-  H3,
+  PrimaryText,
   Grid,
   Label,
   Row,
@@ -11,7 +11,6 @@ import {
   IconButton,
   Button,
   Alert,
-  WalletButton,
 } from '@/components';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import DatePicker from 'react-datepicker';
@@ -31,7 +30,7 @@ const AddUpdateGame = () => {
 
   const screenSize = useScreenSize();
   console.log('screenSize', screenSize);
-  const adjustedMin = screenSize === 'small' ? '100%' : '400px';
+  const adjustedMin = screenSize === 'small' ? '100%' : '200px';
 
   const [isEdit, setIsEdit] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -127,15 +126,11 @@ const AddUpdateGame = () => {
     <Column className='w-full h-full flex-grow gap-12' justify='between'>
       <Column className='w-full gap-4'>
         <Row className='w-full items-center flex-col lg:flex-row lg:justify-between'>
-          <div className='lg:w-[300px] mb-4 lg:mb-0 order-first lg:order-last'>
-            <WalletButton className='w-full' />
-          </div>
-          <H3 className='flex-1 text-center mb-4 lg:mb-0 lg:absolute lg:left-1/2 lg:transform lg:-translate-x-1/2'>
+          <PrimaryText className='flex-1 text-center w-full'>
             {doesGameCodeExist
               ? `${t('Update game')}: ${gameData.gameCode}`
               : t('Create a Twizzin game')}
-          </H3>
-          <div className='hidden lg:block w-[300px]' />
+          </PrimaryText>
         </Row>
         <Grid min={adjustedMin} gapSize='1rem' className='w-full p-4'>
           <Input
@@ -151,8 +146,8 @@ const AddUpdateGame = () => {
             name='entryFee'
             value={gameData.entryFee}
             onChange={handleInputChange}
-            placeholder={`${t('Entry Fee')} (SOL)`}
-            label={`${t('Entry Fee')} (SOL)`}
+            placeholder={t('Entry Fee')}
+            label={t('Entry Fee')}
           />
           <Input
             type='number'
@@ -168,7 +163,7 @@ const AddUpdateGame = () => {
             value={gameData.donation}
             onChange={handleInputChange}
             placeholder={t('Admin donation to the pool')}
-            label={`${t('Admin donation to the pool')} (SOL)`}
+            label={t('Admin donation to the pool')}
           />
           <Input
             type='number'
@@ -186,7 +181,7 @@ const AddUpdateGame = () => {
                 selected={gameData.startTime}
                 onChange={handleDateChange}
                 showTimeSelect
-                className='w-full min-w-[200px] px-4 py-2 border border-lightPurple rounded-md focus:outline-none focus:ring-2 focus:ring-darkPurple focus:border-transparent bg-light-background dark:bg-dark-background'
+                className='w-full min-w-[200px] px-4 py-1 border border-disabledText rounded-md focus:outline-none focus:ring-2 focus:ring-secondaryText focus:border-transparent bg-light-background dark:bg-dark-background'
                 placeholderText='Select date and time'
                 dateFormat='Pp'
                 wrapperClassName='w-full'
@@ -214,16 +209,18 @@ const AddUpdateGame = () => {
             ))}
         </Column>
       </Column>
-      <Row className='w-full p-4' justify='end'>
-        <IconButton
-          Icon={FaPlus}
-          onClick={handleAddBlankQuestion}
-          title={t('Add question')}
-          className='cursor-pointer text-blue'
-          size={32}
-        />
+      <Row className='w-full' justify='end'>
+        <div className='flex items-center justify-center rounded-full bg-primary'>
+          <IconButton
+            Icon={FaPlus}
+            onClick={handleAddBlankQuestion}
+            title={t('Add question')}
+            className='cursor-pointer text-white'
+            size={32}
+          />
+        </div>
       </Row>
-      <Column className='w-[50%] min-w-[200px] max-w-[400px]'>
+      <Column className='w-full gap-4'>
         {error && (
           <Alert
             variant='error'
