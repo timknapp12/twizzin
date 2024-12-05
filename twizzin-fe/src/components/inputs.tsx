@@ -1,9 +1,11 @@
+import { Row } from './containers';
 import { Label } from './texts';
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   className?: string;
   style?: React.CSSProperties;
   label?: string;
+  callout?: React.ReactNode;
 }
 
 export const Input: React.FC<InputProps> = ({
@@ -11,11 +13,15 @@ export const Input: React.FC<InputProps> = ({
   style,
   label,
   id,
+  callout,
   ...props
 }) => {
   return (
     <div className='w-full' style={style}>
-      {label && <Label htmlFor={id}>{label}</Label>}
+      <Row justify='between'>
+        {label && <Label htmlFor={id}>{label}</Label>}
+        {callout ? callout : null}
+      </Row>
       <input
         id={id}
         className={`w-full px-4 py-1 border border-disabledText rounded-md focus:outline-none focus:ring-2 focus:ring-secondaryText focus:border-transparent ${
