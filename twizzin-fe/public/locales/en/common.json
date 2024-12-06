@@ -25,7 +25,7 @@
   "Create a Twizzin game": "Create a Twizzin game",
   "Game Title": "Game Title",
   "Entry Fee": "Entry Fee",
-  "Commission in %": "Commission in %",
+  "Commission 0-10%": "Commission 0-10%",
   "Number of Max Winners": "Number of Max Winners",
   "Create Question": "Create Question",
   "Add answers and select the correct one": "Add answers and select the correct one",
@@ -78,5 +78,11 @@
   "Rewards": "Rewards",
   "Back": "Back",
   "Claimed": "Claimed",
-  "Claim": "Claim"
+  "Claim": "Claim",
+  "Entry fee is the amount each player must pay to enter the game (optional)": "Entry fee is the amount each player must pay to enter the game (optional)",
+  "Commission is the percentage of the pot that you, the game admin, will receive (optional)": "Commission is the percentage of the pot that you, the game admin, will receive (optional)",
+  "Admin donation is the amount that you, the game admin, will donate to the pot (optional)": "Admin donation is the amount that you, the game admin, will donate to the pot (optional)",
+  "The number of winners that will be paid out in the game (1-200)": "The number of winners that will be paid out in the game (1-200)",
+  "Upload image": "Upload image",
+  "Upload an image to use as the game cover image": "Upload an image to use as the game cover image"
 }
