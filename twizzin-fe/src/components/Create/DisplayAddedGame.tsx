@@ -4,11 +4,12 @@ import {
   Row,
   Grid,
   Label,
-  H3,
+  PrimaryText,
   Alert,
   H5,
   IconButton,
 } from '@/components';
+import { TbListDetails } from 'react-icons/tb';
 import { useAppContext } from '@/contexts/AppContext';
 import { GameData, QuestionForDb } from '@/types';
 import { displayOrderMap } from '@/types';
@@ -74,16 +75,23 @@ const DisplayAddedGame: React.FC<DisplayAddedGameProps> = ({
               size={20}
             />
           </Row>
-          <H3>{t('Game Details')}</H3>
-          <Row className='gap-2'>
-            <Label>{t('Game Code')}:</Label>
-            <Label style={{ color: primaryColor }}>{gameData.gameCode}</Label>
-          </Row>
+          <Column className='w-full gap-4'>
+            <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg  bg-[#FBF9E9] gap-4 w-full max-w-small mx-auto  text-[10px] md:text-[14px] active:opacity-80'>
+              <Row className='gap-2'>
+                <TbListDetails size={20} color='var(--color-tertiary)' />
+                {t('Game Details')}
+              </Row>
+            </div>
+            <Row className='gap-2'>
+              <Label>{t('Game Code')}:</Label>
+              <Label style={{ color: primaryColor }}>{gameData.gameCode}</Label>
+            </Row>
+          </Column>
         </Column>
         <Grid
           min='400px'
           gapSize='1rem'
-          className='w-full p-4 bg-offWhite rounded-lg'
+          className='w-full p-4 bg-surface rounded-lg'
         >
           <Row>
             <Label className='mr-2'>{t('Game Title')}:</Label>
@@ -124,14 +132,14 @@ const DisplayAddedGame: React.FC<DisplayAddedGameProps> = ({
           <Label style={{ color: primaryColor }}>{totalTime}</Label>
         </Row>
 
-        <H3>{t('Questions')}</H3>
+        <PrimaryText>{t('Questions')}</PrimaryText>
         <Column className='w-full gap-6'>
           {questions
             .sort((a, b) => a.displayOrder - b.displayOrder)
             .map((question, index) => (
               <Column
                 key={index}
-                className='w-full gap-4 bg-offWhite p-4 rounded-lg'
+                className='w-full gap-4 bg-surface p-4 rounded-lg'
               >
                 <H5 style={{ color: secondaryColor }}>{`${t('Question')} ${
                   question.displayOrder + 1
