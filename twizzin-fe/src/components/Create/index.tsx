@@ -7,7 +7,7 @@ import { ScreenContainer, InnerScreenContainer } from '../containers';
 export const CreateComponent = () => (
   <ScreenContainer>
     <Header />
-    <InnerScreenContainer>
+    <InnerScreenContainer className='mt-4'>
       <AddUpdateGame />
     </InnerScreenContainer>
   </ScreenContainer>

@@ -7,6 +7,7 @@ import {
   Grid,
   IconButton,
   PrimaryText,
+  SecondaryText,
 } from '@/components';
 import { QuestionForDb, displayOrderMap } from '@/types';
 import { FaTrashCan, FaPlus } from 'react-icons/fa6';
@@ -108,9 +109,9 @@ const AddUpdateQuestion: React.FC<AddUpdateQuestionProps> = ({
         onChange={handleQuestionChange}
         placeholder={t('Enter question')}
       />
-      <PrimaryText className='-mb-4 mt-2'>
+      <SecondaryText className='-mb-4 mt-2'>
         {t('Add answers and select the correct one')}
-      </PrimaryText>
+      </SecondaryText>
       <Grid min='200px' gapSize='1rem' className='w-full'>
         {questionFromParent.answers.map((answer) => (
           <div key={answer.displayOrder} className='flex items-center'>
