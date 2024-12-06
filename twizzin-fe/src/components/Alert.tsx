@@ -1,4 +1,5 @@
-import React from 'react';
+'use client';
+import React, { useState } from 'react';
 import {
   FaCircleInfo,
   FaTriangleExclamation,
@@ -23,6 +24,9 @@ export const Alert: React.FC<AlertProps> = ({
   onClose,
   className = '',
 }) => {
+  const [isVisible, setIsVisible] = useState(true);
+  const [shouldRender, setShouldRender] = useState(true);
+
   const variantClasses = {
     info: 'bg-blue/10 border-blue text-blue',
     warning: 'bg-yellow/10 border-yellow text-yellow',
@@ -39,9 +43,26 @@ export const Alert: React.FC<AlertProps> = ({
 
   const Icon = variantIcons[variant];
 
+  // animation for closing the alert
+  const handleClose = () => {
+    setIsVisible(false);
+    setTimeout(() => {
+      setShouldRender(false);
+      onClose?.();
+    }, 300);
+  };
+
+  if (!shouldRender) return null;
+
   return (
     <Column
-      className={`w-full border-l-4 p-4 mb-4 ${variantClasses[variant]} ${className}`} // Update this line
+      className={`w-full border-l-4 p-4 mb-4 ${
+        variantClasses[variant]
+      } ${className}
+        transition-all duration-300 ease-in-out
+        ${
+          isVisible ? 'opacity-100' : 'opacity-0 transform translate-y-[-10px]'
+        }`}
       role='alert'
       align='space-between'
     >
@@ -50,7 +71,7 @@ export const Alert: React.FC<AlertProps> = ({
           <Row justify='end'>
             <FaCircleXmark
               className='h-5 w-5 cursor-pointer'
-              onClick={onClose}
+              onClick={handleClose}
             />
           </Row>
         )}
