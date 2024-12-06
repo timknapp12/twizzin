@@ -63,7 +63,7 @@ export const MenuDropdown: React.FC<MenuDropdownProps> = ({
     <>
       <div
         ref={dropdownRef}
-        className='absolute bg-offWhite dark:bg-lightBlack shadow-lg rounded-md p-4 min-w-[200px]'
+        className='absolute bg-surface dark:bg-lightBlack shadow-lg rounded-md p-4 min-w-[200px]'
         style={{ position: 'absolute' }}
       >
         <ul>

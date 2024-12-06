@@ -97,7 +97,7 @@ const AddUpdateQuestion: React.FC<AddUpdateQuestionProps> = ({
 
   return (
     <Column
-      className='w-full gap-4 bg-offWhite p-4 rounded-lg relative'
+      className='w-full gap-4 bg-surface p-4 rounded-lg relative'
       align='start'
     >
       <PrimaryText>{`${t('Question')}: ${

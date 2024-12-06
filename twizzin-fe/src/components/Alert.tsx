@@ -56,7 +56,7 @@ export const Alert: React.FC<AlertProps> = ({
 
   return (
     <Column
-      className={`w-full border-l-4 p-4 mb-4 ${
+      className={`w-full border-l-8 p-4 mb-4 ${
         variantClasses[variant]
       } ${className}
         transition-all duration-300 ease-in-out
