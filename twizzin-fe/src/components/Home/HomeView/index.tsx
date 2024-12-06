@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
+import { useRouter } from 'next/navigation';
 import { Button, Column, Row } from '@/components';
 import { useAppContext } from '@/contexts/AppContext';
 import { CarouselItem } from '@/types';
@@ -44,10 +45,13 @@ interface HomeViewProps {
 }
 
 const HomeView = ({ onSetView }: HomeViewProps) => {
-  const { t } = useAppContext();
+  const { t, language } = useAppContext();
   const { connected } = useWallet();
+  const router = useRouter();
 
   const [selectedItem, setSelectedItem] = useState<number>(0);
+
+  const onCreateGame = () => router.push(`/${language}/create`);
 
   return (
     <Column className='gap-4'>
@@ -72,7 +76,7 @@ const HomeView = ({ onSetView }: HomeViewProps) => {
           />
         ))}
       </Row>
-      <Button>{t('Create a new game')}</Button>
+      <Button onClick={onCreateGame}>{t('Create a new game')}</Button>
       <Button secondary>{t('Join a game')}</Button>
     </Column>
   );
