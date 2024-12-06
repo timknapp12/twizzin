@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useClickOutside } from '@/hooks/useClickOutside';
 import { IoInformationCircleOutline } from 'react-icons/io5';
@@ -21,17 +21,68 @@ export const Callout: React.FC<CalloutProps> = ({
   iconClassName = '',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [style, setStyle] = useState<React.CSSProperties>({});
   const triggerRef = useRef<HTMLDivElement>(null);
   const calloutRef = useRef<HTMLDivElement>(null);
 
   useClickOutside([triggerRef, calloutRef], () => setIsOpen(false));
 
-  const positionStyles: { [key: string]: string } = {
-    top: 'bottom-full left-1/2 -translate-x-1/2 mb-2',
-    bottom: 'top-full left-1/2 -translate-x-1/2 mt-2',
-    left: 'right-full top-1/2 -translate-y-1/2 mr-2',
-    right: 'left-full top-1/2 -translate-y-1/2 ml-2',
-  };
+  // calculate position to handle smaller screens
+  useEffect(() => {
+    if (isOpen && calloutRef.current && triggerRef.current) {
+      const calloutRect = calloutRef.current.getBoundingClientRect();
+      const triggerRect = triggerRef.current.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+
+      let newStyle: React.CSSProperties = {};
+
+      // Calculate positions
+      if (position === 'left' || position === 'right') {
+        // Vertical positioning
+        let top =
+          triggerRect.top + (triggerRect.height - calloutRect.height) / 2;
+        top = Math.max(
+          10,
+          Math.min(top, viewportHeight - calloutRect.height - 10)
+        );
+
+        // Horizontal positioning
+        if (position === 'left') {
+          const left = Math.max(10, triggerRect.left - calloutRect.width - 8);
+          newStyle = { top: `${top}px`, left: `${left}px` };
+        } else {
+          const left = Math.min(
+            viewportWidth - calloutRect.width - 10,
+            triggerRect.right + 8
+          );
+          newStyle = { top: `${top}px`, left: `${left}px` };
+        }
+      } else {
+        // Horizontal positioning for top/bottom
+        let left =
+          triggerRect.left + (triggerRect.width - calloutRect.width) / 2;
+        left = Math.max(
+          10,
+          Math.min(left, viewportWidth - calloutRect.width - 10)
+        );
+
+        // Vertical positioning
+        if (position === 'top') {
+          const top = Math.max(10, triggerRect.top - calloutRect.height - 8);
+          newStyle = { top: `${top}px`, left: `${left}px` };
+        } else {
+          const top = Math.min(
+            viewportHeight - calloutRect.height - 10,
+            triggerRect.bottom + 8
+          );
+          newStyle = { top: `${top}px`, left: `${left}px` };
+        }
+      }
+
+      setStyle(newStyle);
+    }
+  }, [isOpen, position]);
 
   return (
     <div className='relative inline-block'>
@@ -46,15 +97,15 @@ export const Callout: React.FC<CalloutProps> = ({
       {isOpen && (
         <div
           ref={calloutRef}
+          style={style}
           className={`
-            absolute z-50 
+            fixed z-50 
             bg-background
             rounded-lg shadow-lg 
             p-2
             max-h-32 overflow-y-auto
             w-[300px] min-w-[250px]
             border border-disabledText
-            ${positionStyles[position]}
             ${className}
           `}
         >
