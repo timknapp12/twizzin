@@ -39,22 +39,15 @@ export const H5 = ({ children, className, ...props }: TextProps) => (
   </span>
 );
 
-export const Label = ({ children, className, ...props }: TextProps) => (
-  <label
-    className={`block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300 ${className}`}
-    {...props}
-  >
+export const H6 = ({ children, className, ...props }: TextProps) => (
+  <span className={`text-xs sm:text-sm md:text-base ${className}`} {...props}>
     {children}
-  </label>
+  </span>
 );
 
-export const LabelSecondary = ({
-  children,
-  className,
-  ...props
-}: TextProps) => (
+export const Label = ({ children, className, ...props }: TextProps) => (
   <label
-    className={`block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300 opacity-70 ${className}`}
+    className={`block mb-1 text-sm font-medium text-secondaryText ${className}`}
     {...props}
   >
     {children}

@@ -130,7 +130,7 @@ export const InnerScreenContainer = ({
   ...props
 }: InnerScreenContainerProps) => (
   <Column
-    className={`gap-4 w-full lg:w-1/2 mx-auto max-w-med mb-2 flex-grow flex flex-col ${className}`}
+    className={`gap-4 w-full lg:w-1/2 mx-auto max-w-med mb-4 flex-grow flex flex-col ${className}`}
     {...props}
   >
     {children}

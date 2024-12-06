@@ -1,12 +1,12 @@
 'use client';
+import Image from 'next/image';
+import Link from 'next/link';
 import { LanguageIconButton } from './buttons/LanguageIconButton';
 import { WalletButton } from './buttons/WalletButton';
 import sol from '../assets/svgs/sol.svg';
 import ukFlag from '../assets/svgs/uk-flag.svg';
 import twizzin from '../assets/svgs/twizzin.svg';
 import twizzinIcon from '../assets/svgs/twizzin-icon.svg';
-import Image from 'next/image';
-import Link from 'next/link';
 import { useAppContext } from '@/contexts/AppContext';
 
 export const Header: React.FC = () => {
