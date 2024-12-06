@@ -56,7 +56,7 @@ export const Alert: React.FC<AlertProps> = ({
 
   return (
     <Column
-      className={`w-full border-l-8 p-4 mb-4 ${
+      className={`w-full border-l-8 p-2 mb-2 ${
         variantClasses[variant]
       } ${className}
         transition-all duration-300 ease-in-out
@@ -70,17 +70,17 @@ export const Alert: React.FC<AlertProps> = ({
         {onClose && (
           <Row justify='end'>
             <FaCircleXmark
-              className='h-5 w-5 cursor-pointer'
+              className='h-4 w-4 cursor-pointer'
               onClick={handleClose}
             />
           </Row>
         )}
-        <Row justify='start' className='gap-2'>
-          <Icon className='h-5 w-5' />
+        <Row justify='start' className='gap-1'>
+          <Icon className='h-4 w-4' />
           {title && <p className='font-semibold'>{title}</p>}
         </Row>
 
-        <div className='flex-grow mt-2'>
+        <div className='flex-grow mt-1'>
           <div className='text-sm'>{description}</div>
         </div>
       </div>
