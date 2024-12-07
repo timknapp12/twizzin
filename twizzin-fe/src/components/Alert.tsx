@@ -67,17 +67,19 @@ export const Alert: React.FC<AlertProps> = ({
       align='space-between'
     >
       <div className='flex flex-col'>
-        {onClose && (
-          <Row justify='end'>
-            <FaCircleXmark
-              className='h-4 w-4 cursor-pointer'
-              onClick={handleClose}
-            />
+        <Row justify='between' className='gap-1'>
+          <Row justify='start' className='gap-1'>
+            <Icon className='h-4 w-4' />
+            {title && <p className='font-semibold'>{title}</p>}
           </Row>
-        )}
-        <Row justify='start' className='gap-1'>
-          <Icon className='h-4 w-4' />
-          {title && <p className='font-semibold'>{title}</p>}
+          {onClose && (
+            <Row justify='end'>
+              <FaCircleXmark
+                className='h-4 w-4 cursor-pointer'
+                onClick={handleClose}
+              />
+            </Row>
+          )}
         </Row>
 
         <div className='flex-grow mt-1'>
