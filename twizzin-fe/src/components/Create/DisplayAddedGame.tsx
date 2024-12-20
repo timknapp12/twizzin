@@ -145,7 +145,7 @@ const DisplayAddedGame: React.FC<DisplayAddedGameProps> = ({
                   question.displayOrder + 1
                 }`}</H5>
                 <Label style={{ color: primaryColor }}>
-                  {question.question}
+                  {question.questionText}
                 </Label>
                 <div className='w-11/12 h-[1px] bg-lightPurple my-3 mx-auto' />
                 <H5 style={{ color: secondaryColor }}>{t('Answers')}:</H5>

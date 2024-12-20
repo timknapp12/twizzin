@@ -34,7 +34,7 @@ const AddUpdateQuestion: React.FC<AddUpdateQuestionProps> = ({
     setError(null);
     handleUpdateQuestionData({
       ...questionFromParent,
-      question: e.target.value,
+      questionText: e.target.value,
     });
   };
 
@@ -68,6 +68,7 @@ const AddUpdateQuestion: React.FC<AddUpdateQuestionProps> = ({
         {
           displayOrder: questionFromParent.answers.length,
           answerText: '',
+          displayLetter: getAnswerLetter(questionFromParent.answers.length),
           isCorrect: false,
         },
       ],
@@ -105,7 +106,7 @@ const AddUpdateQuestion: React.FC<AddUpdateQuestionProps> = ({
       }`}</PrimaryText>
       <TextArea
         label={t('Enter question')}
-        value={questionFromParent.question}
+        value={questionFromParent.questionText}
         onChange={handleQuestionChange}
         placeholder={t('Enter question')}
       />

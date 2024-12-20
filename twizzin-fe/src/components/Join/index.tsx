@@ -12,14 +12,15 @@ import {
 import { useAppContext } from '@/contexts/AppContext';
 
 export const JoinComponent = () => {
-  const { t, gameCode, setGameCode } = useAppContext();
+  const { t } = useAppContext();
 
+  const [gameCode, setGameCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
   const onHandleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setGameCode(e.target.value);
     setError('');
+    setGameCode(e.target.value);
   };
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
