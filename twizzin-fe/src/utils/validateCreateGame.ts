@@ -6,7 +6,7 @@ const validateQuestions = (questions: QuestionForDb[]): string | null => {
     question: QuestionForDb,
     index: number
   ): string | null => {
-    if (!question.question.trim()) {
+    if (!question.questionText.trim()) {
       return i18next.t('Question {{number}} is blank', { number: index + 1 });
     }
     if (!question.answers.some((answer) => answer.isCorrect)) {
@@ -52,9 +52,9 @@ const validateGameData = (gameData: GameData): string | null => {
     return i18next.t('Game title is required');
   }
 
-  if (!gameData.startTime || new Date(gameData.startTime) <= new Date()) {
-    return i18next.t('Start time must be in the future');
-  }
+  // if (!gameData.startTime || new Date(gameData.startTime) <= new Date()) {
+  //   return i18next.t('Start time must be in the future');
+  // }
 
   if (!gameData.maxWinners || gameData.maxWinners < 1) {
     return i18next.t('Number of max winners must be at least 1');

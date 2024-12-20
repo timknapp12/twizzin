@@ -1,3 +1,9 @@
+import { PublicKey } from '@solana/web3.js';
+import { Program } from '@coral-xyz/anchor';
+import { WalletContextState } from '@solana/wallet-adapter-react';
+import { TwizzinIdl } from '@/types/idl';
+
+/* eslint-disable no-unused-vars */
 export interface AppContextType {
   isSignedIn: boolean;
   setIsSignedIn: (value: boolean) => void;
@@ -9,27 +15,48 @@ export interface AppContextType {
   handleUpdateQuestionData: (question: QuestionForDb) => void;
   handleDeleteQuestion: (index: number) => void;
   handleAddBlankQuestion: () => void;
-  gameCode: string;
-  setGameCode: (code: string) => void;
   language: string;
   changeLanguage: (language: string) => void;
   t: (key: string) => string;
   currency: string;
   changeCurrency: (currency: string) => void;
+  handleCreateGame: (
+    program: Program<TwizzinIdl>,
+    wallet: WalletContextState
+  ) => void;
+}
+
+export interface GameInputForDb {
+  gamePubkey: string;
+  adminWallet: string;
+  name: string;
+  tokenMint: string;
+  entryFee: number;
+  commissionBps: number;
+  startTime: Date;
+  endTime: Date;
+  maxWinners: number;
+  donationAmount: number;
+  isNative: boolean;
+  allAreWinners: boolean;
+  evenSplit: boolean;
+  answerMerkleRoot: string;
+  imgUrl?: string;
 }
 
 export interface QuestionForDb {
   id?: string;
   displayOrder: number;
-  question: string;
-  answers: Answer[];
+  questionText: string;
   correctAnswer: string;
   timeLimit: number;
+  answers: AnswerForDb[];
 }
 
-export interface Answer {
-  displayOrder: number;
+export interface AnswerForDb {
   answerText: string;
+  displayLetter: string;
+  displayOrder: number;
   isCorrect: boolean;
 }
 
@@ -58,10 +85,29 @@ export interface GameData {
   gameName: string;
   entryFee: number;
   startTime: Date;
+  endTime: Date;
   commission: number;
   donation: number;
   maxWinners: number;
   answers: AnswerToBeHashed[];
+  evenSplit: boolean;
+  allAreWinners: boolean;
+}
+
+export interface CreateFullGameParams {
+  name: string;
+  entryFee: number;
+  commission: number;
+  startTime: number;
+  endTime: number;
+  maxWinners: number;
+  tokenMint: PublicKey;
+  donationAmount?: number;
+  allAreWinners?: boolean;
+  evenSplit?: boolean;
+  adminTokenAccount?: PublicKey;
+  questions: QuestionForDb[];
+  imageFile: File | null;
 }
 
 export interface CarouselItem {
