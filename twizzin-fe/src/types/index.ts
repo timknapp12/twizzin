@@ -2,28 +2,39 @@ import { PublicKey } from '@solana/web3.js';
 import { Program } from '@coral-xyz/anchor';
 import { WalletContextState } from '@solana/wallet-adapter-react';
 import { TwizzinIdl } from '@/types/idl';
+import { TFunction } from 'i18next';
 
 /* eslint-disable no-unused-vars */
 export interface AppContextType {
   isSignedIn: boolean;
   setIsSignedIn: (value: boolean) => void;
-  admin: object | null;
-  setAdmin: (admin: any) => void;
-  gameData: any;
-  handleGameData: (data: any) => void;
-  questions: QuestionForDb[];
-  handleUpdateQuestionData: (question: QuestionForDb) => void;
-  handleDeleteQuestion: (index: number) => void;
-  handleAddBlankQuestion: () => void;
+  admin: any;
+  setAdmin: (value: any) => void;
   language: string;
-  changeLanguage: (language: string) => void;
-  t: (key: string) => string;
+  changeLanguage: (lang: string) => void;
+  t: TFunction;
   currency: string;
   changeCurrency: (currency: string) => void;
+}
+
+export type GameDataChangeEvent = {
+  target: {
+    name: string;
+    value: string | number;
+  };
+};
+
+export interface CreateGameContextType {
+  gameData: GameData;
+  handleGameData: (e: GameDataChangeEvent) => void;
+  questions: QuestionForDb[];
+  handleUpdateQuestionData: (question: QuestionForDb) => void;
+  handleDeleteQuestion: (displayOrder: number) => void;
+  handleAddBlankQuestion: () => void;
   handleCreateGame: (
     program: Program<TwizzinIdl>,
     wallet: WalletContextState
-  ) => void;
+  ) => Promise<void>;
 }
 
 export interface GameInputForDb {
@@ -98,8 +109,8 @@ export interface CreateFullGameParams {
   name: string;
   entryFee: number;
   commission: number;
-  startTime: number;
-  endTime: number;
+  startTime: Date;
+  endTime: Date;
   maxWinners: number;
   tokenMint: PublicKey;
   donationAmount?: number;

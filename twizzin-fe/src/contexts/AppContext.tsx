@@ -7,11 +7,13 @@ import React, {
   useEffect,
   ReactNode,
 } from 'react';
-import { AppContextType, QuestionForDb, GameData } from '@/types';
+import { AppContextType } from '@/types';
 import { usePathname, useRouter } from 'next/navigation';
 import i18n from '@/i18n';
 import { useTranslation } from 'react-i18next';
-import { localeMap } from '@/utils/locales';
+import { localeMap } from '@/utils';
+import CreateGameProvider from './CreateGameContext';
+
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const useAppContext = () => {
@@ -96,74 +98,6 @@ const AppProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [language, pathname, router]);
 
-  const initialGameData: GameData = {
-    gameCode: '',
-    gameName: '',
-    entryFee: 0,
-    startTime: new Date(),
-    commission: 0,
-    donation: 0,
-    maxWinners: 1,
-    answers: [],
-  };
-
-  const [gameData, setGameData] = useState<GameData>(initialGameData);
-
-  const handleGameData = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setGameData((prevData) => ({
-      ...prevData,
-      [name]: name === 'startTime' ? new Date(value) : value,
-    }));
-  };
-
-  const blankQuestion = {
-    displayOrder: 0,
-    question: '',
-    answers: [{ displayOrder: 0, answerText: '', isCorrect: false }],
-    correctAnswer: '',
-    timeLimit: 10,
-  };
-
-  const [questions, setQuestions] = useState<QuestionForDb[]>([blankQuestion]);
-
-  const handleUpdateQuestionData = (updatedQuestion: QuestionForDb) => {
-    setQuestions((prevQuestions) =>
-      prevQuestions.map((q) =>
-        q.displayOrder === updatedQuestion.displayOrder ? updatedQuestion : q
-      )
-    );
-  };
-
-  const handleAddBlankQuestion = () => {
-    setQuestions((prevQuestions) => [
-      ...prevQuestions,
-      {
-        ...blankQuestion,
-        displayOrder: prevQuestions.length,
-      },
-    ]);
-  };
-
-  const handleDeleteQuestion = (displayOrder: number) => {
-    if (questions.length > 1) {
-      setQuestions((prevQuestions) => {
-        const newQuestions = prevQuestions.filter(
-          (q) => q.displayOrder !== displayOrder
-        );
-        return newQuestions.map((q, index) => ({ ...q, displayOrder: index }));
-      });
-    }
-  };
-
-  const [gameCode, setGameCode] = useState('');
-
-  const changeLanguage = (newLang: string) => {
-    if (i18n.isInitialized) {
-      i18n.changeLanguage(newLang);
-    }
-  };
-
   // CURRENCY
   const [currency, setCurrency] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -185,22 +119,18 @@ const AppProvider = ({ children }: { children: ReactNode }) => {
         setIsSignedIn,
         admin,
         setAdmin,
-        gameData,
-        handleGameData,
-        questions,
-        handleUpdateQuestionData,
-        handleDeleteQuestion,
-        handleAddBlankQuestion,
-        gameCode,
-        setGameCode,
         language,
-        changeLanguage,
+        changeLanguage: (newLang: string) => {
+          if (i18n.isInitialized) {
+            i18n.changeLanguage(newLang);
+          }
+        },
         t,
         currency,
         changeCurrency,
       }}
     >
-      {children}
+      <CreateGameProvider>{children}</CreateGameProvider>
     </AppContext.Provider>
   );
 };

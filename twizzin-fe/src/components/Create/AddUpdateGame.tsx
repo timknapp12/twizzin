@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAppContext } from '@/contexts/AppContext';
+import { useCreateGameContext } from '@/contexts/CreateGameContext';
 import {
   Column,
   Input,
@@ -21,11 +22,17 @@ import { FaPlus } from 'react-icons/fa6';
 import { GiBrain } from 'react-icons/gi';
 import { validateGame } from '@/utils';
 import { useScreenSize } from '@/hooks/useScreenSize';
-import { createGameWithQuestions } from '@/utils/supabase/createGame';
+// import { createGameWithQuestions } from '@/utils/supabase/createGame';
 
 const AddUpdateGame = () => {
-  const { t, gameData, handleGameData, questions, handleAddBlankQuestion } =
-    useAppContext();
+  const { t } = useAppContext();
+  const {
+    gameData,
+    handleGameData,
+    questions,
+    handleAddBlankQuestion,
+    // handleCreateGame,
+  } = useCreateGameContext();
 
   const { connection } = useConnection();
   const { publicKey } = useWallet();
@@ -79,15 +86,15 @@ const AddUpdateGame = () => {
   };
   console.log('selectedFile', selectedFile);
 
-  const generateGameCode = (): string => {
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let result = '';
-    for (let i = 0; i < 6; i++) {
-      const randomIndex = Math.floor(Math.random() * characters.length);
-      result += characters.charAt(randomIndex);
-    }
-    return result;
-  };
+  // const generateGameCode = (): string => {
+  //   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  //   let result = '';
+  //   for (let i = 0; i < 6; i++) {
+  //     const randomIndex = Math.floor(Math.random() * characters.length);
+  //     result += characters.charAt(randomIndex);
+  //   }
+  //   return result;
+  // };
 
   // TODO - add more validations
   const handleSubmit = async () => {
@@ -102,19 +109,14 @@ const AddUpdateGame = () => {
         throw new Error(validationError);
       }
 
-      if (!gameData.gameCode) {
-        const gameCode = generateGameCode();
-        handleGameData({
-          target: { name: 'gameCode', value: gameCode },
-        });
-      }
+      // const result = await createGameWithQuestions(
+      //   gameData,
+      //   questions,
+      //   selectedFile
+      // );
+      // console.log('Game created successfully:', result);
 
-      const result = await createGameWithQuestions(
-        gameData,
-        questions,
-        selectedFile
-      );
-      console.log('Game created successfully:', result);
+      // await handleCreateGame(program, wallet, params);
 
       setIsLoading(false);
       setIsEdit(false);
