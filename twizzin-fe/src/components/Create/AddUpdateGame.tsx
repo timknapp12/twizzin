@@ -3,14 +3,14 @@ import { useAppContext } from '@/contexts/AppContext';
 import {
   Column,
   Input,
-  PrimaryText,
   Grid,
   Label,
   Row,
-  LabelSecondary,
   IconButton,
   Button,
   Alert,
+  Callout,
+  FileInput,
 } from '@/components';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import DatePicker from 'react-datepicker';
@@ -18,8 +18,10 @@ import 'react-datepicker/dist/react-datepicker.css';
 import AddUpdateQuestion from './AddUpdateQuestion';
 import DisplayAddedGame from './DisplayAddedGame';
 import { FaPlus } from 'react-icons/fa6';
+import { GiBrain } from 'react-icons/gi';
 import { validateGame } from '@/utils';
 import { useScreenSize } from '@/hooks/useScreenSize';
+import { createGameWithQuestions } from '@/utils/supabase/createGame';
 
 const AddUpdateGame = () => {
   const { t, gameData, handleGameData, questions, handleAddBlankQuestion } =
@@ -29,16 +31,16 @@ const AddUpdateGame = () => {
   const { publicKey } = useWallet();
 
   const screenSize = useScreenSize();
-  console.log('screenSize', screenSize);
   const adjustedMin = screenSize === 'small' ? '100%' : '200px';
 
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isEdit, setIsEdit] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showGameCode, setShowGameCode] = useState(false);
 
   const doesGameCodeExist = gameData.gameCode && gameData.gameCode.length > 0;
-  console.log('doesGameCodeExist', doesGameCodeExist);
+  // console.log('doesGameCodeExist', doesGameCodeExist);
   const handleDateChange = (date: Date | null) => {
     setError(null);
     if (date) {
@@ -68,6 +70,15 @@ const AddUpdateGame = () => {
     0
   );
 
+  const handleFileSelect = (file: File) => {
+    setSelectedFile(file);
+  };
+
+  const handleFileError = (error: string) => {
+    setError(error);
+  };
+  console.log('selectedFile', selectedFile);
+
   const generateGameCode = (): string => {
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let result = '';
@@ -78,33 +89,40 @@ const AddUpdateGame = () => {
     return result;
   };
 
+  // TODO - add more validations
   const handleSubmit = async () => {
     setIsLoading(true);
-    if (!publicKey || !connection) {
-      setIsLoading(false);
-      return setError('Please connect your wallet');
-    }
-    const validationError = validateGame(gameData, questions);
+    try {
+      if (!publicKey || !connection) {
+        throw new Error(t('Please connect your wallet'));
+      }
 
-    if (validationError) {
-      setError(validationError);
-      setIsLoading(false);
-    } else {
-      setError(null);
-      console.log('Game creation validated, proceeding with submission');
-
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const validationError = validateGame(gameData, questions);
+      if (validationError) {
+        throw new Error(validationError);
+      }
 
       if (!gameData.gameCode) {
         const gameCode = generateGameCode();
         handleGameData({
           target: { name: 'gameCode', value: gameCode },
         });
-        setShowGameCode(true);
       }
+
+      const result = await createGameWithQuestions(
+        gameData,
+        questions,
+        selectedFile
+      );
+      console.log('Game created successfully:', result);
 
       setIsLoading(false);
       setIsEdit(false);
+      setShowGameCode(true);
+    } catch (error: any) {
+      console.error('Failed to create game:', error);
+      setError(error.message);
+      setIsLoading(false);
     }
   };
 
@@ -125,13 +143,14 @@ const AddUpdateGame = () => {
   return (
     <Column className='w-full h-full flex-grow gap-12' justify='between'>
       <Column className='w-full gap-4'>
-        <Row className='w-full items-center flex-col lg:flex-row lg:justify-between'>
-          <PrimaryText className='flex-1 text-center w-full'>
+        <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg bg-[#E8F7EA] gap-4 w-full max-w-small mx-auto  text-[10px] text-[#655B30] md:text-[14px] active:opacity-80'>
+          <Row className='gap-2'>
+            <GiBrain size={20} className='text-green' />
             {doesGameCodeExist
               ? `${t('Update game')}: ${gameData.gameCode}`
               : t('Create a Twizzin game')}
-          </PrimaryText>
-        </Row>
+          </Row>
+        </div>
         <Grid min={adjustedMin} gapSize='1rem' className='w-full p-4'>
           <Input
             type='text'
@@ -148,14 +167,32 @@ const AddUpdateGame = () => {
             onChange={handleInputChange}
             placeholder={t('Entry Fee')}
             label={t('Entry Fee')}
+            callout={
+              <Callout
+                content={t(
+                  'Entry fee is the amount each player must pay to enter the game (optional)'
+                )}
+                position='left'
+              />
+            }
           />
           <Input
             type='number'
             name='commission'
             value={gameData.commission}
             onChange={handleInputChange}
-            placeholder={t('Commission in %')}
-            label={t('Commission in %')}
+            placeholder={t('Commission 0-10%')}
+            label={t('Commission 0-10%')}
+            min={0}
+            max={10}
+            callout={
+              <Callout
+                content={t(
+                  'Commission is the percentage of the pot that you, the game admin, will receive (optional)'
+                )}
+                position='left'
+              />
+            }
           />
           <Input
             type='number'
@@ -164,6 +201,14 @@ const AddUpdateGame = () => {
             onChange={handleInputChange}
             placeholder={t('Admin donation to the pool')}
             label={t('Admin donation to the pool')}
+            callout={
+              <Callout
+                content={t(
+                  'Admin donation is the amount that you, the game admin, will donate to the pot (optional)'
+                )}
+                position='left'
+              />
+            }
           />
           <Input
             type='number'
@@ -172,6 +217,15 @@ const AddUpdateGame = () => {
             onChange={handleInputChange}
             placeholder={t('Number of Max Winners')}
             label={t('Number of Max Winners')}
+            min={1}
+            callout={
+              <Callout
+                content={t(
+                  'The number of winners that will be paid out in the game (1-200)'
+                )}
+                position='left'
+              />
+            }
           />
           <Column className='w-full' align='start'>
             <Label>{t('Game start time')}</Label>
@@ -188,6 +242,18 @@ const AddUpdateGame = () => {
               />
             </div>
           </Column>
+          <FileInput
+            label={t('Upload image')}
+            accept='image/jpeg,image/png,image/webp'
+            onFileSelect={handleFileSelect}
+            onError={handleFileError}
+            callout={
+              <Callout
+                content={t('Upload an image to use as the game cover image')}
+                position='left'
+              />
+            }
+          />
         </Grid>
 
         <div className='h-4' />
@@ -195,7 +261,7 @@ const AddUpdateGame = () => {
           <Label className='mr-2'>{`${t(
             'Total game time in seconds'
           )}:`}</Label>
-          <LabelSecondary>{totalTime}</LabelSecondary>
+          <Label>{totalTime}</Label>
         </Row>
         <Column className='w-full gap-6'>
           {questions
@@ -216,7 +282,7 @@ const AddUpdateGame = () => {
             onClick={handleAddBlankQuestion}
             title={t('Add question')}
             className='cursor-pointer text-white'
-            size={32}
+            size={24}
           />
         </div>
       </Row>
