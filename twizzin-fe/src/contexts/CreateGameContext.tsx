@@ -8,6 +8,7 @@ import {
   GameData,
   CreateFullGameParams,
   GameDataChangeEvent,
+  GameCreationResult,
 } from '@/types';
 import { createFullGame } from '@/utils';
 import { useWallet } from '@solana/wallet-adapter-react';
@@ -110,11 +111,19 @@ export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
     0
   );
 
+  const [creationResult, setCreationResult] =
+    useState<GameCreationResult | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   const handleCreateGame = async () => {
     if (!program) {
       console.error('Program not initialized');
       return;
     }
+
+    setIsCreating(true);
+    setError(null);
 
     try {
       const params: CreateFullGameParams = {
@@ -133,15 +142,19 @@ export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
       };
 
       const result = await createFullGame(program, wallet, params);
-      console.log('Game created successfully!', result);
+      setCreationResult(result);
 
       // Reset form
       setGameData(initialGameData);
       setQuestions([blankQuestion]);
-    } catch (error) {
-      console.error('Failed to create game:', error);
+    } catch (err: unknown) {
+      console.log('Failed to create game:', err);
+      setError(err instanceof Error ? err.message : 'Failed to create game');
+    } finally {
+      setIsCreating(false);
     }
   };
+
   console.log('gameData', gameData);
   return (
     <CreateGameContext.Provider
@@ -154,6 +167,11 @@ export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
         handleAddBlankQuestion,
         handleCreateGame,
         totalTime,
+        creationResult,
+        isCreating,
+        error,
+        clearCreationResult: () => setCreationResult(null),
+        clearError: () => setError(null),
       }}
     >
       {children}

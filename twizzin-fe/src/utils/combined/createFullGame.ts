@@ -98,8 +98,8 @@ export const createFullGame = async (
       onChain: onChainResult,
       database: dbResult,
     };
-  } catch (error) {
-    console.error('❌ Error creating game:', error);
-    throw error;
+  } catch (err: unknown) {
+    console.log('❌ Error creating game:', err);
+    throw err;
   }
 };

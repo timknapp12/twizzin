@@ -33,8 +33,14 @@ const AddUpdateGame = () => {
     questions,
     handleAddBlankQuestion,
     totalTime,
-    // handleCreateGame,
+    handleCreateGame,
+    isCreating,
+    error: createError,
+    creationResult,
+    clearError,
   } = useCreateGameContext();
+
+  console.log('creationResult', creationResult);
 
   const { connection } = useConnection();
   const { publicKey } = useWallet();
@@ -62,6 +68,7 @@ const AddUpdateGame = () => {
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    clearError();
     setError(null);
     const { name, value, type } = e.target;
 
@@ -76,12 +83,23 @@ const AddUpdateGame = () => {
     }
   };
 
+  const [imageError, setImageError] = useState<string | null>(null);
+  const fileSizeError = t('File size must be less than 5MB');
+  const fileTypeError = t('File must be a JPEG, PNG, or WebP image');
+
   const handleFileSelect = (file: File) => {
+    setImageError(null);
     setSelectedFile(file);
   };
 
+  const handleFileUploadComplete = (processedFile: File) => {
+    setImageError(null);
+    setSelectedFile(processedFile);
+  };
+
   const handleFileError = (error: string) => {
-    setError(error);
+    setImageError(error);
+    setSelectedFile(null);
   };
   console.log('selectedFile', selectedFile);
 
@@ -98,21 +116,18 @@ const AddUpdateGame = () => {
         throw new Error(validationError);
       }
 
-      // const result = await createGameWithQuestions(
-      //   gameData,
-      //   questions,
-      //   selectedFile
-      // );
-      // console.log('Game created successfully:', result);
+      await handleCreateGame();
 
-      // await handleCreateGame(program, wallet, params);
-
-      setIsLoading(false);
-      setIsEdit(false);
-      setShowGameCode(true);
+      // Check creationResult from context
+      if (creationResult) {
+        setIsEdit(false);
+        setShowGameCode(true);
+      }
     } catch (error: any) {
       console.error('Failed to create game:', error);
       setError(error.message);
+    } finally {
+      // Always set loading to false, regardless of success or failure
       setIsLoading(false);
     }
   };
@@ -248,6 +263,9 @@ const AddUpdateGame = () => {
             accept='image/jpeg,image/png,image/webp'
             onFileSelect={handleFileSelect}
             onError={handleFileError}
+            onUploadComplete={handleFileUploadComplete}
+            fileSizeError={fileSizeError}
+            fileTypeError={fileTypeError}
             callout={
               <Callout
                 content={t('Upload an image to use as the game cover image')}
@@ -255,6 +273,14 @@ const AddUpdateGame = () => {
               />
             }
           />
+          {imageError && (
+            <Alert
+              variant='error'
+              title={t('Error')}
+              description={imageError}
+              onClose={() => setImageError(null)}
+            />
+          )}
         </Grid>
 
         <Row className='px-4'>
@@ -327,9 +353,17 @@ const AddUpdateGame = () => {
             onClose={() => setError(null)}
           />
         )}
+        {createError && (
+          <Alert
+            variant='error'
+            title={t('Error')}
+            description={createError}
+            onClose={clearError}
+          />
+        )}
 
         {!doesGameCodeExist && (
-          <Button onClick={handleSubmit} isLoading={isLoading}>
+          <Button onClick={handleSubmit} isLoading={isLoading || isCreating}>
             {t('Create Game')}
           </Button>
         )}

@@ -1,7 +1,4 @@
 import { PublicKey } from '@solana/web3.js';
-import { Program } from '@coral-xyz/anchor';
-import { WalletContextState } from '@solana/wallet-adapter-react';
-import { TwizzinIdl } from '@/types/idl';
 import { TFunction } from 'i18next';
 
 /* eslint-disable no-unused-vars */
@@ -25,6 +22,54 @@ export type GameDataChangeEvent = {
   };
 };
 
+export interface GameCreationResult {
+  onChain: {
+    success: boolean;
+    signature: string | null;
+    error: string | null;
+  };
+  database: {
+    game: {
+      id: string;
+      game_code: string;
+      game_pubkey: string;
+      admin_wallet: string;
+      name: string;
+      token_mint: string;
+      entry_fee: number;
+      commission_bps: number;
+      start_time: string;
+      end_time: string;
+      max_winners: number;
+      donation_amount: number;
+      is_native: boolean;
+      all_are_winners: boolean;
+      even_split: boolean;
+      answer_merkle_root: string;
+      img_url: string;
+      created_at: string;
+    };
+    questions: Array<{
+      id: string;
+      game_id: string;
+      question_text: string;
+      display_order: number;
+      correct_answer: string;
+      time_limit: number;
+      created_at: string;
+    }>;
+    answers: Array<{
+      id: string;
+      question_id: string;
+      answer_text: string;
+      display_letter: string;
+      display_order: number;
+      is_correct: boolean;
+      created_at: string;
+    }>;
+  };
+}
+
 export interface CreateGameContextType {
   gameData: GameData;
   handleGameData: (e: GameDataChangeEvent) => void;
@@ -32,11 +77,13 @@ export interface CreateGameContextType {
   handleUpdateQuestionData: (question: QuestionForDb) => void;
   handleDeleteQuestion: (displayOrder: number) => void;
   handleAddBlankQuestion: () => void;
-  handleCreateGame: (
-    program: Program<TwizzinIdl>,
-    wallet: WalletContextState
-  ) => Promise<void>;
+  handleCreateGame: () => Promise<void>;
   totalTime: number;
+  creationResult: GameCreationResult | null;
+  isCreating: boolean;
+  error: string | null;
+  clearCreationResult: () => void;
+  clearError: () => void;
 }
 
 export interface GameInputForDb {
