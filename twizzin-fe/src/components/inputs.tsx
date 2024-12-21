@@ -1,8 +1,10 @@
+'use client';
+
 /* eslint-disable no-unused-vars */
 import { Row } from './containers';
 import { Label } from './texts';
-// import { supabase } from '@/utils/supabase/supabaseClient';
-// import { processImageFile } from '@/utils/supabase/imageProcessing';
+import { processImageFile } from '@/utils/supabase/imageProcessing';
+import { useState } from 'react';
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   className?: string;
@@ -74,9 +76,11 @@ interface FileInputProps
   style?: React.CSSProperties;
   label?: string;
   callout?: React.ReactNode;
-  accept?: string;
   onFileSelect?: (file: File) => void;
   onError?: (error: string) => void;
+  onUploadComplete?: (processedFile: File) => void;
+  fileSizeError?: string;
+  fileTypeError?: string;
 }
 
 export const FileInput: React.FC<FileInputProps> = ({
@@ -85,76 +89,89 @@ export const FileInput: React.FC<FileInputProps> = ({
   label,
   id,
   callout,
-  // accept,
   onFileSelect,
   onError,
+  onUploadComplete,
+  fileSizeError,
+  fileTypeError,
   ...props
 }) => {
-  const validateFile = (file: File): string | null => {
-    // Size validation (1MB = 1024 * 1024 bytes)
-    if (file.size > 1024 * 1024) {
-      return 'File size must be less than 1MB';
+  const [selectedFileName, setSelectedFileName] = useState<string>('');
+
+  const validateFile = (file: File) => {
+    // Increase to 5MB (5 * 1024 * 1024 bytes)
+    const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
+    if (file.size > MAX_FILE_SIZE) {
+      return fileSizeError;
     }
 
-    // Type validation
     if (!file.type.match(/^image\/(jpeg|png|webp)$/)) {
-      return 'File must be a JPG, PNG, or WebP image';
+      return fileTypeError;
     }
 
-    return null; // no error
+    return null;
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file
     const error = validateFile(file);
     if (error) {
       onError?.(error);
-      e.target.value = ''; // Reset input
+      e.target.value = '';
+      setSelectedFileName('');
       return;
     }
 
-    // Validate dimensions
-    const img = new Image();
-    const imageUrl = URL.createObjectURL(file);
-
-    img.onload = () => {
-      URL.revokeObjectURL(imageUrl);
-      if (img.width > 800 || img.height > 800) {
-        onError?.('Image dimensions must be 800x800 pixels or smaller');
-        e.target.value = ''; // Reset input
-        return;
-      }
+    try {
+      // Call onFileSelect with the original file first
       onFileSelect?.(file);
-    };
 
-    img.onerror = () => {
-      URL.revokeObjectURL(imageUrl);
-      onError?.('Error reading image file');
-      e.target.value = ''; // Reset input
-    };
+      // Process the file
+      const processedFile = await processImageFile(file);
 
-    img.src = imageUrl;
+      // Update UI
+      setSelectedFileName(file.name);
+
+      // Call onUploadComplete with the processed file
+      if (processedFile) {
+        onUploadComplete?.(processedFile);
+        console.log('Processed file:', processedFile); // Debug log
+      }
+    } catch (error) {
+      console.error('Error processing file:', error); // Debug log
+      onError?.(
+        error instanceof Error ? error.message : 'Error processing file'
+      );
+      e.target.value = '';
+      setSelectedFileName('');
+    }
   };
 
   return (
-    <div className='w-full' style={style}>
-      <Row justify='between'>
-        {label && <Label htmlFor={id}>{label}</Label>}
-        {callout ? callout : null}
-      </Row>
-      <input
-        type='file'
-        id={id}
-        accept='image/jpeg,image/png,image/webp'
-        className={`w-full px-4 py-1 border border-disabledText rounded-md focus:outline-none focus:ring-2 focus:ring-secondaryText focus:border-transparent file:mr-4 file:py-1 file:px-4 file:rounded-md file:border-0 file:text-sm file:bg-secondaryText file:text-white hover:file:bg-secondaryText/90 ${
-          className || ''
-        }`}
-        onChange={handleFileChange}
-        {...props}
-      />
+    <div className={className} style={style}>
+      {label && (
+        <Row className='gap-2 items-center w-full justify-between'>
+          <Label>{label}</Label>
+          {callout}
+        </Row>
+      )}
+      <div className='relative w-full'>
+        <input
+          type='file'
+          onChange={handleFileChange}
+          className='w-full px-4 py-1 border border-disabledText rounded-md focus:outline-none focus:ring-2 focus:ring-secondaryText focus:border-transparent bg-light-background dark:bg-dark-background'
+          accept='image/jpeg,image/png,image/webp'
+          {...props}
+        />
+        {selectedFileName && (
+          <div className='mt-2 text-sm text-gray-600'>
+            Selected: {selectedFileName}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
@@ -182,7 +199,7 @@ export const Checkbox: React.FC<CheckboxProps> = ({
           <input
             type='checkbox'
             id={id}
-            className={`w-4 h-4 border border-disabledText rounded focus:outline-none focus:ring-2 focus:ring-secondaryText focus:border-transparent accent-secondaryText ${
+            className={`w-4 h-4 border border-disabledText rounded focus:outline-none focus:border-transparent accent-primary ${
               className || ''
             }`}
             {...props}
