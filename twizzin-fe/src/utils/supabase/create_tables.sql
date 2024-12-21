@@ -158,3 +158,45 @@
 --     true,
 --     'solana'
 -- );
+
+-- Create the transaction management functions
+-- create or replace function public.begin_transaction()
+-- returns void
+-- language plpgsql
+-- security definer
+-- as $$
+-- begin
+--   -- Start a new transaction
+--   begin
+--     -- The transaction is automatically started
+--     -- We just need this function to exist
+--   end;
+-- end;
+-- $$;
+
+-- create or replace function public.commit_transaction()
+-- returns void
+-- language plpgsql
+-- security definer
+-- as $$
+-- begin
+--   -- Commit the current transaction
+--   commit;
+-- end;
+-- $$;
+
+-- create or replace function public.rollback_transaction()
+-- returns void
+-- language plpgsql
+-- security definer
+-- as $$
+-- begin
+--   -- Rollback the current transaction
+--   rollback;
+-- end;
+-- $$;
+
+-- -- Grant access to these functions
+-- grant execute on function public.begin_transaction to authenticated;
+-- grant execute on function public.commit_transaction to authenticated;
+-- grant execute on function public.rollback_transaction to authenticated;
