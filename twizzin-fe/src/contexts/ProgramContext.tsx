@@ -1,3 +1,4 @@
+'use client';
 import { Program, AnchorProvider } from '@coral-xyz/anchor';
 import { useAnchorWallet, useConnection } from '@solana/wallet-adapter-react';
 import { createContext, useContext, useEffect, useState } from 'react';

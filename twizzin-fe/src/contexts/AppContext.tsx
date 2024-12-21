@@ -12,19 +12,19 @@ import { usePathname, useRouter } from 'next/navigation';
 import i18n from '@/i18n';
 import { useTranslation } from 'react-i18next';
 import { localeMap } from '@/utils';
-import CreateGameProvider from './CreateGameContext';
+import { CreateGameProvider } from './CreateGameContext';
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const useAppContext = () => {
   const context = useContext(AppContext);
   if (!context) {
-    throw new Error('useAppContext must be used within an AppProvider');
+    throw new Error('useAppContext must be used within an AppContextProvider');
   }
   return context;
 };
 
-const AppProvider = ({ children }: { children: ReactNode }) => {
+export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const { t } = useTranslation();
 
   const [isSignedIn, setIsSignedIn] = useState(false);
@@ -134,5 +134,3 @@ const AppProvider = ({ children }: { children: ReactNode }) => {
     </AppContext.Provider>
   );
 };
-
-export default AppProvider;

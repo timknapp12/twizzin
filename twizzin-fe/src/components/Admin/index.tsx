@@ -13,7 +13,7 @@ import { useProgram } from '@/contexts/ProgramContext';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { initializeConfig } from '@/utils/program/initConfig';
-import { useAppContext } from '@/contexts/AppContext';
+import { useAppContext } from '@/contexts';
 import { Header } from '../Header';
 
 export const AdminComponent = () => {

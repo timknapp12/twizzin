@@ -7,7 +7,7 @@ import sol from '../assets/svgs/sol.svg';
 import ukFlag from '../assets/svgs/uk-flag.svg';
 import twizzin from '../assets/svgs/twizzin.svg';
 import twizzinIcon from '../assets/svgs/twizzin-icon.svg';
-import { useAppContext } from '@/contexts/AppContext';
+import { useAppContext } from '@/contexts';
 
 export const Header: React.FC = () => {
   const { language } = useAppContext();

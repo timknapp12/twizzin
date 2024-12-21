@@ -1,6 +1,6 @@
 import { Column, PrimaryText } from '@/components';
 import { LuPartyPopper } from 'react-icons/lu';
-import { useAppContext } from '@/contexts/AppContext';
+import { useAppContext } from '@/contexts';
 
 const RewardsBanner = ({ rewards = 2 }: { rewards: number }) => {
   const { t } = useAppContext();

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Column, H5, Row } from '@/components';
-import { useAppContext } from '@/contexts/AppContext';
+import { useAppContext } from '@/contexts';
 
 const MoreInfo = () => {
   const { t } = useAppContext();

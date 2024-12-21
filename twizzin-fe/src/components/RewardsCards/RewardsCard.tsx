@@ -3,7 +3,7 @@ import { Column } from '@/components/containers';
 import { PrimaryText } from '@/components/texts';
 import { LuPartyPopper } from 'react-icons/lu';
 import RewardsCardsContainer from './RewardsCardsContainer';
-import { useAppContext } from '@/contexts/AppContext';
+import { useAppContext } from '@/contexts';
 
 export const RewardsCard = ({
   rewards = 5,

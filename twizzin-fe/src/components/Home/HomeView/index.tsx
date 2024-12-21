@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useRouter } from 'next/navigation';
 import { Button, Column, Row } from '@/components';
-import { useAppContext } from '@/contexts/AppContext';
+import { useAppContext } from '@/contexts';
 import { CarouselItem } from '@/types';
 import ConnectWalletForRewardsButton from './ConnectWalletForRewardsButton';
 import ClaimRewardsRow from './ClaimRewardsRow';

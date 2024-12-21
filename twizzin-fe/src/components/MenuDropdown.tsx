@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { LanguageModal } from './modals';
 import { CurrencyModal } from './modals';
-import { useAppContext } from '@/contexts/AppContext';
+import { useAppContext } from '@/contexts';
 
 interface MenuDropdownProps {
   anchorEl: React.RefObject<HTMLElement>;

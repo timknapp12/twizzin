@@ -1,9 +1,6 @@
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { Program } from '@coral-xyz/anchor';
-import { TwizzinIdl } from '@/types/idl';
-import { WalletContextState } from '@solana/wallet-adapter-react';
 import { NATIVE_MINT } from '@solana/spl-token';
 import {
   CreateGameContextType,
@@ -13,6 +10,8 @@ import {
   GameDataChangeEvent,
 } from '@/types';
 import { createFullGame } from '@/utils';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { useProgram } from './ProgramContext';
 
 const CreateGameContext = createContext<CreateGameContextType | undefined>(
   undefined
@@ -28,17 +27,19 @@ export const useCreateGameContext = () => {
   return context;
 };
 
-const CreateGameProvider = ({ children }: { children: ReactNode }) => {
+export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
+  const { program } = useProgram();
+  const wallet = useWallet();
+
   const initialGameData: GameData = {
-    gameCode: '',
     gameName: '',
     entryFee: 0,
     startTime: new Date(),
-    endTime: new Date(),
+    // endTime: new Date(),
     commission: 0,
     donation: 0,
     maxWinners: 1,
-    answers: [],
+    // answers: [],
     evenSplit: false,
     allAreWinners: false,
   };
@@ -46,7 +47,12 @@ const CreateGameProvider = ({ children }: { children: ReactNode }) => {
   const [gameData, setGameData] = useState<GameData>(initialGameData);
 
   const handleGameData = (e: GameDataChangeEvent) => {
-    const { name, value } = e.target;
+    const { name, type } = e.target;
+    const value =
+      type === 'checkbox'
+        ? (e.target as HTMLInputElement).checked
+        : e.target.value;
+
     setGameData((prevData) => ({
       ...prevData,
       [name]: value,
@@ -99,17 +105,24 @@ const CreateGameProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const handleCreateGame = async (
-    program: Program<TwizzinIdl>,
-    wallet: WalletContextState
-  ) => {
+  const totalTime = questions.reduce(
+    (acc, question) => acc + question.timeLimit,
+    0
+  );
+
+  const handleCreateGame = async () => {
+    if (!program) {
+      console.error('Program not initialized');
+      return;
+    }
+
     try {
       const params: CreateFullGameParams = {
         name: gameData.gameName,
         entryFee: gameData.entryFee,
         commission: gameData.commission * 100,
-        startTime: new Date(gameData.startTime),
-        endTime: new Date(gameData.endTime),
+        startTime: gameData.startTime,
+        endTime: new Date(gameData.startTime.getTime() + totalTime * 1000),
         maxWinners: gameData.maxWinners,
         tokenMint: NATIVE_MINT,
         donationAmount: gameData.donation,
@@ -129,7 +142,7 @@ const CreateGameProvider = ({ children }: { children: ReactNode }) => {
       console.error('Failed to create game:', error);
     }
   };
-
+  console.log('gameData', gameData);
   return (
     <CreateGameContext.Provider
       value={{
@@ -140,11 +153,10 @@ const CreateGameProvider = ({ children }: { children: ReactNode }) => {
         handleDeleteQuestion,
         handleAddBlankQuestion,
         handleCreateGame,
+        totalTime,
       }}
     >
       {children}
     </CreateGameContext.Provider>
   );
 };
-
-export default CreateGameProvider;

@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 import { FaSignOutAlt, FaWallet, FaSpinner } from 'react-icons/fa';
-import { useAppContext } from '@/contexts/AppContext';
+import { useAppContext } from '@/contexts';
 import { useScreenSize } from '@/hooks/useScreenSize';
 
 interface WalletButtonProps {

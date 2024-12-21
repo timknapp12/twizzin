@@ -4,7 +4,7 @@ import { FaChevronRight } from 'react-icons/fa6';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 
 import { Row } from '@/components';
-import { useAppContext } from '@/contexts/AppContext';
+import { useAppContext } from '@/contexts';
 
 const ConnectWalletForRewardsButton = () => {
   const { setVisible } = useWalletModal();

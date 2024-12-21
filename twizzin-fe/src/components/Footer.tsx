@@ -2,7 +2,7 @@ import { Row } from './containers';
 import { SecondaryText, DisabledText } from './texts';
 import { FaXTwitter, FaTelegram } from 'react-icons/fa6';
 import Link from 'next/link';
-import { useAppContext } from '@/contexts/AppContext';
+import { useAppContext } from '@/contexts';
 
 const iconSize = 18;
 

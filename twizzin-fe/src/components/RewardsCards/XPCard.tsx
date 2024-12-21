@@ -3,7 +3,7 @@ import { Column } from '@/components/containers';
 import { PrimaryText } from '@/components/texts';
 import { PiShootingStarFill } from 'react-icons/pi';
 import RewardsCardsContainer from './RewardsCardsContainer';
-import { useAppContext } from '@/contexts/AppContext';
+import { useAppContext } from '@/contexts';
 
 interface XPCardProps {
   progressPercentage?: number;

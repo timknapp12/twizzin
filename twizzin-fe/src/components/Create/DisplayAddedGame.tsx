@@ -10,7 +10,7 @@ import {
   IconButton,
 } from '@/components';
 import { TbListDetails } from 'react-icons/tb';
-import { useAppContext } from '@/contexts/AppContext';
+import { useAppContext } from '@/contexts';
 import { GameData, QuestionForDb } from '@/types';
 import { displayOrderMap } from '@/types';
 import { FaPencil, FaCircleCheck } from 'react-icons/fa6';

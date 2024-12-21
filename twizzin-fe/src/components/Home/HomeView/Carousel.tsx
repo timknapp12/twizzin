@@ -3,7 +3,7 @@ import { CarouselItem } from '@/types';
 import { PrimaryText, SecondaryText, IconButton, Row } from '@/components';
 import { FaCircleChevronRight, FaCircleChevronLeft } from 'react-icons/fa6';
 import { Column } from '@/components/containers';
-import { useAppContext } from '@/contexts/AppContext';
+import { useAppContext } from '@/contexts';
 
 const Carousel = ({
   items,

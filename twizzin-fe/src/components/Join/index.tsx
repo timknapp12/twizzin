@@ -9,7 +9,7 @@ import {
   Input,
   H3,
 } from '@/components';
-import { useAppContext } from '@/contexts/AppContext';
+import { useAppContext } from '@/contexts';
 
 export const JoinComponent = () => {
   const { t } = useAppContext();
