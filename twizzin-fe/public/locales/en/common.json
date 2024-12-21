@@ -90,5 +90,7 @@
   "Make all players winners": "Make all players winners",
   "If checked, all players will be winners and override the number of maximum winners set above": "If checked, all players will be winners and override the number of maximum winners set above",
   "This will help players know when to join the game but it won't start until you manually start it": "This will help players know when to join the game but it won't start until you manually start it",
-  "Select date and time": "Select date and time"
+  "Select date and time": "Select date and time",
+  "File size must be less than 5MB": "File size must be less than 5MB",
+  "File must be a JPEG, PNG, or WebP image": "File must be a JPEG, PNG, or WebP image"
 }
