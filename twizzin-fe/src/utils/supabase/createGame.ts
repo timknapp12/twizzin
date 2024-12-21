@@ -43,9 +43,39 @@ const deleteGameImage = async (fileName: string) => {
   }
 };
 
+// Function to create or get player
+const ensurePlayerExists = async (walletAddress: string) => {
+  try {
+    // First try to get existing player
+    const { data: existingPlayer } = await supabase
+      .from('players')
+      .select()
+      .eq('wallet_address', walletAddress)
+      .single();
+
+    if (existingPlayer) return existingPlayer;
+
+    // If player doesn't exist, create them
+    const { data: newPlayer, error } = await supabase
+      .from('players')
+      .insert([{ wallet_address: walletAddress }])
+      .select()
+      .single();
+
+    if (error) throw error;
+    return newPlayer;
+  } catch (error) {
+    console.error('Error ensuring player exists:', error);
+    throw error;
+  }
+};
+
 // Function to create a new game
 const createGame = async (gameData: GameInputForDb) => {
   try {
+    // Ensure player exists before creating game
+    await ensurePlayerExists(gameData.adminWallet);
+
     const { data: game, error: gameError } = await supabase
       .from('games')
       .insert([
@@ -169,7 +199,9 @@ export const createGameWithQuestions = async (
       const { error: rollbackError } = await supabase.rpc(
         'rollback_transaction'
       );
-      if (rollbackError) console.error('Error rolling back:', rollbackError);
+      if (rollbackError) {
+        console.log('Error rolling back:', rollbackError);
+      }
 
       // Clean up uploaded image if it exists
       if (uploadedFileName) {
@@ -178,9 +210,9 @@ export const createGameWithQuestions = async (
 
       throw error;
     }
-  } catch (error) {
-    console.error('Error in createGameWithQuestions:', error);
-    throw error;
+  } catch (err: unknown) {
+    console.log('Error in createGameWithQuestions:', err);
+    throw err;
   }
 };
 
