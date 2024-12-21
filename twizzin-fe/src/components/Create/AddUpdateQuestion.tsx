@@ -11,7 +11,7 @@ import {
 } from '@/components';
 import { QuestionForDb, displayOrderMap } from '@/types';
 import { FaTrashCan, FaPlus } from 'react-icons/fa6';
-import { useAppContext } from '@/contexts/AppContext';
+import { useAppContext, useCreateGameContext } from '@/contexts';
 
 interface AddUpdateQuestionProps {
   questionFromParent: QuestionForDb;
@@ -27,8 +27,9 @@ const AddUpdateQuestion: React.FC<AddUpdateQuestionProps> = ({
   questionFromParent,
   setError,
 }) => {
-  const { t, handleUpdateQuestionData, handleDeleteQuestion, questions } =
-    useAppContext();
+  const { t } = useAppContext();
+  const { handleUpdateQuestionData, handleDeleteQuestion, questions } =
+    useCreateGameContext();
 
   const handleQuestionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setError(null);

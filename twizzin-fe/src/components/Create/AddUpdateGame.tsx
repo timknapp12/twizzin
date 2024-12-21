@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { useAppContext } from '@/contexts/AppContext';
-import { useCreateGameContext } from '@/contexts/CreateGameContext';
+import { useAppContext, useCreateGameContext } from '@/contexts';
 import {
   Column,
   Input,
@@ -12,6 +11,7 @@ import {
   Alert,
   Callout,
   FileInput,
+  Checkbox,
 } from '@/components';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import DatePicker from 'react-datepicker';
@@ -22,6 +22,7 @@ import { FaPlus } from 'react-icons/fa6';
 import { GiBrain } from 'react-icons/gi';
 import { validateGame } from '@/utils';
 import { useScreenSize } from '@/hooks/useScreenSize';
+import { GameDataChangeEvent } from '@/types';
 // import { createGameWithQuestions } from '@/utils/supabase/createGame';
 
 const AddUpdateGame = () => {
@@ -31,6 +32,7 @@ const AddUpdateGame = () => {
     handleGameData,
     questions,
     handleAddBlankQuestion,
+    totalTime,
     // handleCreateGame,
   } = useCreateGameContext();
 
@@ -50,11 +52,13 @@ const AddUpdateGame = () => {
   // console.log('doesGameCodeExist', doesGameCodeExist);
   const handleDateChange = (date: Date | null) => {
     setError(null);
-    if (date) {
-      handleGameData({
-        target: { name: 'startTime', value: date.toISOString() },
-      } as React.ChangeEvent<HTMLInputElement>);
-    }
+    handleGameData({
+      target: {
+        name: 'startTime',
+        value: date || new Date(),
+        type: 'date',
+      },
+    } as unknown as GameDataChangeEvent);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -62,20 +66,15 @@ const AddUpdateGame = () => {
     const { name, value, type } = e.target;
 
     if (type === 'number') {
-      const parsedValue = parseInt(value, 10);
+      const parsedValue = parseFloat(value);
       const finalValue = isNaN(parsedValue) ? 0 : parsedValue;
       handleGameData({
-        target: { name, value: finalValue },
-      } as { target: { name: string; value: number | string } });
+        target: { name, value: finalValue, type: 'number' },
+      } as { target: { name: string; value: number | string; type: string } });
     } else {
       handleGameData(e);
     }
   };
-
-  const totalTime = questions.reduce(
-    (acc, question) => acc + question.timeLimit,
-    0
-  );
 
   const handleFileSelect = (file: File) => {
     setSelectedFile(file);
@@ -85,16 +84,6 @@ const AddUpdateGame = () => {
     setError(error);
   };
   console.log('selectedFile', selectedFile);
-
-  // const generateGameCode = (): string => {
-  //   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  //   let result = '';
-  //   for (let i = 0; i < 6; i++) {
-  //     const randomIndex = Math.floor(Math.random() * characters.length);
-  //     result += characters.charAt(randomIndex);
-  //   }
-  //   return result;
-  // };
 
   // TODO - add more validations
   const handleSubmit = async () => {
@@ -144,7 +133,7 @@ const AddUpdateGame = () => {
 
   return (
     <Column className='w-full h-full flex-grow gap-12' justify='between'>
-      <Column className='w-full gap-4'>
+      <Column className='w-full'>
         <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg bg-[#E8F7EA] gap-4 w-full max-w-small mx-auto  text-[10px] text-[#655B30] md:text-[14px] active:opacity-80'>
           <Row className='gap-2'>
             <GiBrain size={20} className='text-green' />
@@ -230,18 +219,28 @@ const AddUpdateGame = () => {
             }
           />
           <Column className='w-full' align='start'>
-            <Label>{t('Game start time')}</Label>
-            <div className='w-full'>
-              <DatePicker
-                name='startTime'
-                selected={gameData.startTime}
-                onChange={handleDateChange}
-                showTimeSelect
-                className='w-full min-w-[200px] px-4 py-1 border border-disabledText rounded-md focus:outline-none focus:ring-2 focus:ring-secondaryText focus:border-transparent bg-light-background dark:bg-dark-background'
-                placeholderText='Select date and time'
-                dateFormat='Pp'
-                wrapperClassName='w-full'
+            <Row className='gap-2 items-center w-full justify-between'>
+              <Label>{t('Game start time')}</Label>
+              <Callout
+                content={t(
+                  `This will help players know when to join the game but it won't start until you manually start it`
+                )}
+                position='left'
               />
+            </Row>
+            <div className='w-full'>
+              {gameData && (
+                <DatePicker
+                  name='startTime'
+                  selected={gameData.startTime}
+                  onChange={handleDateChange}
+                  showTimeSelect
+                  className='w-full min-w-[200px] px-4 py-1 border border-disabledText rounded-md focus:outline-none focus:ring-2 focus:ring-secondaryText focus:border-transparent bg-light-background dark:bg-dark-background'
+                  placeholderText={t('Select date and time')}
+                  dateFormat='Pp'
+                  wrapperClassName='w-full'
+                />
+              )}
             </div>
           </Column>
           <FileInput
@@ -257,6 +256,37 @@ const AddUpdateGame = () => {
             }
           />
         </Grid>
+
+        <Row className='px-4'>
+          <Checkbox
+            name='evenSplit'
+            checked={gameData.evenSplit}
+            onChange={handleGameData}
+            label={t('Split the winnings evenly among winners')}
+            callout={
+              <Callout
+                content={t(
+                  'If checked, the winnings will be rewarded evenly among winners, rather than on a tiered system based on rankings'
+                )}
+                position='left'
+              />
+            }
+          />
+          <Checkbox
+            name='allAreWinners'
+            checked={gameData.allAreWinners}
+            onChange={handleGameData}
+            label={t('Make all players winners')}
+            callout={
+              <Callout
+                content={t(
+                  'If checked, all players will be winners and override the number of maximum winners set above'
+                )}
+                position='left'
+              />
+            }
+          />
+        </Row>
 
         <div className='h-4' />
         <Row justify='end' className='w-full pr-4'>
