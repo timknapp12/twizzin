@@ -21,6 +21,7 @@ export type GameDataChangeEvent = {
   target: {
     name: string;
     value: string | number;
+    type: string;
   };
 };
 
@@ -35,6 +36,7 @@ export interface CreateGameContextType {
     program: Program<TwizzinIdl>,
     wallet: WalletContextState
   ) => Promise<void>;
+  totalTime: number;
 }
 
 export interface GameInputForDb {
@@ -92,15 +94,15 @@ export interface AnswerToBeHashed {
 }
 
 export interface GameData {
-  gameCode: string; // length of 6
+  gameCode?: string; // length of 6
   gameName: string;
   entryFee: number;
   startTime: Date;
-  endTime: Date;
+  // endTime: Date;
   commission: number;
   donation: number;
   maxWinners: number;
-  answers: AnswerToBeHashed[];
+  // answers: AnswerToBeHashed[];
   evenSplit: boolean;
   allAreWinners: boolean;
 }
