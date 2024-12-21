@@ -84,5 +84,11 @@
   "Admin donation is the amount that you, the game admin, will donate to the pot (optional)": "Admin donation is the amount that you, the game admin, will donate to the pot (optional)",
   "The number of winners that will be paid out in the game (1-200)": "The number of winners that will be paid out in the game (1-200)",
   "Upload image": "Upload image",
-  "Upload an image to use as the game cover image": "Upload an image to use as the game cover image"
+  "Upload an image to use as the game cover image": "Upload an image to use as the game cover image",
+  "Split the winnings evenly among winners": "Split the winnings evenly among winners",
+  "If checked, the winnings will be rewarded evenly among winners, rather than on a tiered system based on rankings": "If checked, the winnings will be rewarded evenly among winners, rather than on a tiered system based on rankings",
+  "Make all players winners": "Make all players winners",
+  "If checked, all players will be winners and override the number of maximum winners set above": "If checked, all players will be winners and override the number of maximum winners set above",
+  "This will help players know when to join the game but it won't start until you manually start it": "This will help players know when to join the game but it won't start until you manually start it",
+  "Select date and time": "Select date and time"
 }
