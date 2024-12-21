@@ -1,8 +1,8 @@
 /* eslint-disable no-unused-vars */
 import { Row } from './containers';
 import { Label } from './texts';
-import { supabase } from '@/utils/supabase/supabaseClient';
-import { processImageFile } from '@/utils/supabase/imageProcessing';
+// import { supabase } from '@/utils/supabase/supabaseClient';
+// import { processImageFile } from '@/utils/supabase/imageProcessing';
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   className?: string;
@@ -155,6 +155,42 @@ export const FileInput: React.FC<FileInputProps> = ({
         onChange={handleFileChange}
         {...props}
       />
+    </div>
+  );
+};
+
+interface CheckboxProps
+  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'> {
+  className?: string;
+  style?: React.CSSProperties;
+  label?: string;
+  callout?: React.ReactNode;
+}
+
+export const Checkbox: React.FC<CheckboxProps> = ({
+  className,
+  style,
+  label,
+  id,
+  callout,
+  ...props
+}) => {
+  return (
+    <div className='w-full' style={style}>
+      <Row justify='between' className='items-center'>
+        <div className='flex items-center gap-2'>
+          <input
+            type='checkbox'
+            id={id}
+            className={`w-4 h-4 border border-disabledText rounded focus:outline-none focus:ring-2 focus:ring-secondaryText focus:border-transparent accent-secondaryText ${
+              className || ''
+            }`}
+            {...props}
+          />
+          {label && <Label htmlFor={id}>{label}</Label>}
+        </div>
+        {callout ? callout : null}
+      </Row>
     </div>
   );
 };
