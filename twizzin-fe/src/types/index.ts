@@ -84,6 +84,8 @@ export interface CreateGameContextType {
   error: string | null;
   clearCreationResult: () => void;
   clearError: () => void;
+  imageFile: File | null;
+  handleImageChange: (file: File | null) => void;
 }
 
 export interface GameInputForDb {

@@ -8,22 +8,29 @@ import { QuestionForDb, GameInputForDb } from '@/types';
 const uploadGameImage = async (imageFile: File) => {
   try {
     const processedFile = await processImageFile(imageFile);
-    const fileName = `game-images/${Date.now()}-${imageFile.name}`;
+
+    const safeFileName = `${Date.now()}-${imageFile.name
+      .toLowerCase()
+      .replace(/[^a-z0-9.]/g, '-')}`;
 
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('game-images')
-      .upload(fileName, processedFile, {
+      .upload(safeFileName, processedFile, {
         cacheControl: '3600',
         upsert: false,
+        contentType: imageFile.type,
       });
 
-    if (uploadError) throw uploadError;
+    if (uploadError) {
+      console.error('Upload error:', uploadError);
+      throw uploadError;
+    }
 
     const {
       data: { publicUrl },
     } = supabase.storage.from('game-images').getPublicUrl(uploadData.path);
 
-    return { publicUrl, fileName };
+    return { publicUrl, fileName: safeFileName };
   } catch (error) {
     console.error('Error uploading image:', error);
     throw error;
@@ -164,54 +171,39 @@ export const createGameWithQuestions = async (
   let uploadedFileName: string | null = null;
 
   try {
-    // Start a transaction
-    const { error: txnError } = await supabase.rpc('begin_transaction');
-    if (txnError) throw txnError;
-
-    try {
-      // Handle image upload if provided
-      let finalGameData = { ...gameData };
-      if (imageFile) {
+    // Handle image upload first if provided
+    let finalGameData = { ...gameData };
+    if (imageFile) {
+      try {
         const { publicUrl, fileName } = await uploadGameImage(imageFile);
         uploadedFileName = fileName;
         finalGameData.imgUrl = publicUrl;
+      } catch (uploadError) {
+        console.error('Error uploading image:', uploadError);
+        throw new Error('Failed to upload image');
       }
-
-      // Create the game
-      const game = await createGame(finalGameData);
-
-      // Create questions and answers
-      const questionsAndAnswers = await createQuestionsAndAnswers(
-        game.id,
-        questions
-      );
-
-      // Commit the transaction
-      const { error: commitError } = await supabase.rpc('commit_transaction');
-      if (commitError) throw commitError;
-
-      return {
-        game,
-        ...questionsAndAnswers,
-      };
-    } catch (error) {
-      // Rollback on error
-      const { error: rollbackError } = await supabase.rpc(
-        'rollback_transaction'
-      );
-      if (rollbackError) {
-        console.log('Error rolling back:', rollbackError);
-      }
-
-      // Clean up uploaded image if it exists
-      if (uploadedFileName) {
-        await deleteGameImage(uploadedFileName);
-      }
-
-      throw error;
     }
+
+    // Create the game
+    const game = await createGame(finalGameData);
+
+    // Create questions and answers
+    const questionsAndAnswers = await createQuestionsAndAnswers(
+      game.id,
+      questions
+    );
+
+    return {
+      game,
+      ...questionsAndAnswers,
+    };
   } catch (err: unknown) {
-    console.log('Error in createGameWithQuestions:', err);
+    // Clean up uploaded image if it exists and there was an error
+    if (uploadedFileName) {
+      await deleteGameImage(uploadedFileName);
+    }
+
+    console.error('Error in createGameWithQuestions:', err);
     throw err;
   }
 };

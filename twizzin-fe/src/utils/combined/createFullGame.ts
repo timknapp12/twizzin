@@ -1,6 +1,10 @@
 import { Program } from '@coral-xyz/anchor';
-import { WalletContextState } from '@solana/wallet-adapter-react';
-import { LAMPORTS_PER_SOL } from '@solana/web3.js';
+import {
+  Connection,
+  LAMPORTS_PER_SOL,
+  PublicKey,
+  Transaction,
+} from '@solana/web3.js';
 import { NATIVE_MINT } from '@solana/spl-token';
 import { initializeGame } from '../program/initGame';
 import { createGameWithQuestions } from '../supabase/createGame';
@@ -11,10 +15,17 @@ import { supabase } from '../supabase/supabaseClient';
 
 export const createFullGame = async (
   program: Program<TwizzinIdl>,
-  wallet: WalletContextState,
+  connection: Connection,
+  publicKey: PublicKey,
+  sendTransaction: (
+    // eslint-disable-next-line no-unused-vars
+    transaction: Transaction,
+    // eslint-disable-next-line no-unused-vars
+    connection: Connection
+  ) => Promise<string>,
   params: CreateFullGameParams
 ) => {
-  if (!wallet.publicKey) throw new Error('Wallet not connected');
+  if (!publicKey) throw new Error('Wallet not connected');
   console.log('Starting game creation process...');
 
   const isNative = params.tokenMint.equals(NATIVE_MINT);
@@ -25,7 +36,7 @@ export const createFullGame = async (
     const dbResult = await createGameWithQuestions(
       {
         gamePubkey: '',
-        adminWallet: wallet.publicKey.toString(),
+        adminWallet: publicKey.toString(),
         name: params.name,
         tokenMint: params.tokenMint.toString(),
         entryFee: params.entryFee * LAMPORTS_PER_SOL,
@@ -71,7 +82,9 @@ export const createFullGame = async (
     console.log('Step 4: Initializing game on-chain...');
     const onChainResult = await initializeGame(
       program,
-      wallet,
+      connection,
+      publicKey,
+      sendTransaction,
       paramsForOnChain
     );
 

@@ -38,6 +38,7 @@ const AddUpdateGame = () => {
     error: createError,
     creationResult,
     clearError,
+    handleImageChange,
   } = useCreateGameContext();
 
   console.log('creationResult', creationResult);
@@ -48,7 +49,6 @@ const AddUpdateGame = () => {
   const screenSize = useScreenSize();
   const adjustedMin = screenSize === 'small' ? '100%' : '200px';
 
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isEdit, setIsEdit] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -89,19 +89,18 @@ const AddUpdateGame = () => {
 
   const handleFileSelect = (file: File) => {
     setImageError(null);
-    setSelectedFile(file);
+    handleImageChange(file);
   };
 
   const handleFileUploadComplete = (processedFile: File) => {
     setImageError(null);
-    setSelectedFile(processedFile);
+    handleImageChange(processedFile);
   };
 
   const handleFileError = (error: string) => {
     setImageError(error);
-    setSelectedFile(null);
+    handleImageChange(null);
   };
-  console.log('selectedFile', selectedFile);
 
   // TODO - add more validations
   const handleSubmit = async () => {
@@ -124,7 +123,7 @@ const AddUpdateGame = () => {
         setShowGameCode(true);
       }
     } catch (error: any) {
-      console.error('Failed to create game:', error);
+      console.error('Failed to create game AddUpdateGame:', error);
       setError(error.message);
     } finally {
       // Always set loading to false, regardless of success or failure

@@ -200,3 +200,15 @@
 -- grant execute on function public.begin_transaction to authenticated;
 -- grant execute on function public.commit_transaction to authenticated;
 -- grant execute on function public.rollback_transaction to authenticated;
+
+-- IMAGES - storage bucket
+-- -- First, check if the bucket exists and create it if it doesn't
+-- INSERT INTO storage.buckets (id, name, public)
+-- VALUES ('game-images', 'game-images', true)
+-- ON CONFLICT (id) DO NOTHING;
+
+-- -- Allow public access for both upload and download
+-- CREATE POLICY "Allow public access to game-images"
+-- ON storage.objects FOR ALL
+-- USING ( bucket_id = 'game-images' )
+-- WITH CHECK ( bucket_id = 'game-images' );

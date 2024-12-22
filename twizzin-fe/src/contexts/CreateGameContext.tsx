@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { NATIVE_MINT } from '@solana/spl-token';
+import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import {
   CreateGameContextType,
   QuestionForDb,
@@ -11,7 +12,6 @@ import {
   GameCreationResult,
 } from '@/types';
 import { createFullGame } from '@/utils';
-import { useWallet } from '@solana/wallet-adapter-react';
 import { useProgram } from './ProgramContext';
 
 const CreateGameContext = createContext<CreateGameContextType | undefined>(
@@ -31,6 +31,8 @@ export const useCreateGameContext = () => {
 export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
   const { program } = useProgram();
   const wallet = useWallet();
+  const { connection } = useConnection();
+  const { publicKey, sendTransaction } = wallet;
 
   const initialGameData: GameData = {
     gameName: '',
@@ -116,6 +118,12 @@ export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [imageFile, setImageFile] = useState<File | null>(null);
+
+  const handleImageChange = (file: File | null) => {
+    setImageFile(file);
+  };
+
   const handleCreateGame = async () => {
     if (!program) {
       console.error('Program not initialized');
@@ -138,18 +146,29 @@ export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
         evenSplit: gameData.evenSplit,
         allAreWinners: gameData.allAreWinners,
         questions: questions,
-        imageFile: null,
+        imageFile: imageFile,
       };
 
-      const result = await createFullGame(program, wallet, params);
+      const result = await createFullGame(
+        program,
+        connection,
+        publicKey!, // Add non-null assertion since we know publicKey exists at this point
+        sendTransaction,
+        params
+      );
       setCreationResult(result);
 
       // Reset form
       setGameData(initialGameData);
       setQuestions([blankQuestion]);
+      setImageFile(null);
     } catch (err: unknown) {
-      console.log('Failed to create game:', err);
-      setError(err instanceof Error ? err.message : 'Failed to create game');
+      console.error('Failed to create game CreateGameContext:', err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to create game CreateGameContext'
+      );
     } finally {
       setIsCreating(false);
     }
@@ -172,6 +191,8 @@ export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
         error,
         clearCreationResult: () => setCreationResult(null),
         clearError: () => setError(null),
+        imageFile,
+        handleImageChange,
       }}
     >
       {children}

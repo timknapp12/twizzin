@@ -1,26 +1,19 @@
-import { Program } from '@coral-xyz/anchor';
-import { WalletContextState } from '@solana/wallet-adapter-react';
 import {
+  TransactionInstruction,
+  Transaction,
   PublicKey,
   SystemProgram,
-  LAMPORTS_PER_SOL,
-  TransactionInstruction,
+  Connection,
 } from '@solana/web3.js';
 import {
   TOKEN_PROGRAM_ID,
   ASSOCIATED_TOKEN_PROGRAM_ID,
-  createAssociatedTokenAccountInstruction,
-  getAssociatedTokenAddress,
   NATIVE_MINT,
+  getAssociatedTokenAddress,
+  createAssociatedTokenAccountInstruction,
 } from '@solana/spl-token';
+import { BN, Program } from '@coral-xyz/anchor';
 import { TwizzinIdl } from '../../types/idl';
-import { BN } from '@coral-xyz/anchor';
-
-interface InitGameResponse {
-  success: boolean;
-  signature: string | null;
-  error: string | null;
-}
 
 interface InitGameParams {
   name: string;
@@ -40,44 +33,37 @@ interface InitGameParams {
 
 export const initializeGame = async (
   program: Program<TwizzinIdl>,
-  wallet: WalletContextState,
+  connection: Connection,
+  publicKey: PublicKey,
+  sendTransaction: (
+    // eslint-disable-next-line no-unused-vars
+    transaction: Transaction,
+    // eslint-disable-next-line no-unused-vars
+    connection: Connection
+  ) => Promise<string>,
   params: InitGameParams
-): Promise<InitGameResponse> => {
+): Promise<{
+  success: boolean;
+  signature: string | null;
+  error: string | null;
+}> => {
+  // const { connection } = useConnection();
+  // const { publicKey, sendTransaction } = useWallet();
+
   try {
-    if (!wallet.publicKey) throw new Error('Wallet not connected');
+    if (!publicKey) throw new Error('Wallet not connected');
 
-    // Validate parameters
-    if (params.name.length > 32) throw new Error('Name too long');
-    if (params.maxWinners < 1) throw new Error('Max winners too low');
-    if (params.maxWinners > 200) throw new Error('Max winners too high');
-    if (params.startTime >= params.endTime)
-      throw new Error('Invalid time range');
-
+    validateGameParams(params);
     const isNative = params.tokenMint.equals(NATIVE_MINT);
 
-    // Derive PDAs
-    const [gamePda] = PublicKey.findProgramAddressSync(
-      [
-        Buffer.from('game'),
-        wallet.publicKey.toBuffer(),
-        Buffer.from(params.gameCode),
-      ],
-      program.programId
+    const { gamePda, vaultPda } = deriveGamePDAs(
+      program,
+      publicKey,
+      params.gameCode
     );
-
-    const [vaultPda] = PublicKey.findProgramAddressSync(
-      [
-        Buffer.from('vault'),
-        wallet.publicKey.toBuffer(),
-        Buffer.from(params.gameCode),
-      ],
-      program.programId
-    );
-
-    let preInstructions: TransactionInstruction[] = [];
+    const preInstructions: TransactionInstruction[] = [];
     let vaultTokenAccount: PublicKey | null = null;
 
-    // Handle SPL token setup
     if (!isNative) {
       vaultTokenAccount = await getAssociatedTokenAddress(
         params.tokenMint,
@@ -87,7 +73,7 @@ export const initializeGame = async (
 
       preInstructions.push(
         createAssociatedTokenAccountInstruction(
-          wallet.publicKey,
+          publicKey,
           vaultTokenAccount,
           vaultPda,
           params.tokenMint
@@ -95,84 +81,62 @@ export const initializeGame = async (
       );
     }
 
-    // If there's a donation, add rent exemption for native SOL
     if (isNative && params.donationAmount && params.donationAmount > 0) {
-      const rentExemption =
-        await program.provider.connection.getMinimumBalanceForRentExemption(0);
+      const rentExemption = await connection.getMinimumBalanceForRentExemption(
+        0
+      );
       preInstructions.push(
         SystemProgram.transfer({
-          fromPubkey: wallet.publicKey,
+          fromPubkey: publicKey,
           toPubkey: vaultPda,
           lamports: rentExemption,
         })
       );
     }
 
-    let tx;
-    if (isNative) {
-      tx = await program.methods
-        .initGame(
-          params.name,
-          params.gameCode,
-          new BN(params.entryFee * LAMPORTS_PER_SOL),
-          params.commission,
-          new BN(params.startTime),
-          new BN(params.endTime),
-          params.maxWinners,
-          params.answerHash,
-          new BN((params.donationAmount || 0) * LAMPORTS_PER_SOL),
-          params.allAreWinners || false,
-          params.evenSplit || false
-        )
-        .accounts({
-          admin: wallet.publicKey,
-          game: gamePda,
-          token_mint: params.tokenMint,
-          vault: vaultPda,
-          vault_token_account: undefined as any,
-          admin_token_account: undefined as any,
-          token_program: TOKEN_PROGRAM_ID,
-          associated_token_program: ASSOCIATED_TOKEN_PROGRAM_ID,
-          system_program: SystemProgram.programId,
-        })
-        .preInstructions(preInstructions)
-        .rpc();
-    } else {
-      // SPL token case
-      if (!vaultTokenAccount)
-        throw new Error('Vault token account is required for SPL tokens');
+    const instruction = await program.methods
+      .initGame(
+        params.name,
+        params.gameCode,
+        new BN(params.entryFee),
+        params.commission,
+        new BN(params.startTime),
+        new BN(params.endTime),
+        params.maxWinners,
+        params.answerHash,
+        params.donationAmount ? new BN(params.donationAmount) : new BN(0),
+        params.allAreWinners || false,
+        params.evenSplit || false
+      )
+      .accounts({
+        admin: publicKey,
+        game: gamePda,
+        tokenMint: params.tokenMint,
+        vault: vaultPda,
+        vaultTokenAccount: vaultTokenAccount,
+        adminTokenAccount: isNative ? null : params.adminTokenAccount,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+      })
+      .instruction();
 
-      tx = await program.methods
-        .initGame(
-          params.name,
-          params.gameCode,
-          new BN(params.entryFee * LAMPORTS_PER_SOL),
-          params.commission,
-          new BN(params.startTime),
-          new BN(params.endTime),
-          params.maxWinners,
-          params.answerHash,
-          new BN((params.donationAmount || 0) * LAMPORTS_PER_SOL),
-          params.allAreWinners || false,
-          params.evenSplit || false
-        )
-        .accounts({
-          admin: wallet.publicKey,
-          game: gamePda,
-          token_mint: params.tokenMint,
-          vault: vaultPda,
-          vault_token_account: vaultTokenAccount as any,
-          admin_token_account: params.adminTokenAccount as any,
-          token_program: TOKEN_PROGRAM_ID,
-          associated_token_program: ASSOCIATED_TOKEN_PROGRAM_ID,
-          system_program: SystemProgram.programId,
-        })
-        .preInstructions(preInstructions)
-        .rpc();
-    }
+    const transaction = new Transaction();
 
-    return { success: true, signature: tx, error: null };
-  } catch (error) {
+    // Add all instructions
+    transaction.add(...preInstructions, instruction);
+
+    const signature = await sendTransaction(transaction, connection);
+
+    // Wait for confirmation
+    const latestBlockhash = await connection.getLatestBlockhash();
+    await connection.confirmTransaction({
+      signature,
+      ...latestBlockhash,
+    });
+
+    return { success: true, signature, error: null };
+  } catch (error: any) {
     console.error('Failed to initialize game:', error);
     return {
       success: false,
@@ -180,4 +144,29 @@ export const initializeGame = async (
       error: error instanceof Error ? error.message : 'Unknown error occurred',
     };
   }
+};
+
+const validateGameParams = (params: InitGameParams): void => {
+  if (params.name.length > 32) throw new Error('Name too long');
+  if (params.maxWinners < 1) throw new Error('Max winners too low');
+  if (params.maxWinners > 200) throw new Error('Max winners too high');
+  if (params.startTime >= params.endTime) throw new Error('Invalid time range');
+};
+
+const deriveGamePDAs = (
+  program: Program<TwizzinIdl>,
+  adminPubkey: PublicKey,
+  gameCode: string
+) => {
+  const [gamePda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('game'), adminPubkey.toBuffer(), Buffer.from(gameCode)],
+    program.programId
+  );
+
+  const [vaultPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('vault'), adminPubkey.toBuffer(), Buffer.from(gameCode)],
+    program.programId
+  );
+
+  return { gamePda, vaultPda };
 };
