@@ -2,8 +2,6 @@ import { supabase } from './supabaseClient';
 import { processImageFile } from './imageProcessing';
 import { QuestionForDb, GameInputForDb } from '@/types';
 
-// Types for TypeScript
-
 // Function to handle image upload
 const uploadGameImage = async (imageFile: File) => {
   try {

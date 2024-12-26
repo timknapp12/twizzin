@@ -7,13 +7,16 @@ import {
   PrimaryText,
   Alert,
   H5,
-  IconButton,
+  // IconButton,
 } from '@/components';
 import { TbListDetails } from 'react-icons/tb';
-import { useAppContext } from '@/contexts';
+import { useAppContext, useCreateGameContext } from '@/contexts';
 import { GameData, QuestionForDb } from '@/types';
 import { displayOrderMap } from '@/types';
-import { FaPencil, FaCircleCheck } from 'react-icons/fa6';
+import {
+  // FaPencil,
+  FaCircleCheck,
+} from 'react-icons/fa6';
 
 interface DisplayAddedGameProps {
   gameData: GameData;
@@ -27,11 +30,12 @@ const DisplayAddedGame: React.FC<DisplayAddedGameProps> = ({
   gameData,
   questions,
   showGameCode,
-  setShowGameCode,
-  setIsEdit,
+  // setShowGameCode,
+  // setIsEdit,
 }) => {
   const { t } = useAppContext();
-
+  const { creationResult } = useCreateGameContext();
+  console.log('creationResult', creationResult);
   const totalTime = questions.reduce(
     (acc, question) => acc + question.timeLimit,
     0
@@ -45,10 +49,10 @@ const DisplayAddedGame: React.FC<DisplayAddedGameProps> = ({
     return displayOrderMap[displayOrder as keyof typeof displayOrderMap] || '';
   };
 
-  const onEdit = () => {
-    setShowGameCode(false);
-    setIsEdit(true);
-  };
+  // const onEdit = () => {
+  //   setShowGameCode(false);
+  //   setIsEdit(true);
+  // };
 
   const primaryColor = 'var(--color-primaryText)';
   const secondaryColor = 'var(--color-secondaryText)';
@@ -63,10 +67,10 @@ const DisplayAddedGame: React.FC<DisplayAddedGameProps> = ({
               variant='success'
               title={t('Your game is saved!')}
               description={`${t('Game Code')}: ${gameData.gameCode} `}
-              onClose={() => setShowGameCode(false)}
+              // onClose={() => setShowGameCode(false)}
             />
           )}
-          <Row className='w-full' justify='end'>
+          {/* <Row className='w-full' justify='end'>
             <IconButton
               Icon={FaPencil}
               onClick={onEdit}
@@ -74,7 +78,7 @@ const DisplayAddedGame: React.FC<DisplayAddedGameProps> = ({
               className='cursor-pointer'
               size={20}
             />
-          </Row>
+          </Row> */}
           <Column className='w-full gap-4'>
             <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg  bg-[#FBF9E9] gap-4 w-full max-w-small mx-auto  text-[10px] md:text-[14px] active:opacity-80'>
               <Row className='gap-2'>

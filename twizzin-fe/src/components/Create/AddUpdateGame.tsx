@@ -53,7 +53,7 @@ const AddUpdateGame = () => {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showGameCode, setShowGameCode] = useState(false);
-
+  console.log('isEdit', isEdit);
   const doesGameCodeExist = gameData.gameCode && gameData.gameCode.length > 0;
   // console.log('doesGameCodeExist', doesGameCodeExist);
   const handleDateChange = (date: Date | null) => {
@@ -120,7 +120,7 @@ const AddUpdateGame = () => {
       // Check creationResult from context
       if (creationResult) {
         setIsEdit(false);
-        setShowGameCode(true);
+        // setShowGameCode(true);
       }
     } catch (error: any) {
       console.error('Failed to create game AddUpdateGame:', error);
@@ -148,7 +148,7 @@ const AddUpdateGame = () => {
   return (
     <Column className='w-full h-full flex-grow gap-12' justify='between'>
       <Column className='w-full'>
-        <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg bg-[#E8F7EA] gap-4 w-full max-w-small mx-auto  text-[10px] text-[#655B30] md:text-[14px] active:opacity-80'>
+        <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg bg-[#E8F7EA] gap-4 w-full max-w-small mx-auto  text-[16px] text-[#655B30] active:opacity-80'>
           <Row className='gap-2'>
             <GiBrain size={20} className='text-green' />
             {doesGameCodeExist

@@ -47,9 +47,6 @@ export const initializeGame = async (
   signature: string | null;
   error: string | null;
 }> => {
-  // const { connection } = useConnection();
-  // const { publicKey, sendTransaction } = useWallet();
-
   try {
     if (!publicKey) throw new Error('Wallet not connected');
 
