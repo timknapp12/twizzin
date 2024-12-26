@@ -178,3 +178,8 @@ export interface CarouselItem {
   image: string;
   order: number;
 }
+
+export interface JoinGameContextType {
+  gameCode: string;
+  setGameCode: (value: string) => void;
+}

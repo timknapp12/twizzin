@@ -174,7 +174,7 @@ export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  console.log('gameData', gameData);
+  // console.log('gameData', gameData);
   return (
     <CreateGameContext.Provider
       value={{
