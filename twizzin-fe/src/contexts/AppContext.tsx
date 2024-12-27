@@ -13,6 +13,7 @@ import i18n from '@/i18n';
 import { useTranslation } from 'react-i18next';
 import { localeMap } from '@/utils';
 import { CreateGameProvider } from './CreateGameContext';
+import { JoinGameContextProvider } from './JoinGameContext';
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -130,7 +131,9 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         changeCurrency,
       }}
     >
-      <CreateGameProvider>{children}</CreateGameProvider>
+      <CreateGameProvider>
+        <JoinGameContextProvider>{children}</JoinGameContextProvider>
+      </CreateGameProvider>
     </AppContext.Provider>
   );
 };

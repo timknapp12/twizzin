@@ -182,4 +182,25 @@ export interface CarouselItem {
 export interface JoinGameContextType {
   gameCode: string;
   setGameCode: (value: string) => void;
+  partialGameData: PartialGame | null;
+  getGameByCode: (gameCode: string) => Promise<void>;
+}
+
+export interface PartialGame {
+  game_code: string;
+  id: string;
+  admin_wallet: string;
+  name: string;
+  token_mint: string;
+  entry_fee: number;
+  commission_bps: number;
+  start_time: string;
+  end_time: string;
+  max_winners: number;
+  donation_amount: number;
+  is_native: boolean;
+  all_are_winners: boolean;
+  even_split: boolean;
+  img_url: string | null;
+  question_count: number;
 }
