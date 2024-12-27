@@ -115,7 +115,7 @@ export const initializeGame = async (
         tokenProgram: TOKEN_PROGRAM_ID,
         associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
-      })
+      } as any)
       .instruction();
 
     const transaction = new Transaction();
