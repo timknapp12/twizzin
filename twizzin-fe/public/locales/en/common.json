@@ -34,6 +34,7 @@
   "Add question": "Add question",
   "Admin donation to the pool": "Admin donation to the pool",
   "Game start time": "Game start time",
+  "Number of questions": "Number of questions",
   "Time Limit in seconds": "Time Limit in seconds",
   "Save question": "Save question",
   "Question": "Question",
@@ -92,5 +93,17 @@
   "This will help players know when to join the game but it won't start until you manually start it": "This will help players know when to join the game but it won't start until you manually start it",
   "Select date and time": "Select date and time",
   "File size must be less than 5MB": "File size must be less than 5MB",
-  "File must be a JPEG, PNG, or WebP image": "File must be a JPEG, PNG, or WebP image"
+  "File must be a JPEG, PNG, or WebP image": "File must be a JPEG, PNG, or WebP image",
+  "Join a game": "Join a game",
+  "Game code": "Game code",
+  "Your game host should provide you with a 6-digit game code to join the game. Only join games from hosts you trust!": "Your game host should provide you with a 6-digit game code to join the game. Only join games from hosts you trust!",
+  "Find game": "Find game",
+  "Game code must be 6 characters": "Game code must be 6 characters",
+  "Game not found": "Game not found",
+  "All": "All",
+  "Commission to game host": "Commission to game host",
+  "Maximum number of winners": "Maximum number of winners",
+  "Split": "Split",
+  "Evenly split among all winners": "Evenly split among all winners",
+  "Tiered": "Tiered"
 }
