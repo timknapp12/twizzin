@@ -10,13 +10,13 @@ import {
   // IconButton,
 } from '@/components';
 import { TbListDetails } from 'react-icons/tb';
-import { useAppContext, useCreateGameContext } from '@/contexts';
-import { GameData, QuestionForDb } from '@/types';
-import { displayOrderMap } from '@/types';
 import {
   // FaPencil,
   FaCircleCheck,
 } from 'react-icons/fa6';
+import { useAppContext, useCreateGameContext } from '@/contexts';
+import { GameData, QuestionForDb } from '@/types';
+import { displayOrderMap } from '@/types';
 
 interface DisplayAddedGameProps {
   gameData: GameData;

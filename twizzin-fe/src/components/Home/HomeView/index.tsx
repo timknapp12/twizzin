@@ -52,6 +52,7 @@ const HomeView = ({ onSetView }: HomeViewProps) => {
   const [selectedItem, setSelectedItem] = useState<number>(0);
 
   const onCreateGame = () => router.push(`/${language}/create`);
+  const onJoinGame = () => router.push(`/${language}/join`);
 
   return (
     <Column className='gap-4'>
@@ -77,7 +78,9 @@ const HomeView = ({ onSetView }: HomeViewProps) => {
         ))}
       </Row>
       <Button onClick={onCreateGame}>{t('Create a new game')}</Button>
-      <Button secondary>{t('Join a game')}</Button>
+      <Button secondary onClick={onJoinGame}>
+        {t('Join a game')}
+      </Button>
     </Column>
   );
 };

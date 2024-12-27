@@ -23,7 +23,6 @@ import { GiBrain } from 'react-icons/gi';
 import { validateGame } from '@/utils';
 import { useScreenSize } from '@/hooks/useScreenSize';
 import { GameDataChangeEvent } from '@/types';
-// import { createGameWithQuestions } from '@/utils/supabase/createGame';
 
 const AddUpdateGame = () => {
   const { t } = useAppContext();
