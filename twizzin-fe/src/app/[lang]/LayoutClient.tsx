@@ -28,14 +28,14 @@ export default function LayoutClient({ children, lang }: LayoutClientProps) {
   }, [lang]);
 
   return (
-    <ErrorBoundary>
-      <I18nextProvider i18n={i18n} defaultNS='common'>
-        <WalletProviders>
-          <ProgramContextProvider>
-            <AppContextProvider>{children}</AppContextProvider>
-          </ProgramContextProvider>
-        </WalletProviders>
-      </I18nextProvider>
-    </ErrorBoundary>
+    <I18nextProvider i18n={i18n} defaultNS='common'>
+      <WalletProviders>
+        <ProgramContextProvider>
+          <AppContextProvider>
+            <ErrorBoundary>{children}</ErrorBoundary>
+          </AppContextProvider>
+        </ProgramContextProvider>
+      </WalletProviders>
+    </I18nextProvider>
   );
 }
