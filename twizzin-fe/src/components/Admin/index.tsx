@@ -1,13 +1,20 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Column, Row } from '../containers';
+import {
+  Column,
+  InnerScreenContainer,
+  Row,
+  ScreenContainer,
+} from '../containers';
 import { Input } from '../inputs';
 import { Button } from '../buttons/Button';
+import { PrimaryText } from '../texts';
 import { useProgram } from '@/contexts/ProgramContext';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { initializeConfig } from '@/utils/program/initConfig';
-import { useAppContext } from '@/contexts/AppContext';
+import { useAppContext } from '@/contexts';
+import { Header } from '../Header';
 
 export const AdminComponent = () => {
   const { t } = useAppContext();
@@ -77,9 +84,10 @@ export const AdminComponent = () => {
   }
 
   return (
-    <main className='flex min-h-screen flex-col items-center p-12'>
-      <Column className='w-full gap-8 max-w-[600px] mx-auto'>
-        <p className='text-2xl font-bold'>{t('Initialize Program Config')}</p>
+    <ScreenContainer>
+      <Header />
+      <InnerScreenContainer justify='start' className='mt-[7vh]'>
+        <PrimaryText>{t('Initialize Program Config')}</PrimaryText>
 
         {!isWalletConnected ? (
           <Column className='items-center gap-4'>
@@ -155,7 +163,7 @@ export const AdminComponent = () => {
             </a>
           </div>
         )}
-      </Column>
-    </main>
+      </InnerScreenContainer>
+    </ScreenContainer>
   );
 };

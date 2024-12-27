@@ -3,7 +3,7 @@ import React from 'react';
 interface TextProps {
   children: React.ReactNode;
   className?: string;
-  [key: string]: any; // To allow additional props
+  [key: string]: any;
 }
 
 export const H1 = ({ children, className, ...props }: TextProps) => (
@@ -39,22 +39,15 @@ export const H5 = ({ children, className, ...props }: TextProps) => (
   </span>
 );
 
-export const Label = ({ children, className, ...props }: TextProps) => (
-  <label
-    className={`block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300 ${className}`}
-    {...props}
-  >
+export const H6 = ({ children, className, ...props }: TextProps) => (
+  <span className={`text-xs sm:text-sm md:text-base ${className}`} {...props}>
     {children}
-  </label>
+  </span>
 );
 
-export const LabelSecondary = ({
-  children,
-  className,
-  ...props
-}: TextProps) => (
+export const Label = ({ children, className, ...props }: TextProps) => (
   <label
-    className={`block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300 opacity-70 ${className}`}
+    className={`block mb-1 text-sm font-medium text-secondaryText ${className}`}
     {...props}
   >
     {children}
@@ -63,7 +56,7 @@ export const LabelSecondary = ({
 
 export const PrimaryText = ({ children, className, ...props }: TextProps) => (
   <span
-    className={`text-primaryText text-[16px] md:text-[20px] font-['Open_Runde',sans-serif] font-semibold ${className}`}
+    className={`text-primaryText text-[16px] md:text-[20px] font-semibold ${className}`}
     {...props}
   >
     {children}
@@ -72,7 +65,7 @@ export const PrimaryText = ({ children, className, ...props }: TextProps) => (
 
 export const SecondaryText = ({ children, className, ...props }: TextProps) => (
   <span
-    className={`text-secondaryText text-center font-[500] text-[12px] md:text-[14px] font-['Open_Runde',sans-serif] ${className}`}
+    className={`text-secondaryText font-[500] text-[12px] md:text-[14px]  ${className}`}
     {...props}
   >
     {children}
@@ -81,7 +74,7 @@ export const SecondaryText = ({ children, className, ...props }: TextProps) => (
 
 export const DisabledText = ({ children, className, ...props }: TextProps) => (
   <span
-    className={`text-disabledText text-center font-[500] text-xs font-['Open_Runde',sans-serif] ${className}`}
+    className={`text-disabledText font-[500] text-xs  ${className}`}
     {...props}
   >
     {children}

@@ -1,4 +1,4 @@
-import { useAppContext } from '@/contexts/AppContext';
+import { useAppContext } from '@/contexts';
 
 export const ClaimButton = ({
   disabled = false,

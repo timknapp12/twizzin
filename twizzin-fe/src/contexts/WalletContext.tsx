@@ -22,7 +22,7 @@ console.warn = function filterWarnings(msg, ...args) {
   originalConsoleWarn.apply(console, [msg, ...args]);
 };
 
-const WalletContextProvider: FC<PropsWithChildren> = ({ children }) => {
+export const WalletContextProvider: FC<PropsWithChildren> = ({ children }) => {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -77,5 +77,3 @@ const WalletContextProvider: FC<PropsWithChildren> = ({ children }) => {
     </ConnectionProvider>
   );
 };
-
-export default WalletContextProvider;

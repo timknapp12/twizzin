@@ -1,7 +1,7 @@
 import { FaXTwitter, FaTelegram } from 'react-icons/fa6';
 import { Column, Row } from '../containers';
 import { H3 } from '../texts';
-import { useAppContext } from '@/contexts/AppContext';
+import { useAppContext } from '@/contexts';
 
 export const Landing = () => {
   const { t } = useAppContext();

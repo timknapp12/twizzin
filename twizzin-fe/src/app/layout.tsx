@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import Script from 'next/script';
 import { openRunde } from './fonts';
 import './globals.css';
-import AppProvider from '@/contexts/AppContext';
 
 export const metadata: Metadata = {
   title: 'Twizzin',
@@ -38,9 +37,7 @@ export default function RootLayout({
           `}
         </Script>
       </head>
-      <body>
-        <AppProvider>{children}</AppProvider>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

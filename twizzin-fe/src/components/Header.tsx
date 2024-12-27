@@ -1,21 +1,26 @@
 'use client';
+import Image from 'next/image';
+import Link from 'next/link';
 import { LanguageIconButton } from './buttons/LanguageIconButton';
 import { WalletButton } from './buttons/WalletButton';
 import sol from '../assets/svgs/sol.svg';
 import ukFlag from '../assets/svgs/uk-flag.svg';
 import twizzin from '../assets/svgs/twizzin.svg';
 import twizzinIcon from '../assets/svgs/twizzin-icon.svg';
-import Image from 'next/image';
+import { useAppContext } from '@/contexts';
 
 export const Header: React.FC = () => {
+  const { language } = useAppContext();
   return (
     <header className='bg-background w-full flex justify-between items-center relative z-50'>
       <div className='flex items-center gap-2'>
-        <Image
-          src={twizzinIcon}
-          alt='Twizzin Icon'
-          className='h-9 w-auto mt-1'
-        />
+        <Link href={`/${language}`}>
+          <Image
+            src={twizzinIcon}
+            alt='Twizzin Icon'
+            className='h-9 w-auto mt-1'
+          />
+        </Link>
         <Image
           src={twizzin}
           alt='Twizzin text'

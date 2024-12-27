@@ -28,7 +28,7 @@ export const LanguageModal: React.FC<LanguageModalProps> = ({
   return (
     <div className={`modal ${className || ''}`}>
       <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center'>
-        <div className='bg-offWhite dark:bg-lightBlack p-8 rounded-lg w-3/4 max-w-md h-3/4 max-h-[400px] flex flex-col'>
+        <div className='bg-surface dark:bg-lightBlack p-8 rounded-lg w-3/4 max-w-md h-3/4 max-h-[400px] flex flex-col'>
           <h2 className='text-3xl font-bold mb-8 dark:text-white'>
             {t('Select Language')}
           </h2>

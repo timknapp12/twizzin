@@ -3,7 +3,7 @@ import { IconButton, Column, Row, PrimaryText } from '@/components';
 import ClaimRewardCard from './ClaimRewardCard';
 
 import RewardsBanner from './RewardsBanner';
-import { useAppContext } from '@/contexts/AppContext';
+import { useAppContext } from '@/contexts';
 
 interface RewardsViewProps {
   // eslint-disable-next-line no-unused-vars

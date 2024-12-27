@@ -1,35 +1,124 @@
+import { PublicKey } from '@solana/web3.js';
+import { TFunction } from 'i18next';
+
+/* eslint-disable no-unused-vars */
 export interface AppContextType {
   isSignedIn: boolean;
   setIsSignedIn: (value: boolean) => void;
-  admin: object | null;
-  setAdmin: (admin: any) => void;
-  gameData: any;
-  handleGameData: (data: any) => void;
-  questions: QuestionForDb[];
-  handleUpdateQuestionData: (question: QuestionForDb) => void;
-  handleDeleteQuestion: (index: number) => void;
-  handleAddBlankQuestion: () => void;
-  gameCode: string;
-  setGameCode: (code: string) => void;
+  admin: any;
+  setAdmin: (value: any) => void;
   language: string;
-  changeLanguage: (language: string) => void;
-  t: (key: string) => string;
+  changeLanguage: (lang: string) => void;
+  t: TFunction;
   currency: string;
   changeCurrency: (currency: string) => void;
+}
+
+export type GameDataChangeEvent = {
+  target: {
+    name: string;
+    value: string | number;
+    type: string;
+  };
+};
+
+export interface GameCreationResult {
+  onChain: {
+    success: boolean;
+    signature: string | null;
+    error: string | null;
+  };
+  database: {
+    game: {
+      id: string;
+      game_code: string;
+      game_pubkey: string;
+      admin_wallet: string;
+      name: string;
+      token_mint: string;
+      entry_fee: number;
+      commission_bps: number;
+      start_time: string;
+      end_time: string;
+      max_winners: number;
+      donation_amount: number;
+      is_native: boolean;
+      all_are_winners: boolean;
+      even_split: boolean;
+      answer_merkle_root: string;
+      img_url: string;
+      created_at: string;
+    };
+    questions: Array<{
+      id: string;
+      game_id: string;
+      question_text: string;
+      display_order: number;
+      correct_answer: string;
+      time_limit: number;
+      created_at: string;
+    }>;
+    answers: Array<{
+      id: string;
+      question_id: string;
+      answer_text: string;
+      display_letter: string;
+      display_order: number;
+      is_correct: boolean;
+      created_at: string;
+    }>;
+  };
+}
+
+export interface CreateGameContextType {
+  gameData: GameData;
+  handleGameData: (e: GameDataChangeEvent) => void;
+  questions: QuestionForDb[];
+  handleUpdateQuestionData: (question: QuestionForDb) => void;
+  handleDeleteQuestion: (displayOrder: number) => void;
+  handleAddBlankQuestion: () => void;
+  handleCreateGame: () => Promise<void>;
+  totalTime: number;
+  creationResult: GameCreationResult | null;
+  isCreating: boolean;
+  error: string | null;
+  clearCreationResult: () => void;
+  clearError: () => void;
+  imageFile: File | null;
+  handleImageChange: (file: File | null) => void;
+}
+
+export interface GameInputForDb {
+  gamePubkey: string;
+  adminWallet: string;
+  name: string;
+  tokenMint: string;
+  entryFee: number;
+  commissionBps: number;
+  startTime: Date;
+  endTime: Date;
+  maxWinners: number;
+  donationAmount: number;
+  isNative: boolean;
+  allAreWinners: boolean;
+  evenSplit: boolean;
+  answerMerkleRoot: string;
+  imgUrl?: string;
 }
 
 export interface QuestionForDb {
   id?: string;
   displayOrder: number;
-  question: string;
-  answers: Answer[];
+  questionText: string;
   correctAnswer: string;
   timeLimit: number;
+  answers: AnswerForDb[];
 }
 
-export interface Answer {
-  displayOrder: number;
+export interface AnswerForDb {
   answerText: string;
+  displayLetter: string;
+  displayOrder: number;
   isCorrect: boolean;
 }
 
@@ -54,14 +143,33 @@ export interface AnswerToBeHashed {
 }
 
 export interface GameData {
-  gameCode: string; // length of 6
+  gameCode?: string; // length of 6
   gameName: string;
   entryFee: number;
   startTime: Date;
+  // endTime: Date;
   commission: number;
   donation: number;
   maxWinners: number;
-  answers: AnswerToBeHashed[];
+  // answers: AnswerToBeHashed[];
+  evenSplit: boolean;
+  allAreWinners: boolean;
+}
+
+export interface CreateFullGameParams {
+  name: string;
+  entryFee: number;
+  commission: number;
+  startTime: Date;
+  endTime: Date;
+  maxWinners: number;
+  tokenMint: PublicKey;
+  donationAmount?: number;
+  allAreWinners?: boolean;
+  evenSplit?: boolean;
+  adminTokenAccount?: PublicKey;
+  questions: QuestionForDb[];
+  imageFile: File | null;
 }
 
 export interface CarouselItem {
@@ -69,4 +177,30 @@ export interface CarouselItem {
   description: string;
   image: string;
   order: number;
+}
+
+export interface JoinGameContextType {
+  gameCode: string;
+  setGameCode: (value: string) => void;
+  partialGameData: PartialGame | null;
+  getGameByCode: (gameCode: string) => Promise<void>;
+}
+
+export interface PartialGame {
+  game_code: string;
+  id: string;
+  admin_wallet: string;
+  name: string;
+  token_mint: string;
+  entry_fee: number;
+  commission_bps: number;
+  start_time: string;
+  end_time: string;
+  max_winners: number;
+  donation_amount: number;
+  is_native: boolean;
+  all_are_winners: boolean;
+  even_split: boolean;
+  img_url: string | null;
+  question_count: number;
 }

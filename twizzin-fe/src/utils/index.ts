@@ -1,2 +1,3 @@
 export * from './validateCreateGame';
-export * from './supabaseClient';
+export * from './locales';
+export * from './combined';
