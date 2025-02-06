@@ -6,7 +6,7 @@ import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import {
   CreateGameContextType,
   QuestionForDb,
-  GameData,
+  CreateGameData,
   CreateFullGameParams,
   GameDataChangeEvent,
   GameCreationResult,
@@ -34,7 +34,7 @@ export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
   const { connection } = useConnection();
   const { publicKey, sendTransaction } = wallet;
 
-  const initialGameData: GameData = {
+  const initialGameData: CreateGameData = {
     gameName: '',
     entryFee: 0,
     startTime: new Date(),
@@ -47,7 +47,7 @@ export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
     allAreWinners: false,
   };
 
-  const [gameData, setGameData] = useState<GameData>(initialGameData);
+  const [gameData, setGameData] = useState<CreateGameData>(initialGameData);
 
   const handleGameData = (e: GameDataChangeEvent) => {
     const { name, type } = e.target;
