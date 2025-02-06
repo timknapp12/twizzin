@@ -179,13 +179,6 @@ export interface CarouselItem {
   order: number;
 }
 
-export interface JoinGameContextType {
-  gameCode: string;
-  setGameCode: (value: string) => void;
-  partialGameData: PartialGame | null;
-  getGameByCode: (gameCode: string) => Promise<void>;
-}
-
 export interface PartialGame {
   game_code: string;
   id: string;
@@ -203,4 +196,11 @@ export interface PartialGame {
   even_split: boolean;
   img_url: string | null;
   question_count: number;
+}
+
+export interface GameContextType {
+  gameCode: string;
+  setGameCode: (value: string) => void;
+  partialGameData: PartialGame | null;
+  getGameByCode: (gameCode: string) => Promise<void>;
 }
