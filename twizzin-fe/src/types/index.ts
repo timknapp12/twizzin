@@ -71,7 +71,7 @@ export interface GameCreationResult {
 }
 
 export interface CreateGameContextType {
-  gameData: GameData;
+  gameData: CreateGameData;
   handleGameData: (e: GameDataChangeEvent) => void;
   questions: QuestionForDb[];
   handleUpdateQuestionData: (question: QuestionForDb) => void;
@@ -142,7 +142,7 @@ export interface AnswerToBeHashed {
   salt: string;
 }
 
-export interface GameData {
+export interface CreateGameData {
   gameCode?: string; // length of 6
   gameName: string;
   entryFee: number;
@@ -156,7 +156,7 @@ export interface GameData {
   allAreWinners: boolean;
 }
 
-export interface CreateFullGameParams {
+export interface CreateGameCombinedParams {
   name: string;
   entryFee: number;
   commission: number;
@@ -203,4 +203,14 @@ export interface GameContextType {
   setGameCode: (value: string) => void;
   partialGameData: PartialGame | null;
   getGameByCode: (gameCode: string) => Promise<void>;
+  gameData: CreateGameData;
+  handleJoinGame: () => Promise<void>;
+}
+
+export interface JoinGameParams {
+  gameCode: string;
+  admin: PublicKey;
+  tokenMint: PublicKey;
+  playerTokenAccount?: PublicKey;
+  vaultTokenAccount?: PublicKey;
 }

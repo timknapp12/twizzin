@@ -7,7 +7,7 @@ import {
   CreateGameContextType,
   QuestionForDb,
   CreateGameData,
-  CreateFullGameParams,
+  CreateGameCombinedParams,
   GameDataChangeEvent,
   GameCreationResult,
 } from '@/types';
@@ -134,7 +134,7 @@ export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
     setError(null);
 
     try {
-      const params: CreateFullGameParams = {
+      const params: CreateGameCombinedParams = {
         name: gameData.gameName,
         entryFee: gameData.entryFee,
         commission: gameData.commission * 100,

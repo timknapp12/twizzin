@@ -8,7 +8,7 @@ import {
 import { NATIVE_MINT } from '@solana/spl-token';
 import { initializeGame } from '../program/initGame';
 import { createGameWithQuestions } from '../supabase/createGame';
-import { CreateFullGameParams } from '@/types';
+import { CreateGameCombinedParams } from '@/types';
 import { TwizzinIdl } from '@/types/idl';
 import { generateMerkleRoot } from '../merkle/generateMerkleRoot';
 import { supabase } from '../supabase/supabaseClient';
@@ -23,7 +23,7 @@ export const createGameCombined = async (
     // eslint-disable-next-line no-unused-vars
     connection: Connection
   ) => Promise<string>,
-  params: CreateFullGameParams
+  params: CreateGameCombinedParams
 ) => {
   if (!publicKey) throw new Error('Wallet not connected');
   console.log('Starting game creation process...');
