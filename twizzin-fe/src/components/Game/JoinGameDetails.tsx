@@ -2,12 +2,15 @@ import Image from 'next/image';
 import { Button, Column, Row, Label } from '@/components';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { TbListDetails } from 'react-icons/tb';
-import { useAppContext, useJoinGameContext } from '@/contexts';
+import { useAppContext } from '@/contexts';
+import { PartialGame } from '@/types';
 
-const JoinGameDetails = () => {
+const JoinGameDetails = ({
+  partialGameData,
+}: {
+  partialGameData: PartialGame;
+}) => {
   const { t } = useAppContext();
-  const { partialGameData } = useJoinGameContext();
-  console.log('partialGameData', partialGameData);
 
   const {
     id,
