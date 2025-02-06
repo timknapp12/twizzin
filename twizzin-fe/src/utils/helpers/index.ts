@@ -14,3 +14,18 @@ export const getGameTimeInSeconds = (
 
   return timeDiffInSeconds;
 };
+
+export const formatGameTime = (
+  startTime: number | string,
+  endTime: number | string
+) => {
+  const totalSeconds = getGameTimeInSeconds(startTime, endTime);
+
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+
+  // Pad seconds with leading zero if less than 10
+  const formattedSeconds = seconds.toString().padStart(2, '0');
+
+  return `${minutes}:${formattedSeconds}`;
+};

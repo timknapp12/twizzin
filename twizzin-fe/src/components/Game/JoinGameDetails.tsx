@@ -4,6 +4,7 @@ import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { TbListDetails } from 'react-icons/tb';
 import { useAppContext } from '@/contexts';
 import { PartialGame } from '@/types';
+import { formatGameTime } from '@/utils';
 
 const JoinGameDetails = ({
   partialGameData,
@@ -13,7 +14,6 @@ const JoinGameDetails = ({
   const { t } = useAppContext();
 
   const {
-    id,
     game_code,
     name: game_name,
     entry_fee,
@@ -27,20 +27,13 @@ const JoinGameDetails = ({
     even_split,
     img_url,
   } = partialGameData || {};
-  console.log('id', id ? id : 'no id');
 
   const formatDate = (date: string | Date) => {
     return new Date(date).toLocaleString();
   };
 
-  const calculateTotalTime = (end_time: string, start_time: string) => {
-    const diffInMilliseconds = Date.parse(end_time) - Date.parse(start_time);
-    const diffInSeconds = Math.floor(diffInMilliseconds / 1000);
-    return diffInSeconds;
-  };
-
   const totalTime =
-    end_time && start_time ? calculateTotalTime(end_time, start_time) : 0;
+    end_time && start_time ? formatGameTime(start_time, end_time) : 0;
 
   const primaryColor = 'var(--color-primaryText)';
   return (
@@ -107,7 +100,7 @@ const JoinGameDetails = ({
           <Label style={{ color: primaryColor }}>{question_count}</Label>
         </Row>
         <Row className='gap-2'>
-          <Label>{t('Total game time in seconds')}:</Label>
+          <Label>{t('Total game time')}:</Label>
           <Label style={{ color: primaryColor }}>{totalTime}</Label>
         </Row>
         <Row className='gap-2'>
