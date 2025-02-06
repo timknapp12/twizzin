@@ -13,7 +13,7 @@ import { TwizzinIdl } from '@/types/idl';
 import { generateMerkleRoot } from '../merkle/generateMerkleRoot';
 import { supabase } from '../supabase/supabaseClient';
 
-export const createFullGame = async (
+export const createGameCombined = async (
   program: Program<TwizzinIdl>,
   connection: Connection,
   publicKey: PublicKey,

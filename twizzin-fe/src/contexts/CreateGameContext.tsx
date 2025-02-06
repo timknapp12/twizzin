@@ -11,7 +11,7 @@ import {
   GameDataChangeEvent,
   GameCreationResult,
 } from '@/types';
-import { createFullGame } from '@/utils';
+import { createGameCombined } from '@/utils';
 import { useProgram } from './ProgramContext';
 
 const CreateGameContext = createContext<CreateGameContextType | undefined>(
@@ -149,7 +149,7 @@ export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
         imageFile: imageFile,
       };
 
-      const result = await createFullGame(
+      const result = await createGameCombined(
         program,
         connection,
         publicKey!, // Add non-null assertion since we know publicKey exists at this point

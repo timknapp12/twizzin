@@ -1,1 +1,2 @@
-export * from './createFullGame';
+export * from './createGameCombined';
+export * from './joinGameCombined';
