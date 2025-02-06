@@ -6,3 +6,8 @@ refactor after MVP:
 - handle editing a game
 - create routes for games after creation /create/[gameId]
 - add supabase domain to next.config.mjs for image hosting
+
+Join Game
+
+- show details of game that has already ended - or show 'not found' in case we delete the game after idk
+- don't allow admin to join game to play- but only to be admin
