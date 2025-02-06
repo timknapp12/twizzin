@@ -1,5 +1,7 @@
 import { redirect } from 'next/navigation';
+import { useAppContext } from '@/contexts';
 
 export default function JoinRedirectPage() {
-  redirect('/en/join');
+  const { language } = useAppContext();
+  redirect(`/${language}/join`);
 }

@@ -1,5 +1,7 @@
 import { redirect } from 'next/navigation';
+import { useAppContext } from '@/contexts';
 
 export default function CreateRedirectPage() {
-  redirect('/en/create');
+  const { language } = useAppContext();
+  redirect(`/${language}/create`);
 }

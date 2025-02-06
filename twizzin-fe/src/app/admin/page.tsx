@@ -1,5 +1,7 @@
 import { redirect } from 'next/navigation';
+import { useAppContext } from '@/contexts';
 
 export default function AdminRedirectPage() {
-  redirect('/en/admin');
+  const { language } = useAppContext();
+  redirect(`/${language}/admin`);
 }
