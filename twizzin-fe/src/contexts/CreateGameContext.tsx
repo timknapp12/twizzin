@@ -130,6 +130,16 @@ export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
+    if (!publicKey) {
+      setError('Please connect your wallet');
+      return;
+    }
+
+    if (!sendTransaction) {
+      setError('Wallet adapter not properly initialized');
+      return;
+    }
+
     setIsCreating(true);
     setError(null);
 

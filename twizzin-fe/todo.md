@@ -11,3 +11,9 @@ Join Game
 
 - show details of game that has already ended - or show 'not found' in case we delete the game after idk
 - don't allow admin to join game to play- but only to be admin
+- error handling for invalid params on route game/gameCode
+- show callout hint on join game details for 'split'
+
+- clean up imports from utils
+
+- write tests for helper functions - like getGameTimeInSeconds
