@@ -47,7 +47,7 @@ const JoinGameDetails = ({
     } catch (error: unknown) {
       console.error('Error joining game:', error);
       if (error instanceof Error) {
-        setError(t('Error joining game') + error.message);
+        setError(`${t('Error joining game')}: ${error.message}`);
       } else {
         setError(t('Error joining game'));
       }
