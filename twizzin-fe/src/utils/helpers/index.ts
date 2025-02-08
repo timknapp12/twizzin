@@ -29,3 +29,20 @@ export const formatGameTime = (
 
   return `${minutes}:${formattedSeconds}`;
 };
+
+export const getRemainingTime = (startTime: number | string) => {
+  const now = new Date().getTime();
+  const start = new Date(startTime).getTime();
+  const timeDiff = start - now;
+
+  if (timeDiff <= 0) return 'Game has started!';
+
+  const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
+  const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+  const hours = Math.floor(
+    (timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+  );
+  const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+
+  return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+};
