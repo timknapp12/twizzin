@@ -40,8 +40,19 @@ export const joinGame = async (
     );
 
     const playerPda = derivePlayerPDA(program, gamePda, publicKey);
-
     const isNative = params.tokenMint.equals(NATIVE_MINT);
+
+    const transaction = new Transaction();
+
+    // If it's a native SOL game with entry fee, add the transfer instruction
+    if (isNative && params.entryFee > 0) {
+      const transferInstruction = SystemProgram.transfer({
+        fromPubkey: publicKey,
+        toPubkey: vaultPda,
+        lamports: params.entryFee,
+      });
+      transaction.add(transferInstruction);
+    }
 
     const instruction = await program.methods
       .joinGame()
@@ -58,7 +69,8 @@ export const joinGame = async (
       } as any)
       .instruction();
 
-    const transaction = new Transaction().add(instruction);
+    // Add the join game instruction
+    transaction.add(instruction);
 
     const signature = await sendTransaction(transaction, connection);
 

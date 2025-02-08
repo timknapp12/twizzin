@@ -13,6 +13,7 @@ import {
 } from '@/types';
 import { createGameCombined } from '@/utils';
 import { useProgram } from './ProgramContext';
+import { useAppContext } from './AppContext';
 
 const CreateGameContext = createContext<CreateGameContextType | undefined>(
   undefined
@@ -29,6 +30,7 @@ export const useCreateGameContext = () => {
 };
 
 export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
+  const { t } = useAppContext();
   const { program } = useProgram();
   const wallet = useWallet();
   const { connection } = useConnection();
@@ -126,17 +128,17 @@ export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
 
   const handleCreateGame = async () => {
     if (!program) {
-      console.error('Program not initialized');
+      setError(t('Program not initialized'));
       return;
     }
 
     if (!publicKey) {
-      setError('Please connect your wallet');
+      setError(t('Please connect your wallet'));
       return;
     }
 
     if (!sendTransaction) {
-      setError('Wallet adapter not properly initialized');
+      setError(t('Wallet adapter not properly initialized'));
       return;
     }
 
@@ -177,7 +179,7 @@ export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
       setError(
         err instanceof Error
           ? err.message
-          : 'Failed to create game CreateGameContext'
+          : t('Failed to create game CreateGameContext')
       );
     } finally {
       setIsCreating(false);

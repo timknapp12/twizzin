@@ -203,7 +203,7 @@ export interface GameContextType {
   setGameCode: (value: string) => void;
   partialGameData: PartialGame | null;
   getGameByCode: (gameCode: string) => Promise<void>;
-  gameData: CreateGameData;
+  gameData: JoinFullGame;
   handleJoinGame: () => Promise<void>;
 }
 
@@ -213,4 +213,24 @@ export interface JoinGameParams {
   tokenMint: PublicKey;
   playerTokenAccount?: PublicKey;
   vaultTokenAccount?: PublicKey;
+  entryFee: number;
+}
+
+export interface JoinFullGame {
+  game_code: string;
+  id: string;
+  admin_wallet: string;
+  name: string;
+  token_mint: string;
+  entry_fee: number;
+  commission_bps: number;
+  start_time: string;
+  end_time: string;
+  max_winners: number;
+  donation_amount: number;
+  is_native: boolean;
+  all_are_winners: boolean;
+  even_split: boolean;
+  img_url: string | null;
+  question_count: number;
 }

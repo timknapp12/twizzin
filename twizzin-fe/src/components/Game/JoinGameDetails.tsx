@@ -1,10 +1,11 @@
 import Image from 'next/image';
-import { Button, Column, Row, Label } from '@/components';
+import { Button, Column, Row, Label, Alert } from '@/components';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { TbListDetails } from 'react-icons/tb';
-import { useAppContext } from '@/contexts';
+import { useAppContext, useGameContext } from '@/contexts';
 import { PartialGame } from '@/types';
 import { formatGameTime } from '@/utils';
+import { useState } from 'react';
 
 const JoinGameDetails = ({
   partialGameData,
@@ -12,6 +13,7 @@ const JoinGameDetails = ({
   partialGameData: PartialGame;
 }) => {
   const { t } = useAppContext();
+  const { handleJoinGame } = useGameContext();
 
   const {
     game_code,
@@ -34,6 +36,26 @@ const JoinGameDetails = ({
 
   const totalTime =
     end_time && start_time ? formatGameTime(start_time, end_time) : 0;
+
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const onSubmit = async () => {
+    setIsLoading(true);
+    try {
+      await handleJoinGame();
+    } catch (error: unknown) {
+      console.error('Error joining game:', error);
+      if (error instanceof Error) {
+        setError(t('Error joining game') + error.message);
+      } else {
+        setError(t('Error joining game'));
+      }
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const primaryColor = 'var(--color-primaryText)';
   return (
@@ -110,7 +132,17 @@ const JoinGameDetails = ({
           </Label>
         </Row>
       </Column>
-      <Button>{t('Join game')}</Button>
+      {error && (
+        <Alert
+          variant='error'
+          title={t('Error')}
+          description={error}
+          onClose={() => setError(null)}
+        />
+      )}
+      <Button onClick={onSubmit} isLoading={isLoading}>
+        {t('Join game')}
+      </Button>
     </Column>
   );
 };
