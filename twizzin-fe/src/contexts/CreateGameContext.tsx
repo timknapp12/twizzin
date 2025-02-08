@@ -6,13 +6,14 @@ import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import {
   CreateGameContextType,
   QuestionForDb,
-  GameData,
-  CreateFullGameParams,
+  CreateGameData,
+  CreateGameCombinedParams,
   GameDataChangeEvent,
   GameCreationResult,
 } from '@/types';
-import { createFullGame } from '@/utils';
+import { createGameCombined } from '@/utils';
 import { useProgram } from './ProgramContext';
+import { useAppContext } from './AppContext';
 
 const CreateGameContext = createContext<CreateGameContextType | undefined>(
   undefined
@@ -29,12 +30,13 @@ export const useCreateGameContext = () => {
 };
 
 export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
+  const { t } = useAppContext();
   const { program } = useProgram();
   const wallet = useWallet();
   const { connection } = useConnection();
   const { publicKey, sendTransaction } = wallet;
 
-  const initialGameData: GameData = {
+  const initialGameData: CreateGameData = {
     gameName: '',
     entryFee: 0,
     startTime: new Date(),
@@ -47,7 +49,7 @@ export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
     allAreWinners: false,
   };
 
-  const [gameData, setGameData] = useState<GameData>(initialGameData);
+  const [gameData, setGameData] = useState<CreateGameData>(initialGameData);
 
   const handleGameData = (e: GameDataChangeEvent) => {
     const { name, type } = e.target;
@@ -126,7 +128,17 @@ export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
 
   const handleCreateGame = async () => {
     if (!program) {
-      console.error('Program not initialized');
+      setError(t('Program not initialized'));
+      return;
+    }
+
+    if (!publicKey) {
+      setError(t('Please connect your wallet'));
+      return;
+    }
+
+    if (!sendTransaction) {
+      setError(t('Wallet adapter not properly initialized'));
       return;
     }
 
@@ -134,7 +146,7 @@ export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
     setError(null);
 
     try {
-      const params: CreateFullGameParams = {
+      const params: CreateGameCombinedParams = {
         name: gameData.gameName,
         entryFee: gameData.entryFee,
         commission: gameData.commission * 100,
@@ -149,7 +161,7 @@ export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
         imageFile: imageFile,
       };
 
-      const result = await createFullGame(
+      const result = await createGameCombined(
         program,
         connection,
         publicKey!, // Add non-null assertion since we know publicKey exists at this point
@@ -167,7 +179,7 @@ export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
       setError(
         err instanceof Error
           ? err.message
-          : 'Failed to create game CreateGameContext'
+          : t('Failed to create game CreateGameContext')
       );
     } finally {
       setIsCreating(false);

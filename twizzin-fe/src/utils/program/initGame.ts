@@ -14,6 +14,7 @@ import {
 } from '@solana/spl-token';
 import { BN, Program } from '@coral-xyz/anchor';
 import { TwizzinIdl } from '../../types/idl';
+import { deriveGamePDAs } from './pdas';
 
 interface InitGameParams {
   name: string;
@@ -148,22 +149,4 @@ const validateGameParams = (params: InitGameParams): void => {
   if (params.maxWinners < 1) throw new Error('Max winners too low');
   if (params.maxWinners > 200) throw new Error('Max winners too high');
   if (params.startTime >= params.endTime) throw new Error('Invalid time range');
-};
-
-const deriveGamePDAs = (
-  program: Program<TwizzinIdl>,
-  adminPubkey: PublicKey,
-  gameCode: string
-) => {
-  const [gamePda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('game'), adminPubkey.toBuffer(), Buffer.from(gameCode)],
-    program.programId
-  );
-
-  const [vaultPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('vault'), adminPubkey.toBuffer(), Buffer.from(gameCode)],
-    program.programId
-  );
-
-  return { gamePda, vaultPda };
 };

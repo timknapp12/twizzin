@@ -71,7 +71,7 @@ export interface GameCreationResult {
 }
 
 export interface CreateGameContextType {
-  gameData: GameData;
+  gameData: CreateGameData;
   handleGameData: (e: GameDataChangeEvent) => void;
   questions: QuestionForDb[];
   handleUpdateQuestionData: (question: QuestionForDb) => void;
@@ -142,7 +142,7 @@ export interface AnswerToBeHashed {
   salt: string;
 }
 
-export interface GameData {
+export interface CreateGameData {
   gameCode?: string; // length of 6
   gameName: string;
   entryFee: number;
@@ -156,7 +156,7 @@ export interface GameData {
   allAreWinners: boolean;
 }
 
-export interface CreateFullGameParams {
+export interface CreateGameCombinedParams {
   name: string;
   entryFee: number;
   commission: number;
@@ -179,14 +179,44 @@ export interface CarouselItem {
   order: number;
 }
 
-export interface JoinGameContextType {
+export interface PartialGame {
+  game_code: string;
+  id: string;
+  admin_wallet: string;
+  name: string;
+  token_mint: string;
+  entry_fee: number;
+  commission_bps: number;
+  start_time: string;
+  end_time: string;
+  max_winners: number;
+  donation_amount: number;
+  is_native: boolean;
+  all_are_winners: boolean;
+  even_split: boolean;
+  img_url: string | null;
+  question_count: number;
+}
+
+export interface GameContextType {
   gameCode: string;
   setGameCode: (value: string) => void;
   partialGameData: PartialGame | null;
   getGameByCode: (gameCode: string) => Promise<void>;
+  gameData: JoinFullGame;
+  handleJoinGame: () => Promise<void>;
 }
 
-export interface PartialGame {
+export interface JoinGameParams {
+  gameCode: string;
+  admin: PublicKey;
+  tokenMint: PublicKey;
+  playerTokenAccount?: PublicKey;
+  vaultTokenAccount?: PublicKey;
+  entryFee: number;
+}
+
+export interface JoinFullGame {
   game_code: string;
   id: string;
   admin_wallet: string;

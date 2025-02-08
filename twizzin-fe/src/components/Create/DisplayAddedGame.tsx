@@ -15,11 +15,11 @@ import {
   FaCircleCheck,
 } from 'react-icons/fa6';
 import { useAppContext, useCreateGameContext } from '@/contexts';
-import { GameData, QuestionForDb } from '@/types';
+import { CreateGameData, QuestionForDb } from '@/types';
 import { displayOrderMap } from '@/types';
 
 interface DisplayAddedGameProps {
-  gameData: GameData;
+  gameData: CreateGameData;
   questions: QuestionForDb[];
   showGameCode: boolean;
   setShowGameCode: React.Dispatch<React.SetStateAction<boolean>>;

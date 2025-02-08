@@ -34,6 +34,7 @@ export const getPartialGameFromDb = async (gameCode: string) => {
       .select(
         `
         game_code,
+        game_pubkey,
         id,
         admin_wallet,
         name,

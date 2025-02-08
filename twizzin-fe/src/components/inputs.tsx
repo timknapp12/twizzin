@@ -3,7 +3,7 @@
 /* eslint-disable no-unused-vars */
 import { Row } from './containers';
 import { Label } from './texts';
-import { processImageFile } from '@/utils/supabase/imageProcessing';
+import { processImageFile } from '@/utils';
 import { useState } from 'react';
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {

@@ -2,13 +2,13 @@ import React, { useState, FormEvent } from 'react';
 import Image from 'next/image';
 import { Alert, Button, Column, Input, Row, Callout } from '@/components';
 import { FaGamepad } from 'react-icons/fa';
-import { useAppContext, useJoinGameContext } from '@/contexts';
+import { useAppContext, useGameContext } from '@/contexts';
 import art1 from '../../assets/illustration1.png';
 
 const JoinForm = () => {
   const { t } = useAppContext();
   const { gameCode, setGameCode, getGameByCode, partialGameData } =
-    useJoinGameContext();
+    useGameContext();
   console.log('partialGameData', partialGameData);
 
   const [isLoading, setIsLoading] = useState(false);

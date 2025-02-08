@@ -12,7 +12,7 @@ import { PrimaryText } from '../texts';
 import { useProgram } from '@/contexts/ProgramContext';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
-import { initializeConfig } from '@/utils/program/initConfig';
+import { initializeConfig } from '@/utils';
 import { useAppContext } from '@/contexts';
 import { Header } from '../Header';
 

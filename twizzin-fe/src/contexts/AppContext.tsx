@@ -13,7 +13,7 @@ import i18n from '@/i18n';
 import { useTranslation } from 'react-i18next';
 import { localeMap } from '@/utils';
 import { CreateGameProvider } from './CreateGameContext';
-import { JoinGameContextProvider } from './JoinGameContext';
+import { GameContextProvider } from './GameContext';
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -132,7 +132,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       }}
     >
       <CreateGameProvider>
-        <JoinGameContextProvider>{children}</JoinGameContextProvider>
+        <GameContextProvider>{children}</GameContextProvider>
       </CreateGameProvider>
     </AppContext.Provider>
   );
