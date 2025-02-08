@@ -106,5 +106,9 @@
   "Maximum number of winners": "Maximum number of winners",
   "Split": "Split",
   "Evenly split among all winners": "Evenly split among all winners",
-  "Tiered": "Tiered"
+  "Tiered": "Tiered",
+  "Program not initialized": "Program not initialized",
+  "Wallet adapter not properly initialized": "Wallet adapter not properly initialized",
+  "Failed to create game": "Failed to create game",
+  "Error joining game": "Error joining game"
 }
