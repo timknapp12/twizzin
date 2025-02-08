@@ -13,6 +13,7 @@ Join Game
 - don't allow admin to join game to play- but only to be admin
 - error handling for invalid params on route game/gameCode
 - show callout hint on join game details for 'split'
+- handle if game start time is in the past
 
 - clean up imports from utils
 

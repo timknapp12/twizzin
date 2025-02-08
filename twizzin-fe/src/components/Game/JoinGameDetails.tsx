@@ -1,19 +1,23 @@
+'use client';
+
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { Button, Column, Row, Label, Alert } from '@/components';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { TbListDetails } from 'react-icons/tb';
+import { GiSittingDog } from 'react-icons/gi';
 import { useAppContext, useGameContext } from '@/contexts';
 import { PartialGame } from '@/types';
-import { formatGameTime } from '@/utils';
-import { useState } from 'react';
+import { formatGameTime, getRemainingTime } from '@/utils';
+import { useEffect, useState } from 'react';
 
 const JoinGameDetails = ({
   partialGameData,
 }: {
   partialGameData: PartialGame;
 }) => {
-  const { t } = useAppContext();
-  const { handleJoinGame } = useGameContext();
+  const { t, language } = useAppContext();
+  const { handleJoinGame, gameData } = useGameContext();
 
   const {
     game_code,
@@ -39,8 +43,19 @@ const JoinGameDetails = ({
 
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [countdown, setCountdown] = useState<string>(
+    getRemainingTime(start_time)
+  );
 
-  const onSubmit = async () => {
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCountdown(getRemainingTime(start_time));
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [start_time]);
+
+  const onJoinGame = async () => {
     setIsLoading(true);
     try {
       await handleJoinGame();
@@ -57,18 +72,39 @@ const JoinGameDetails = ({
     }
   };
 
+  const router = useRouter();
+  const onLeaveGame = async () => router.push(`/${language}`);
+
+  const hasGameData = gameData && gameData?.game_code?.length > 0;
+  console.log('hasGameData', hasGameData);
+
   const primaryColor = 'var(--color-primaryText)';
   return (
     <Column className='gap-4 w-full h-full flex-1' justify='between'>
-      <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg  bg-[#FBF9E9] gap-4 w-full max-w-small mx-auto  text-[16px] active:opacity-80'>
-        <Row className='gap-2'>
-          <TbListDetails size={28} color='var(--color-tertiary)' />
-          <Label style={{ marginBottom: -4 }}>{t('Game Code')}:</Label>
-          <Label style={{ color: primaryColor, marginBottom: -4 }}>
-            {game_code}
-          </Label>
-        </Row>
-      </div>
+      {hasGameData ? (
+        <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg  bg-[#af9aec] gap-4 w-full max-w-small mx-auto  text-[16px] active:opacity-80'>
+          <Row className='gap-2'>
+            <GiSittingDog size={28} color='var(--color-primary)' />
+            <Label style={{ color: 'white', marginBottom: -4 }}>
+              {`${t('Waiting room for game')}: ${game_code}`}
+            </Label>
+          </Row>
+        </div>
+      ) : (
+        <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg  bg-[#FBF9E9] gap-4 w-full max-w-small mx-auto  text-[16px] active:opacity-80'>
+          <Row className='gap-2'>
+            <TbListDetails size={28} color='var(--color-tertiary)' />
+            <Label style={{ marginBottom: -4 }}>{t('Game Code')}:</Label>
+            <Label style={{ color: primaryColor, marginBottom: -4 }}>
+              {game_code}
+            </Label>
+          </Row>
+        </div>
+      )}
+      <Row className='gap-2'>
+        <Label>{t('Time till game starts')}:</Label>
+        <Label style={{ color: primaryColor }}>{countdown}</Label>
+      </Row>
       {img_url && (
         <div className='relative w-full max-w-[200px] min-w-[120px] aspect-square mx-auto'>
           <Image
@@ -140,9 +176,13 @@ const JoinGameDetails = ({
           onClose={() => setError(null)}
         />
       )}
-      <Button onClick={onSubmit} isLoading={isLoading}>
-        {t('Join game')}
-      </Button>
+      {hasGameData ? (
+        <Button onClick={onLeaveGame}>{t('Leave game')}</Button>
+      ) : (
+        <Button onClick={onJoinGame} isLoading={isLoading}>
+          {t('Join game')}
+        </Button>
+      )}
     </Column>
   );
 };

@@ -10,6 +10,7 @@ import {
 } from '@/types';
 import {
   getPartialGameFromDb,
+  getGameFromDb,
   joinGameCombined,
   deriveGamePDAs,
   derivePlayerPDA,
@@ -90,7 +91,9 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
           playerPda
         );
         if (playerAccount) {
-          throw new Error(t('You have already joined this game'));
+          const game = await getGameFromDb(partialGameData.game_code);
+          setGameData(game);
+          return;
         }
       } catch (e: any) {
         // If the account doesn't exist, this is good - means user hasn't joined
