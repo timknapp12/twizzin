@@ -10,7 +10,7 @@ pub struct ClosePlayerAccount<'info> {
     #[account(
         seeds = [b"game", game.admin.as_ref(), game.game_code.as_bytes()],
         bump = game.bump,
-        constraint = Clock::get()?.unix_timestamp >= game.end_time @ ErrorCode::GameNotEnded,
+        constraint = Clock::get()?.unix_timestamp * 1000 >= game.end_time @ ErrorCode::GameNotEnded,
     )]
     pub game: Account<'info, Game>,
 

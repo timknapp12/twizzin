@@ -68,7 +68,7 @@ pub struct JoinGame<'info> {
 impl<'info> JoinGame<'info> {
     pub fn join_game(&mut self, bumps: &JoinGameBumps) -> Result<()> {
         // Verify game hasn't ended
-        let current_time = Clock::get()?.unix_timestamp;
+        let current_time = Clock::get()?.unix_timestamp * 1000;
         require!(current_time < self.game.end_time, ErrorCode::GameEnded);
 
         // Only handle entry fee transfer if amount is greater than 0

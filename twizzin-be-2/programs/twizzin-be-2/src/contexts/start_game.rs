@@ -20,7 +20,7 @@ pub struct StartGame<'info> {
 impl<'info> StartGame<'info> {
     pub fn start_game(&mut self) -> Result<()> {
         let game = &mut self.game;
-        let current_time = Clock::get()?.unix_timestamp;
+        let current_time = Clock::get()?.unix_timestamp * 1000;
 
         // Update the start time to current time
         game.start_time = current_time;
