@@ -43,15 +43,6 @@
 
 /twizzin-fe/.vercel
 
-# backend
-/twizzin-be/.anchor
-/twizzin-be/.DS_Store
-/twizzin-be/target
-/twizzin-be/**/*.rs.bk
-/twizzin-be/node_modules
-/twizzin-be/test-ledger
-/twizzin-be/.yarn
-
 # backend-v2
 /twizzin-be-2/.anchor
 /twizzin-be-2/.DS_Store
@@ -60,6 +51,7 @@
 /twizzin-be-2/node_modules
 /twizzin-be-2/test-ledger
 /twizzin-be-2/.yarn
+/twizzin-be-2/program-keypair.json
 
 *wallet.json
 

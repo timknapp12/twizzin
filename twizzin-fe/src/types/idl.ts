@@ -1200,7 +1200,7 @@ export type TwizzinIdl = Idl & {
 };
 
 // export const IDL: TwizzinIdl = {
-//   address: '35V3AqBVBuUVczUxULiZ7eoXbCwVZcNZAN4otDeD4K2F',
+//   address: 'CKG9y4fnWgbd83uKR2qzeGVkr2Qo3Fofq21acog3Ae1',
 //   metadata: {
 //     name: 'twizzin_be_2',
 //     version: '0.1.0',

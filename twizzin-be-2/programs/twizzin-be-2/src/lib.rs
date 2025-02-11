@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-declare_id!("35V3AqBVBuUVczUxULiZ7eoXbCwVZcNZAN4otDeD4K2F");
+declare_id!("CKG9y4fnWgbd83uKR2qzeGVkr2Qo3Fofq21acog3Ae1");
 
 pub mod contexts;
 pub use contexts::*;
@@ -93,8 +93,8 @@ pub mod twizzin_be_2 {
         ctx.accounts.join_game(&ctx.bumps)
     }
 
-    pub fn start_game(ctx: Context<StartGame>) -> Result<()> {
-        ctx.accounts.start_game()
+    pub fn start_game(ctx: Context<StartGame>, total_time: i64) -> Result<()> {
+        ctx.accounts.start_game(total_time)
     }
 
     pub fn submit_answers(
