@@ -75,12 +75,15 @@ export async function startGame(
     })
     .rpc();
 
+  // Mock total_time for testing (e.g., 5 minutes in milliseconds)
+  const totalTimeMs = 5 * 60 * 1000; // 5 minutes
+
   // Test 1: Start game with wrong admin
   console.log('Testing start game with wrong admin...');
   try {
     const wrongAdmin = anchor.web3.Keypair.generate();
     await program.methods
-      .startGame()
+      .startGame(new anchor.BN(totalTimeMs))
       .accounts({
         admin: wrongAdmin.publicKey,
         game: gamePda,
@@ -96,7 +99,7 @@ export async function startGame(
   console.log('Testing successful game start...');
   try {
     const tx = await program.methods
-      .startGame()
+      .startGame(new anchor.BN(totalTimeMs))
       .accounts({
         admin: provider.wallet.publicKey,
         game: gamePda,
@@ -107,12 +110,18 @@ export async function startGame(
 
     // Verify game state
     const gameState = await program.account.game.fetch(gamePda);
-    const currentTime = Math.floor(Date.now() / 1000);
+    const currentTime = Date.now(); // Get current time in milliseconds
 
     // The start time should be close to current time
     // Allow for a small difference due to processing time
-    const timeDiff = Math.abs(gameState.startTime.toNumber() - currentTime);
-    expect(timeDiff).to.be.lessThan(5); // Allow 5 seconds difference
+    const startTimeDiff = Math.abs(
+      gameState.startTime.toNumber() - currentTime
+    );
+    expect(startTimeDiff).to.be.lessThan(5000); // Allow 5 seconds difference
+
+    // Verify end time is correctly set
+    const expectedEndTime = gameState.startTime.toNumber() + totalTimeMs;
+    expect(gameState.endTime.toNumber()).to.equal(expectedEndTime);
 
     console.log('Game start test passed');
   } catch (error) {

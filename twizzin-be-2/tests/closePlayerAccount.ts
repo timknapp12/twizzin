@@ -61,7 +61,9 @@ export async function closePlayerAccount(
   // Setup game
   const uniqueId = Math.floor(Math.random() * 100);
   const gameCode = `CLOSE${uniqueId}`;
-  const now = Math.floor(Date.now() / 1000);
+  const now = Date.now();
+  const startTime = new anchor.BN(now);
+  const endTime = new anchor.BN(now + 3600 * 1000);
 
   // Find PDAs
   const [gamePda] = PublicKey.findProgramAddressSync(
@@ -94,8 +96,8 @@ export async function closePlayerAccount(
       gameCode,
       new anchor.BN(0.1 * LAMPORTS_PER_SOL),
       500, // 5% commission
-      new anchor.BN(now),
-      new anchor.BN(now + 3600),
+      startTime,
+      endTime,
       1, // maxWinners
       Array(32).fill(1), // answerHash
       new anchor.BN(1 * LAMPORTS_PER_SOL), // donationAmount

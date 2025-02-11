@@ -32,9 +32,9 @@ export async function declareWinners(
   const gameCode1 = getUniqueGameCode('DECLARE1');
   const entryFee = new anchor.BN(0.1 * LAMPORTS_PER_SOL);
   const commission = 500; // 5% in basis points
-  const now = Math.floor(Date.now() / 1000);
+  const now = Date.now();
   const startTime = new anchor.BN(now);
-  const endTime = new anchor.BN(now + 3600);
+  const endTime = new anchor.BN(now + 3600 * 1000);
   const maxWinners = 3;
   const totalPlayers = 4;
   const answerHash = Array(32).fill(1);

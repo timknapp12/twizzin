@@ -24,9 +24,9 @@ export async function joinGame(
   const validName = 'Test Game';
   const validEntryFee = new anchor.BN(0.1 * LAMPORTS_PER_SOL);
   const validCommission = 5;
-  const now = Math.floor(Date.now() / 1000);
+  const now = Date.now();
   const validStartTime = new anchor.BN(now);
-  const validEndTime = new anchor.BN(now + 3600);
+  const validEndTime = new anchor.BN(now + 3600 * 1000);
   const validMaxWinners = 5;
   const validAnswerHash = Array(32).fill(1);
 
