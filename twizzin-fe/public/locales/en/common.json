@@ -110,5 +110,8 @@
   "Program not initialized": "Program not initialized",
   "Wallet adapter not properly initialized": "Wallet adapter not properly initialized",
   "Failed to create game": "Failed to create game",
-  "Error joining game": "Error joining game"
+  "Error joining game": "Error joining game",
+  "Game in progress": "Game in progress",
+  "Previous": "Previous",
+  "Next": "Next"
 }
