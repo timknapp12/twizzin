@@ -165,9 +165,9 @@ export async function closeGame(
   const gameCode1 = getUniqueGameCode('CLOSE1');
   const entryFee = new anchor.BN(0.1 * LAMPORTS_PER_SOL);
   const commission = 500; // 5%
-  const now = Math.floor(Date.now() / 1000);
+  const now = Date.now();
   const startTime = new anchor.BN(now);
-  const endTime = new anchor.BN(now + 3600);
+  const endTime = new anchor.BN(now + 3600 * 1000);
   const maxWinners = 3;
   const answerHash = Array(32).fill(1);
   const donationAmount = new anchor.BN(1 * LAMPORTS_PER_SOL);

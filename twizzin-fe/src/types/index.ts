@@ -95,8 +95,8 @@ export interface GameInputForDb {
   tokenMint: string;
   entryFee: number;
   commissionBps: number;
-  startTime: Date;
-  endTime: Date;
+  startTime: string;
+  endTime: string;
   maxWinners: number;
   donationAmount: number;
   isNative: boolean;

@@ -12,6 +12,7 @@ import { CreateGameCombinedParams } from '@/types';
 import { TwizzinIdl } from '@/types/idl';
 import { generateMerkleRoot } from '../merkle/generateMerkleRoot';
 import { supabase } from '../supabase/supabaseClient';
+import { getAnchorTimestamp, getSupabaseTimestamp } from '../helpers';
 
 export const createGameCombined = async (
   program: Program<TwizzinIdl>,
@@ -40,9 +41,8 @@ export const createGameCombined = async (
         name: params.name,
         tokenMint: params.tokenMint.toString(),
         entryFee: params.entryFee * LAMPORTS_PER_SOL,
-        commissionBps: params.commission,
-        startTime: params.startTime,
-        endTime: params.endTime,
+        startTime: getSupabaseTimestamp(params.startTime),
+        endTime: getSupabaseTimestamp(params.endTime),
         maxWinners: params.maxWinners,
         donationAmount: params.donationAmount
           ? params.donationAmount * LAMPORTS_PER_SOL
@@ -52,6 +52,7 @@ export const createGameCombined = async (
         evenSplit: params.evenSplit || false,
         answerMerkleRoot: '',
         imgUrl: '',
+        commissionBps: params.commission,
       },
       params.questions,
       params.imageFile
@@ -66,8 +67,8 @@ export const createGameCombined = async (
     // 3. Get game code and prepare timestamps
     console.log('Step 3: Preparing on-chain parameters...');
     const gameCode = dbResult.game.game_code;
-    const startTime = Math.floor(params.startTime.getTime() / 1000);
-    const endTime = Math.floor(params.endTime.getTime() / 1000);
+    const startTime = getAnchorTimestamp(params.startTime); // in milliseconds
+    const endTime = getAnchorTimestamp(params.endTime);
 
     const paramsForOnChain = {
       ...params,

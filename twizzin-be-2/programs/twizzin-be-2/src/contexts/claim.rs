@@ -74,7 +74,7 @@ pub struct Claim<'info> {
 impl<'info> Claim<'info> {
    pub fn claim(&mut self) -> Result<()> {
        // Verify game has ended
-       let current_time = Clock::get()?.unix_timestamp;
+       let current_time = Clock::get()?.unix_timestamp * 1000;
        require!(current_time >= self.game.end_time, ErrorCode::GameNotEnded);
 
        // Find winner info and verify not claimed

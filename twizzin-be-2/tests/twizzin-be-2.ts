@@ -87,30 +87,39 @@ describe('twizzin-be-2', () => {
   it('Initializes a game', async () => {
     await initializeGame(program, provider, confirm);
   });
+
   it('Updates a game', async () => {
     await updateGame(program, provider, confirm);
   });
+
   it('Joins a game', async () => {
     await joinGame(program, provider, confirm);
   });
+
   it('Starts a game', async () => {
     await startGame(program, provider, confirm);
   });
+
   it('Submits answers', async () => {
     await submitAnswers(program, provider, confirm);
   });
+
   it('Ends a game', async () => {
     await endGame(program, provider, confirm);
   });
+
   it('Declares winners', async () => {
     await declareWinners(program, provider, confirm);
   });
+
   it('Claims a prize', async () => {
     await claim(program, provider, confirm);
   });
+
   it('Closes a game', async () => {
     await closeGame(program, provider, confirm);
   });
+
   it('Closes a player account', async () => {
     await closePlayerAccount(program, provider, confirm);
   });
