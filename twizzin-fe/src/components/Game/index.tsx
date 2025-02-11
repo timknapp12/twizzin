@@ -7,11 +7,13 @@ import { Header } from '../Header';
 import { useGameContext } from '@/contexts';
 import JoinGameDetails from './JoinGameDetails';
 import GameDetailsSkeleton from './GameDetailsSkeleton';
+import PlayGame from './PlayGame';
 
 const Game = () => {
   const params = useParams();
   const gameCode = params.gameCode;
-  const { getGameByCode, partialGameData } = useGameContext();
+  const { getGameByCode, partialGameData, gameData, isGameStarted } =
+    useGameContext();
 
   useEffect(() => {
     if (!gameCode) return;
@@ -24,7 +26,10 @@ const Game = () => {
     <ScreenContainer>
       <Header />
       <InnerScreenContainer>
-        {partialGameData ? (
+        {/* TODO - use local storage to store these two vars */}
+        {isGameStarted && gameData ? (
+          <PlayGame />
+        ) : partialGameData ? (
           <JoinGameDetails partialGameData={partialGameData} />
         ) : (
           <GameDetailsSkeleton />

@@ -8,7 +8,7 @@ import { TbListDetails } from 'react-icons/tb';
 import { GiSittingDog } from 'react-icons/gi';
 import { useAppContext, useGameContext } from '@/contexts';
 import { PartialGame } from '@/types';
-import { formatGameTime, getRemainingTime } from '@/utils';
+import { formatGameTime, getRemainingTime, formatSupabaseDate } from '@/utils';
 import { useEffect, useState } from 'react';
 
 const JoinGameDetails = ({
@@ -17,7 +17,8 @@ const JoinGameDetails = ({
   partialGameData: PartialGame;
 }) => {
   const { t, language } = useAppContext();
-  const { handleJoinGame, gameData, isAdmin } = useGameContext();
+  const { handleJoinGame, gameData, isAdmin, setIsGameStarted } =
+    useGameContext();
 
   const {
     game_code,
@@ -33,10 +34,6 @@ const JoinGameDetails = ({
     even_split,
     img_url,
   } = partialGameData || {};
-
-  const formatDate = (date: string | Date) => {
-    return new Date(date).toLocaleString();
-  };
 
   const totalTime =
     end_time && start_time ? formatGameTime(start_time, end_time) : 0;
@@ -75,7 +72,7 @@ const JoinGameDetails = ({
   const router = useRouter();
   const onLeaveGame = async () => router.push(`/${language}/join`);
   const onStartGame = async () => {
-    console.log('starting game');
+    setIsGameStarted(true);
   };
 
   const hasGameData = gameData && gameData?.game_code?.length > 0;
@@ -153,7 +150,7 @@ const JoinGameDetails = ({
         <Row className='gap-2'>
           <Label>{t('Game start time')}:</Label>
           <Label style={{ color: primaryColor }}>
-            {start_time ? formatDate(start_time) : '-'}
+            {start_time ? formatSupabaseDate(start_time) : '-'}
           </Label>
         </Row>
         <Row className='gap-2'>

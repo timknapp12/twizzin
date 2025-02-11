@@ -45,6 +45,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
   );
   const [gameData, setGameData] = useState<JoinFullGame>({} as JoinFullGame);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isGameStarted, setIsGameStarted] = useState(false);
 
   console.log('partialGameData', partialGameData);
   console.log('gameData', gameData);
@@ -158,6 +159,8 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
         handleJoinGame,
         gameData,
         isAdmin,
+        isGameStarted,
+        setIsGameStarted,
       }}
     >
       {children}

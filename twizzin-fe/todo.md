@@ -14,6 +14,7 @@ Join Game
 - error handling for invalid params on route game/gameCode
 - show callout hint on join game details for 'split'
 - handle if game start time is in the past
+- from game screen, allow admin to edit game
 
 - clean up imports from utils
 

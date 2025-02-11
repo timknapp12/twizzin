@@ -206,6 +206,7 @@ export interface GameContextType {
   gameData: JoinFullGame;
   handleJoinGame: () => Promise<void>;
   isAdmin: boolean;
+  isGameStarted: boolean;
 }
 
 export interface JoinGameParams {
@@ -234,4 +235,23 @@ export interface JoinFullGame {
   even_split: boolean;
   img_url: string | null;
   question_count: number;
+  questions: QuestionFromDb[];
+}
+
+export interface QuestionFromDb {
+  id: string;
+  game_id: string;
+  question_text: string;
+  display_order: number;
+  correct_answer: string;
+  answers: AnswerFromDb[];
+}
+
+export interface AnswerFromDb {
+  id: string;
+  question_id: string;
+  answer_text: string;
+  display_letter: string;
+  display_order: number;
+  is_correct: boolean;
 }

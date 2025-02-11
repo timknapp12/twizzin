@@ -70,3 +70,19 @@ export const getRemainingTime = (startTime: string | number) => {
 
   return `${days}d ${hours}h ${minutes}m ${seconds}s`;
 };
+
+export const countDownGameTime = (endTime: string | number): string => {
+  const now = Date.now();
+  const endMs =
+    typeof endTime === 'string' ? new Date(endTime).getTime() : endTime;
+  const timeDiff = endMs - now;
+
+  if (timeDiff <= 0) {
+    return 'Time is up!';
+  }
+
+  const totalSeconds = Math.floor(timeDiff / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+};
