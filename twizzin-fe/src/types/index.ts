@@ -205,6 +205,7 @@ export interface GameContextType {
   getGameByCode: (gameCode: string) => Promise<void>;
   gameData: JoinFullGame;
   handleJoinGame: () => Promise<void>;
+  isAdmin: boolean;
 }
 
 export interface JoinGameParams {

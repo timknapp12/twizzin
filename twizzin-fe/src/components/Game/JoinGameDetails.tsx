@@ -17,7 +17,7 @@ const JoinGameDetails = ({
   partialGameData: PartialGame;
 }) => {
   const { t, language } = useAppContext();
-  const { handleJoinGame, gameData } = useGameContext();
+  const { handleJoinGame, gameData, isAdmin } = useGameContext();
 
   const {
     game_code,
@@ -73,7 +73,10 @@ const JoinGameDetails = ({
   };
 
   const router = useRouter();
-  const onLeaveGame = async () => router.push(`/${language}`);
+  const onLeaveGame = async () => router.push(`/${language}/join`);
+  const onStartGame = async () => {
+    console.log('starting game');
+  };
 
   const hasGameData = gameData && gameData?.game_code?.length > 0;
   console.log('hasGameData', hasGameData);
@@ -177,11 +180,16 @@ const JoinGameDetails = ({
         />
       )}
       {hasGameData ? (
-        <Button onClick={onLeaveGame}>{t('Leave game')}</Button>
+        <Button secondary onClick={onLeaveGame}>
+          {t('Leave game')}
+        </Button>
       ) : (
         <Button onClick={onJoinGame} isLoading={isLoading}>
           {t('Join game')}
         </Button>
+      )}
+      {hasGameData && isAdmin && (
+        <Button onClick={onStartGame}>{t('Start game')}</Button>
       )}
     </Column>
   );

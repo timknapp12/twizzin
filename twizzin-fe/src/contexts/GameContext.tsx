@@ -1,6 +1,12 @@
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useEffect,
+} from 'react';
 import { useRouter } from 'next/navigation';
 import {
   GameContextType,
@@ -38,6 +44,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
     null
   );
   const [gameData, setGameData] = useState<JoinFullGame>({} as JoinFullGame);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   console.log('partialGameData', partialGameData);
   console.log('gameData', gameData);
@@ -59,6 +66,18 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
   const wallet = useWallet();
   const { publicKey, sendTransaction } = wallet;
 
+  useEffect(() => {
+    const checkAdmin = async () => {
+      const isAdmin = publicKey?.toBase58() === partialGameData?.admin_wallet;
+      setIsAdmin(isAdmin);
+      if (partialGameData) {
+        const game = await getGameFromDb(partialGameData.game_code);
+        setGameData(game);
+      }
+    };
+    checkAdmin();
+  }, [publicKey, partialGameData]);
+
   const handleJoinGame = async () => {
     if (!program) {
       console.error(t('Program not initialized'));
@@ -79,35 +98,31 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
 
       const playerPda = derivePlayerPDA(program, gamePda, publicKey);
 
-      // Fetch and log game account
-      // @ts-ignore
-      const gameAccount = await program.account.game.fetch(gamePda);
-      console.log('Game account:', gameAccount);
-
-      // Try to fetch the player account
+      // Check if playerAccount exists
+      let hasJoined = false;
       try {
         // @ts-ignore
         const playerAccount = await program.account.playerAccount.fetch(
           playerPda
         );
-        if (playerAccount) {
-          const game = await getGameFromDb(partialGameData.game_code);
-          setGameData(game);
-          return;
-        }
+        console.log('Player account exists:', playerAccount);
+        hasJoined = true;
       } catch (e: any) {
-        // If the account doesn't exist, this is good - means user hasn't joined
-        if (e.message !== 'Account does not exist') {
+        if (e.message.includes('does not exist')) {
+          console.log('Player account does not exist.');
+        } else {
+          console.error('Error fetching playerAccount:', e);
           throw e;
         }
       }
 
-      // Return if game account doesn't match expected state
-      if (!gameAccount) {
-        console.error(t('Game account not found'));
+      if (hasJoined || isAdmin) {
+        const game = await getGameFromDb(partialGameData.game_code);
+        setGameData(game);
         return;
       }
 
+      // Proceed to join the game since player hasn't joined yet
       const params: JoinGameParams = {
         gameCode: partialGameData.game_code,
         admin: new PublicKey(partialGameData.admin_wallet),
@@ -142,6 +157,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
         getGameByCode,
         handleJoinGame,
         gameData,
+        isAdmin,
       }}
     >
       {children}
