@@ -17,8 +17,7 @@ const JoinGameDetails = ({
   partialGameData: PartialGame;
 }) => {
   const { t, language } = useAppContext();
-  const { handleJoinGame, gameData, isAdmin, setIsGameStarted } =
-    useGameContext();
+  const { handleJoinGame, gameData, isAdmin } = useGameContext();
 
   const {
     game_code,
@@ -72,7 +71,7 @@ const JoinGameDetails = ({
   const router = useRouter();
   const onLeaveGame = async () => router.push(`/${language}/join`);
   const onStartGame = async () => {
-    setIsGameStarted(true);
+    // setIsGameStarted(true);
   };
 
   const hasGameData = gameData && gameData?.game_code?.length > 0;

@@ -7,17 +7,22 @@ import { FaArrowLeft, FaArrowRight } from 'react-icons/fa';
 
 const PlayGame = () => {
   const { t } = useAppContext();
-  const { gameData } = useGameContext();
+  const { gameData, isGameStarted, submitAnswer, getCurrentAnswer } =
+    useGameContext();
+
   const [remainingTime, setRemainingTime] = useState('');
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [selectedAnswer, setSelectedAnswer] = useState('');
 
   const { name, questions, end_time } = gameData || {};
-
   const currentQuestion = questions?.[currentQuestionIndex];
 
+  // Get current answer from game session
+  const selectedAnswer = currentQuestion
+    ? getCurrentAnswer(currentQuestion.id)?.answerId
+    : '';
+
   useEffect(() => {
-    if (!end_time) return;
+    if (!isGameStarted || !end_time) return;
 
     setRemainingTime(countDownGameTime(end_time));
     const timer = setInterval(() => {
@@ -25,24 +30,53 @@ const PlayGame = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [end_time]);
+  }, [end_time, isGameStarted]);
+
+  // Waiting for game to start state
+  if (!isGameStarted) {
+    return (
+      <Column className='gap-4 w-full' justify='start'>
+        <H2>{name}</H2>
+        <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg bg-[#FBF9E9] gap-4 w-full max-w-small mx-auto text-[16px] text-[#655B30] active:opacity-80'>
+          <Row className='gap-2'>
+            <RiSurveyLine size={28} className='text-yellow' />
+            <Label style={{ marginBottom: -4 }}>
+              {t('Waiting for game to start...')}
+            </Label>
+          </Row>
+        </div>
+      </Column>
+    );
+  }
 
   const handlePreviousQuestion = () => {
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex((prev) => prev - 1);
-      setSelectedAnswer('');
     }
   };
 
   const handleNextQuestion = () => {
     if (currentQuestionIndex < (questions?.length || 0) - 1) {
       setCurrentQuestionIndex((prev) => prev + 1);
-      setSelectedAnswer('');
     }
   };
 
   const handleAnswerSelect = (answerId: string) => {
-    setSelectedAnswer(answerId);
+    if (!currentQuestion) return;
+
+    // Save answer to game session
+    submitAnswer({
+      questionId: currentQuestion.id,
+      answerId,
+      answerText:
+        currentQuestion.answers.find((a) => a.id === answerId)?.answer_text ||
+        '',
+      displayOrder: currentQuestion.display_order,
+      timestamp: Date.now(),
+      displayLetter:
+        currentQuestion.answers.find((a) => a.id === answerId)
+          ?.display_letter || '',
+    });
   };
 
   if (!currentQuestion) return null;
@@ -50,7 +84,7 @@ const PlayGame = () => {
   return (
     <Column className='gap-4 w-full' justify='start'>
       {/* Timer Header */}
-      <H3>{name}</H3>
+      <H2>{name}</H2>
       <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg bg-[#E8F7EA] gap-4 w-full max-w-small mx-auto text-[16px] text-[#655B30] active:opacity-80'>
         <Row className='gap-2'>
           <RiSurveyLine size={28} className='text-green' />
@@ -67,7 +101,7 @@ const PlayGame = () => {
 
       {/* Question Text */}
       <div className='bg-white p-6 rounded-lg shadow-lg'>
-        <H2 className='mb-4'>{currentQuestion.question_text}</H2>
+        <H3 className='mb-4'>{currentQuestion.question_text}</H3>
 
         {/* Answer Options */}
         <div className='space-y-3'>

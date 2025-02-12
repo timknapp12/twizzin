@@ -1,3 +1,4 @@
+import { BN } from '@coral-xyz/anchor';
 import { PublicKey } from '@solana/web3.js';
 import { TFunction } from 'i18next';
 
@@ -207,6 +208,15 @@ export interface GameContextType {
   handleJoinGame: () => Promise<void>;
   isAdmin: boolean;
   isGameStarted: boolean;
+  submitAnswer: (answer: GameAnswer) => void;
+  getCurrentAnswer: (questionId: string) => GameAnswer | undefined;
+  getGameProgress: () => {
+    isComplete: boolean;
+    answeredCount: number;
+    remainingCount: number;
+  };
+  submitGame: () => Promise<void>;
+  handleStartGame: () => Promise<void>;
 }
 
 export interface JoinGameParams {
@@ -254,4 +264,39 @@ export interface AnswerFromDb {
   display_letter: string;
   display_order: number;
   is_correct: boolean;
+}
+
+// Types for storage
+export interface GameAnswer {
+  questionId: string;
+  answerId: string;
+  answerText: string;
+  displayOrder: number;
+  timestamp: number;
+  displayLetter: string;
+}
+
+export interface StoredGameSession {
+  gameCode: string;
+  gamePubkey: string;
+  startTime: number | null; // When user started the game
+  answers: { [questionId: string]: GameAnswer }; // Map of questionId to answer
+  submittedTime: number | null; // When answers were submitted to Solana
+}
+
+// START GAME
+export interface StartGameResult {
+  success: boolean;
+  signature: string | null;
+  error: string | null;
+  startTime?: number;
+  endTime?: number;
+}
+
+// Define the event interface from the IDL
+export interface GameStartedEvent {
+  admin: PublicKey;
+  game: PublicKey;
+  startTime: BN;
+  endTime: BN;
 }
