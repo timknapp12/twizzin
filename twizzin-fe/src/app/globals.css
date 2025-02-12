@@ -14,6 +14,7 @@
   --color-secondaryText: theme('themes.light.secondaryText');
   --color-disabledText: theme('themes.light.disabledText');
   --color-tertiary: theme('themes.light.tertiary');
+  --color-error: theme('themes.light.error');
 }
 
 /* System preference dark mode */

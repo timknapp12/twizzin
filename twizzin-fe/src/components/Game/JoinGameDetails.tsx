@@ -68,6 +68,13 @@ const JoinGameDetails = ({
     }
   };
 
+  const countDownText =
+    countdown === 'Game has started!' && isAdmin
+      ? t('The game is ready for you to start it')
+      : countdown === 'Game has started!'
+      ? t('Waiting for admin to start game...')
+      : countdown;
+
   const router = useRouter();
   const onLeaveGame = async () => router.push(`/${language}/join`);
   const onStartGame = async () => {
@@ -78,6 +85,8 @@ const JoinGameDetails = ({
   console.log('hasGameData', hasGameData);
 
   const primaryColor = 'var(--color-primaryText)';
+  const errorColor = 'var(--color-error)';
+
   return (
     <Column className='gap-4 w-full h-full flex-1' justify='between'>
       {hasGameData ? (
@@ -101,8 +110,10 @@ const JoinGameDetails = ({
         </div>
       )}
       <Row className='gap-2'>
-        <Label>{t('Time till game starts')}:</Label>
-        <Label style={{ color: primaryColor }}>{countdown}</Label>
+        {countdown !== 'Game has started!' ? (
+          <Label>{t('Time till game starts')}:</Label>
+        ) : null}
+        <Label style={{ color: errorColor }}>{countDownText}</Label>
       </Row>
       {img_url && (
         <div className='relative w-full max-w-[200px] min-w-[120px] aspect-square mx-auto'>

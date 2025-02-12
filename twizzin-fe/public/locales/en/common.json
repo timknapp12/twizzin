@@ -113,5 +113,14 @@
   "Error joining game": "Error joining game",
   "Game in progress": "Game in progress",
   "Previous": "Previous",
-  "Next": "Next"
+  "Next": "Next",
+  "Failed to start game": "Failed to start game",
+  "Waiting for game to start...": "Waiting for game to start...",
+  "Waiting for admin to start game...": "Waiting for admin to start game...",
+  "Waiting room for game": "Waiting room for game",
+  "Time till game starts": "Time till game starts",
+  "Join game": "Join game",
+  "Leave game": "Leave game",
+  "Start game": "Start game",
+  "The game is ready for you to start it": "The game is ready for you to start it"
 }
