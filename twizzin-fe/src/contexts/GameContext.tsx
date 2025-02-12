@@ -13,6 +13,8 @@ import {
   PartialGame,
   JoinGameParams,
   JoinFullGame,
+  GameAnswer,
+  StoredGameSession,
 } from '@/types';
 import {
   getPartialGameFromDb,
@@ -20,6 +22,14 @@ import {
   joinGameCombined,
   deriveGamePDAs,
   derivePlayerPDA,
+  initializeGameSession,
+  getGameSession,
+  saveGameAnswer,
+  getGameCompletionStatus,
+  markSessionSubmitted,
+  calculateTotalTimeMs,
+  supabase,
+  startGameCombined,
 } from '@/utils';
 import { useAppContext, useProgram } from '.';
 import { PublicKey } from '@solana/web3.js';
@@ -46,26 +56,35 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
   const [gameData, setGameData] = useState<JoinFullGame>({} as JoinFullGame);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isGameStarted, setIsGameStarted] = useState(false);
+  const [gameSession, setGameSession] = useState<StoredGameSession | null>(
+    null
+  );
 
-  console.log('partialGameData', partialGameData);
-  console.log('gameData', gameData);
   const router = useRouter();
+  const { program } = useProgram();
+  const { connection } = useConnection();
+  const wallet = useWallet();
+  const { publicKey, sendTransaction } = wallet;
 
-  const getGameByCode = async (gameCode: string) => {
+  // Load game session when game code changes
+  useEffect(() => {
+    if (gameCode) {
+      const session = getGameSession(gameCode);
+      setGameSession(session);
+    }
+  }, [gameCode]);
+
+  const getGameByCode = async (code: string) => {
     try {
-      const game = await getPartialGameFromDb(gameCode);
+      const game = await getPartialGameFromDb(code);
       setPartialGameData(game);
+      setGameCode(game.game_code);
       router.push(`/${language}/game/${game.game_code}`);
     } catch (error) {
       console.error('Error fetching game:', error);
       throw error;
     }
   };
-
-  const { program } = useProgram();
-  const { connection } = useConnection();
-  const wallet = useWallet();
-  const { publicKey, sendTransaction } = wallet;
 
   useEffect(() => {
     const checkAdmin = async () => {
@@ -79,6 +98,76 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
     checkAdmin();
   }, [publicKey, partialGameData]);
 
+  // Add event listener cleanup ref
+  const eventListenerRef = React.useRef<number | null>(null);
+
+  // Setup game start event listener
+  useEffect(() => {
+    if (!program || !partialGameData || !connection) return;
+
+    const setupEventListener = async () => {
+      try {
+        const { gamePda } = deriveGamePDAs(
+          program,
+          new PublicKey(partialGameData.admin_wallet),
+          partialGameData.game_code
+        );
+
+        // Listen for GameStarted event
+        const listener = program.addEventListener(
+          'GameStarted',
+          async (event: any) => {
+            // Verify this event is for our game
+            if (event.game?.toString() === gamePda.toString()) {
+              console.log('Game started event received:', event);
+
+              // Update game data with new start/end times
+              setGameData((prev) => ({
+                ...prev,
+                start_time: new Date(event.startTime.toNumber()).toISOString(),
+                end_time: new Date(event.endTime.toNumber()).toISOString(),
+              }));
+
+              setIsGameStarted(true);
+
+              // Initialize game session if it doesn't exist
+              if (!gameSession) {
+                const newSession = initializeGameSession(
+                  partialGameData.game_code,
+                  gamePda.toString()
+                );
+                setGameSession(newSession);
+              }
+            }
+          }
+        );
+
+        // Store listener ID for cleanup
+        eventListenerRef.current = listener;
+
+        // Check if game is already started
+        // @ts-ignore
+        const gameAccount = await program.account.game.fetch(gamePda);
+        if (gameAccount.startTime.toNumber() > 0) {
+          setIsGameStarted(true);
+        }
+      } catch (error) {
+        console.error('Error setting up game start listener:', error);
+      }
+    };
+
+    setupEventListener();
+
+    // Cleanup function
+    return () => {
+      if (eventListenerRef.current !== null && program) {
+        program.removeEventListener(eventListenerRef.current);
+        eventListenerRef.current = null;
+      }
+    };
+  }, [program, partialGameData, connection, gameSession]);
+
+  // Existing handleJoinGame implementation...
   const handleJoinGame = async () => {
     if (!program) {
       console.error(t('Program not initialized'));
@@ -90,7 +179,6 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
       throw new Error(t('Wallet adapter not properly initialized'));
 
     try {
-      // Get the game PDA and player PDA
       const { gamePda } = deriveGamePDAs(
         program,
         new PublicKey(partialGameData.admin_wallet),
@@ -99,7 +187,6 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
 
       const playerPda = derivePlayerPDA(program, gamePda, publicKey);
 
-      // Check if playerAccount exists
       let hasJoined = false;
       try {
         // @ts-ignore
@@ -123,7 +210,6 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      // Proceed to join the game since player hasn't joined yet
       const params: JoinGameParams = {
         gameCode: partialGameData.game_code,
         admin: new PublicKey(partialGameData.admin_wallet),
@@ -149,6 +235,78 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const handleStartGame = async () => {
+    if (!program) {
+      console.error(t('Program not initialized'));
+      return;
+    }
+    if (!partialGameData) throw new Error('Game data not found');
+    if (!publicKey) throw new Error(t('Please connect your wallet'));
+    if (!sendTransaction)
+      throw new Error(t('Wallet adapter not properly initialized'));
+
+    const totalTimeMs = calculateTotalTimeMs(
+      gameData.start_time,
+      gameData.end_time
+    );
+
+    const result = await startGameCombined(
+      program,
+      connection,
+      publicKey,
+      sendTransaction,
+      supabase,
+      {
+        gameId: gameData.id,
+        gameCode: gameData.game_code,
+        totalTimeMs,
+      }
+    );
+
+    if (result.success) {
+      // The game will be started through the event listener
+      console.log('Game start transaction successful');
+      setIsGameStarted(true);
+    } else {
+      console.error('Failed to start game:', result.error);
+      throw new Error(t('Failed to start game'));
+    }
+  };
+
+  // New answer management functions
+  const submitAnswer = (answer: GameAnswer) => {
+    if (!gameCode) return;
+
+    const updatedSession = saveGameAnswer(gameCode, answer);
+    setGameSession(updatedSession);
+  };
+
+  const getCurrentAnswer = (questionId: string) => {
+    return gameSession?.answers[questionId];
+  };
+
+  const getGameProgress = () => {
+    return getGameCompletionStatus(gameCode, gameData.questions?.length ?? 0);
+  };
+
+  const submitGame = async () => {
+    if (!gameSession || !program || !publicKey) return;
+
+    try {
+      // Mark the session as submitted first
+      const submittedSession = markSessionSubmitted(gameCode);
+      if (submittedSession) {
+        setGameSession(submittedSession);
+      }
+
+      // TODO: Implement the actual submission logic to Solana and Supabase
+      // This will be implemented in the next step
+    } catch (error) {
+      console.error('Error submitting game:', error);
+      throw error;
+    }
+  };
+
   return (
     <GameContext.Provider
       value={{
@@ -160,10 +318,16 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
         gameData,
         isAdmin,
         isGameStarted,
-        setIsGameStarted,
+        submitAnswer,
+        getCurrentAnswer,
+        getGameProgress,
+        submitGame,
+        handleStartGame,
       }}
     >
       {children}
     </GameContext.Provider>
   );
 };
+
+export default GameContextProvider;

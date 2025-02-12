@@ -86,3 +86,13 @@ export const countDownGameTime = (endTime: string | number): string => {
   const seconds = totalSeconds % 60;
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 };
+
+// Helper function to calculate total time in milliseconds between start and end time
+export const calculateTotalTimeMs = (
+  startTime: string,
+  endTime: string
+): number => {
+  const start = new Date(startTime).getTime();
+  const end = new Date(endTime).getTime();
+  return end - start;
+};
