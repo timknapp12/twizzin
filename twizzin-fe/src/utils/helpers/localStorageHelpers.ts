@@ -1,14 +1,17 @@
-import { GameAnswer, StoredGameSession } from '@/types';
+import { GameAnswer, StoredGameSession, GameStartStatus } from '@/types';
 
 const GAME_SESSION_KEY = 'game_session';
+const GAME_START_STATUS_KEY = 'game_start_status';
 
-/**
- * Save a game answer to local storage
- */
+// Save a game answer to local storage
 export const saveGameAnswer = (
   gameCode: string,
   answer: GameAnswer
-): StoredGameSession => {
+): StoredGameSession | null => {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
   try {
     const session = getGameSession(gameCode);
 
@@ -37,10 +40,12 @@ export const saveGameAnswer = (
   }
 };
 
-/**
- * Get the current game session from storage
- */
+// Get the current game session from storage
 export const getGameSession = (gameCode: string): StoredGameSession | null => {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
   try {
     const data = localStorage.getItem(GAME_SESSION_KEY);
     if (!data) return null;
@@ -53,13 +58,15 @@ export const getGameSession = (gameCode: string): StoredGameSession | null => {
   }
 };
 
-/**
- * Initialize or update game session with game pubkey
- */
+// Initialize or update game session with game pubkey
 export const initializeGameSession = (
   gameCode: string,
   gamePubkey: string
-): StoredGameSession => {
+): StoredGameSession | null => {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
   try {
     const existingSession = getGameSession(gameCode);
     const session: StoredGameSession = existingSession || {
@@ -83,12 +90,14 @@ export const initializeGameSession = (
   }
 };
 
-/**
- * Mark game session as submitted
- */
+// Mark game session as submitted
 export const markSessionSubmitted = (
   gameCode: string
 ): StoredGameSession | null => {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
   try {
     const session = getGameSession(gameCode);
     if (!session) return null;
@@ -102,10 +111,12 @@ export const markSessionSubmitted = (
   }
 };
 
-/**
- * Clear game session from storage
- */
+// Clear game session from storage
 export const clearGameSession = (gameCode: string): void => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
   try {
     const session = getGameSession(gameCode);
     if (session?.gameCode === gameCode) {
@@ -116,10 +127,12 @@ export const clearGameSession = (gameCode: string): void => {
   }
 };
 
-/**
- * Get sorted answers for submission
- */
+// Get sorted answers for submission
 export const getSortedGameAnswers = (gameCode: string): GameAnswer[] => {
+  if (typeof window === 'undefined') {
+    return [];
+  }
+
   const session = getGameSession(gameCode);
   if (!session) return [];
 
@@ -128,13 +141,15 @@ export const getSortedGameAnswers = (gameCode: string): GameAnswer[] => {
   );
 };
 
-/**
- * Check if all questions have been answered
- */
+// Check if all questions have been answered
 export const areAllQuestionsAnswered = (
   gameCode: string,
   totalQuestions: number
 ): boolean => {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
   const session = getGameSession(gameCode);
   if (!session) return false;
 
@@ -142,9 +157,7 @@ export const areAllQuestionsAnswered = (
   return answeredQuestions === totalQuestions;
 };
 
-/**
- * Get game completion status
- */
+// Get game completion status
 export const getGameCompletionStatus = (
   gameCode: string,
   totalQuestions: number
@@ -153,6 +166,14 @@ export const getGameCompletionStatus = (
   answeredCount: number;
   remainingCount: number;
 } => {
+  if (typeof window === 'undefined') {
+    return {
+      isComplete: false,
+      answeredCount: 0,
+      remainingCount: totalQuestions,
+    };
+  }
+
   const session = getGameSession(gameCode);
   if (!session) {
     return {
@@ -168,4 +189,47 @@ export const getGameCompletionStatus = (
     answeredCount,
     remainingCount: totalQuestions - answeredCount,
   };
+};
+
+// GAME SESSION STATUS
+export const getGameStartStatus = (gameCode: string): boolean => {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  try {
+    const data = localStorage.getItem(GAME_START_STATUS_KEY);
+    if (!data) return false;
+
+    const statuses: GameStartStatus = JSON.parse(data);
+    return statuses[gameCode]?.isManuallyStarted || false;
+  } catch (error) {
+    console.error('Error getting game start status:', error);
+    return false;
+  }
+};
+
+export const setGameStartStatus = (
+  gameCode: string,
+  actualStartTime: number,
+  actualEndTime: number
+) => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  try {
+    const data = localStorage.getItem(GAME_START_STATUS_KEY);
+    const statuses: GameStartStatus = data ? JSON.parse(data) : {};
+
+    statuses[gameCode] = {
+      isManuallyStarted: true,
+      actualStartTime,
+      actualEndTime,
+    };
+
+    localStorage.setItem(GAME_START_STATUS_KEY, JSON.stringify(statuses));
+  } catch (error) {
+    console.error('Error setting game start status:', error);
+  }
 };

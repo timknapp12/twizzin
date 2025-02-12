@@ -284,6 +284,14 @@ export interface StoredGameSession {
   submittedTime: number | null; // When answers were submitted to Solana
 }
 
+export interface GameStartStatus {
+  [gameCode: string]: {
+    isManuallyStarted: boolean; // Only true when admin explicitly starts the game
+    actualStartTime: number; // When admin started the game
+    actualEndTime: number; // Calculated end time from when admin started
+  };
+}
+
 // START GAME
 export interface StartGameResult {
   success: boolean;

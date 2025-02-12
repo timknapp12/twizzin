@@ -30,6 +30,7 @@ import {
   calculateTotalTimeMs,
   supabase,
   startGameCombined,
+  setGameStartStatus,
 } from '@/utils';
 import { useAppContext, useProgram } from '.';
 import { PublicKey } from '@solana/web3.js';
@@ -115,20 +116,31 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
 
         // Listen for GameStarted event
         const listener = program.addEventListener(
-          'GameStarted',
-          async (event: any) => {
+          'gameStarted',
+          async (event) => {
             // Verify this event is for our game
-            if (event.game?.toString() === gamePda.toString()) {
+            // @ts-ignore
+            if (event.game.toString() === gamePda.toString()) {
               console.log('Game started event received:', event);
-
+              // @ts-ignore
+              const actualStartTime = event.startTime.toNumber();
+              // @ts-ignore
+              const actualEndTime = event.endTime.toNumber();
               // Update game data with new start/end times
               setGameData((prev) => ({
                 ...prev,
-                start_time: new Date(event.startTime.toNumber()).toISOString(),
-                end_time: new Date(event.endTime.toNumber()).toISOString(),
+                start_time: new Date(actualStartTime).toISOString(),
+                end_time: new Date(actualEndTime).toISOString(),
               }));
 
               setIsGameStarted(true);
+
+              // Save to local storage
+              setGameStartStatus(
+                partialGameData.game_code,
+                actualStartTime,
+                actualEndTime
+              );
 
               // Initialize game session if it doesn't exist
               if (!gameSession) {
@@ -144,13 +156,6 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
 
         // Store listener ID for cleanup
         eventListenerRef.current = listener;
-
-        // Check if game is already started
-        // @ts-ignore
-        const gameAccount = await program.account.game.fetch(gamePda);
-        if (gameAccount.startTime.toNumber() > 0) {
-          setIsGameStarted(true);
-        }
       } catch (error) {
         console.error('Error setting up game start listener:', error);
       }
