@@ -17,7 +17,8 @@ const JoinGameDetails = ({
   partialGameData: PartialGame;
 }) => {
   const { t, language } = useAppContext();
-  const { handleJoinGame, gameData, isAdmin } = useGameContext();
+  const { handleJoinGame, gameData, isAdmin, handleStartGame } =
+    useGameContext();
 
   const {
     game_code,
@@ -39,6 +40,7 @@ const JoinGameDetails = ({
 
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isStartingGame, setIsStartingGame] = useState(false);
   const [countdown, setCountdown] = useState<string>(
     getRemainingTime(start_time)
   );
@@ -68,18 +70,31 @@ const JoinGameDetails = ({
     }
   };
 
+  const router = useRouter();
+  const onLeaveGame = async () => router.push(`/${language}/join`);
+  const onStartGame = async () => {
+    setIsStartingGame(true);
+    try {
+      await handleStartGame();
+    } catch (error: unknown) {
+      console.error('Error starting game:', error);
+      if (error instanceof Error) {
+        setError(`${t('Error starting game')}: ${error.message}`);
+      } else {
+        setError(t('Error starting game'));
+      }
+      throw error;
+    } finally {
+      setIsStartingGame(false);
+    }
+  };
+
   const countDownText =
     countdown === 'Game has started!' && isAdmin
       ? t('The game is ready for you to start it')
       : countdown === 'Game has started!'
       ? t('Waiting for admin to start game...')
       : countdown;
-
-  const router = useRouter();
-  const onLeaveGame = async () => router.push(`/${language}/join`);
-  const onStartGame = async () => {
-    // setIsGameStarted(true);
-  };
 
   const hasGameData = gameData && gameData?.game_code?.length > 0;
   console.log('hasGameData', hasGameData);
@@ -196,7 +211,9 @@ const JoinGameDetails = ({
         </Button>
       )}
       {hasGameData && isAdmin && (
-        <Button onClick={onStartGame}>{t('Start game')}</Button>
+        <Button onClick={onStartGame} isLoading={isStartingGame}>
+          {t('Start game')}
+        </Button>
       )}
     </Column>
   );

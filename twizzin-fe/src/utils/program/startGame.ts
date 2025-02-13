@@ -47,10 +47,14 @@ export const startGame = async (
   try {
     const { gamePda } = deriveGamePDAs(program, admin, params.gameCode);
 
+    // Convert totalTimeMs to BN
+    const totalTimeMsBN = new BN(params.totalTimeMs);
+
+    // Create the transaction - note the separation of the argument and accounts
     const transaction = new Transaction();
 
     const instruction = await program.methods
-      .startGame(new BN(params.totalTimeMs))
+      .startGame(totalTimeMsBN)
       .accounts({
         admin,
         game: gamePda,
