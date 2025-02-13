@@ -33,18 +33,23 @@ export const joinGame = async (
   try {
     if (!publicKey) throw new Error('Wallet not connected');
 
+    // 1. Derive PDAs and log them
     const { gamePda, vaultPda } = deriveGamePDAs(
       program,
       params.admin,
       params.gameCode
     );
-
     const playerPda = derivePlayerPDA(program, gamePda, publicKey);
     const isNative = params.tokenMint.equals(NATIVE_MINT);
 
+    // 2. Create transaction and get blockhash first
     const transaction = new Transaction();
+    const { blockhash, lastValidBlockHeight } =
+      await connection.getLatestBlockhash('confirmed');
+    transaction.recentBlockhash = blockhash;
+    transaction.feePayer = publicKey;
 
-    // If it's a native SOL game with entry fee, add the transfer instruction
+    // 3. If native SOL with entry fee, add transfer instruction
     if (isNative && params.entryFee > 0) {
       const transferInstruction = SystemProgram.transfer({
         fromPubkey: publicKey,
@@ -54,40 +59,62 @@ export const joinGame = async (
       transaction.add(transferInstruction);
     }
 
+    // 4. Create all accounts object and log it
+    const accounts = {
+      player: publicKey,
+      game: gamePda,
+      playerAccount: playerPda,
+      vault: vaultPda,
+      vaultTokenAccount: isNative ? null : params.vaultTokenAccount,
+      playerTokenAccount: isNative ? null : params.playerTokenAccount,
+      tokenProgram: TOKEN_PROGRAM_ID,
+      associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+      systemProgram: SystemProgram.programId,
+    };
     const instruction = await program.methods
       .joinGame()
-      .accounts({
-        player: publicKey,
-        game: gamePda,
-        playerAccount: playerPda,
-        vault: vaultPda,
-        vaultTokenAccount: isNative ? null : params.vaultTokenAccount,
-        playerTokenAccount: isNative ? null : params.playerTokenAccount,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-        systemProgram: SystemProgram.programId,
-      } as any)
+      // @ts-ignore
+      .accounts(accounts)
       .instruction();
 
-    // Add the join game instruction
     transaction.add(instruction);
 
     const signature = await sendTransaction(transaction, connection);
 
-    // Wait for confirmation
-    const latestBlockhash = await connection.getLatestBlockhash();
     await connection.confirmTransaction({
       signature,
-      ...latestBlockhash,
+      blockhash,
+      lastValidBlockHeight,
     });
 
     return { success: true, signature, error: null };
   } catch (error: any) {
     console.error('Failed to join game:', error);
+
+    let errorMessage = 'Unknown error occurred';
+    const errorDetails = {
+      message: error.message,
+      logs: error.logs,
+      details: error.details,
+    };
+    console.error('Error details:', errorDetails);
+
+    if (error.message) {
+      if (error.message.includes('0x1')) {
+        errorMessage = 'Insufficient funds for transaction';
+      } else if (error.message.includes('0x0')) {
+        errorMessage = 'Player has already joined this game';
+      } else if (error.message.includes('simulation failed')) {
+        errorMessage = `Simulation failed: ${error.message}`;
+      } else {
+        errorMessage = error.message;
+      }
+    }
+
     return {
       success: false,
       signature: null,
-      error: error instanceof Error ? error.message : 'Unknown error occurred',
+      error: errorMessage,
     };
   }
 };

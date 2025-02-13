@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button, Column, Row, Label, Alert } from '@/components';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
@@ -8,8 +9,15 @@ import { TbListDetails } from 'react-icons/tb';
 import { GiSittingDog } from 'react-icons/gi';
 import { useAppContext, useGameContext } from '@/contexts';
 import { PartialGame } from '@/types';
-import { formatGameTime, getRemainingTime, formatSupabaseDate } from '@/utils';
-import { useEffect, useState } from 'react';
+import {
+  formatGameTime,
+  getRemainingTime,
+  formatSupabaseDate,
+  getCurrentConfig,
+} from '@/utils';
+import { toast } from 'react-toastify';
+
+const { network } = getCurrentConfig();
 
 const JoinGameDetails = ({
   partialGameData,
@@ -56,7 +64,26 @@ const JoinGameDetails = ({
   const onJoinGame = async () => {
     setIsLoading(true);
     try {
-      await handleJoinGame();
+      const signature = await handleJoinGame();
+      if (signature) {
+        toast.success(
+          <div>
+            {t('Game joined successfully!')}
+            <a
+              href={`https://explorer.solana.com/tx/${signature}?cluster=${network}`}
+              target='_blank'
+              rel='noopener noreferrer'
+              className='text-var(--color-success) ml-2'
+            >
+              {t('View transaction')}
+            </a>
+          </div>,
+          {
+            autoClose: false,
+            position: 'bottom-right',
+          }
+        );
+      }
     } catch (error: unknown) {
       console.error('Error joining game:', error);
       if (error instanceof Error) {
@@ -72,6 +99,7 @@ const JoinGameDetails = ({
 
   const router = useRouter();
   const onLeaveGame = async () => router.push(`/${language}/join`);
+
   const onStartGame = async () => {
     setIsStartingGame(true);
     try {
@@ -103,7 +131,7 @@ const JoinGameDetails = ({
   const errorColor = 'var(--color-error)';
 
   return (
-    <Column className='gap-4 w-full h-full flex-1' justify='between'>
+    <Column className='gap-4 w-full h-full flex-1 mt-2' justify='between'>
       {hasGameData ? (
         <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg  bg-[#af9aec] gap-4 w-full max-w-small mx-auto  text-[16px] active:opacity-80'>
           <Row className='gap-2'>

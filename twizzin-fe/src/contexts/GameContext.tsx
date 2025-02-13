@@ -50,7 +50,7 @@ export const useGameContext = () => {
 
 export const GameContextProvider = ({ children }: { children: ReactNode }) => {
   const { t, language } = useAppContext();
-  const [gameCode, setGameCode] = useState('XEB2NK');
+  const [gameCode, setGameCode] = useState('NYVWFN');
   const [partialGameData, setPartialGameData] = useState<PartialGame | null>(
     null
   );
@@ -91,7 +91,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
     const checkAdmin = async () => {
       const isAdmin = publicKey?.toBase58() === partialGameData?.admin_wallet;
       setIsAdmin(isAdmin);
-      if (partialGameData) {
+      if (partialGameData && isAdmin) {
         const game = await getGameFromDb(partialGameData.game_code);
         setGameData(game);
       }
@@ -173,11 +173,8 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
   }, [program, partialGameData, connection, gameSession]);
 
   // Existing handleJoinGame implementation...
-  const handleJoinGame = async () => {
-    if (!program) {
-      console.error(t('Program not initialized'));
-      return;
-    }
+  const handleJoinGame = async (): Promise<string | null> => {
+    if (!program) throw new Error(t('Program not initialized'));
     if (!partialGameData) throw new Error('Game data not found');
     if (!publicKey) throw new Error(t('Please connect your wallet'));
     if (!sendTransaction)
@@ -212,7 +209,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
       if (hasJoined || isAdmin) {
         const game = await getGameFromDb(partialGameData.game_code);
         setGameData(game);
-        return;
+        return null;
       }
 
       const params: JoinGameParams = {
@@ -233,7 +230,10 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
       if (result) {
         console.log('result', result);
         setGameData(result.game);
+        return result.signature || null;
       }
+
+      return null;
     } catch (error) {
       console.error('Error joining game:', error);
       throw error;
@@ -241,19 +241,22 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const handleStartGame = async () => {
-    if (!program) {
-      console.error(t('Program not initialized'));
-      return;
-    }
+    if (!program) throw new Error(t('Program not initialized'));
     if (!partialGameData) throw new Error('Game data not found');
     if (!publicKey) throw new Error(t('Please connect your wallet'));
     if (!sendTransaction)
       throw new Error(t('Wallet adapter not properly initialized'));
 
+    // Calculate total time in milliseconds
     const totalTimeMs = calculateTotalTimeMs(
       gameData.start_time,
       gameData.end_time
     );
+
+    // Validate the time calculation
+    if (typeof totalTimeMs !== 'number' || isNaN(totalTimeMs)) {
+      throw new Error('Invalid time calculation');
+    }
 
     const result = await startGameCombined(
       program,
@@ -269,7 +272,6 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
     );
 
     if (result.success) {
-      // The game will be started through the event listener
       console.log('Game start transaction successful');
       setIsGameStarted(true);
     } else {

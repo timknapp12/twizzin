@@ -205,7 +205,7 @@ export interface GameContextType {
   partialGameData: PartialGame | null;
   getGameByCode: (gameCode: string) => Promise<void>;
   gameData: JoinFullGame;
-  handleJoinGame: () => Promise<void>;
+  handleJoinGame: () => Promise<string | null>;
   isAdmin: boolean;
   isGameStarted: boolean;
   submitAnswer: (answer: GameAnswer) => void;
