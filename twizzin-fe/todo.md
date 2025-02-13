@@ -15,6 +15,8 @@ Join Game
 - show callout hint on join game details for 'split'
 - handle if game start time is in the past
 - from game screen, allow admin to edit game
+- change the check for hasGameData to check some other variable - cuz switching from admin to another wallet does not reset it state
+- add username when player joins game or creates game
 
 - clean up imports from utils
 

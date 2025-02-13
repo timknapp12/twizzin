@@ -34,8 +34,9 @@ export const initializeConfig = async (
     );
 
     try {
+      // Changed from config to programConfig
       // @ts-ignore
-      await program.account.config.fetch(configPda);
+      await program.account.programConfig.fetch(configPda);
       throw new Error('Config has already been initialized');
     } catch (e: any) {
       if (!e.toString().includes('Account does not exist')) {
@@ -46,7 +47,7 @@ export const initializeConfig = async (
     const method = program.methods.initConfig(
       new PublicKey(treasuryAddress),
       treasuryFeeBps
-    ) as any;
+    );
 
     const tx = await method
       .accounts({
