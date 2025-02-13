@@ -1,3 +1,7 @@
+Before DEMO:
+
+- add success toast for creating game and return game code
+
 refactor after MVP:
 
 - accept SPL tokens - change in create game and JoinComponent
@@ -9,7 +13,7 @@ refactor after MVP:
 
 Join Game
 
-- show details of game that has already ended - or show 'not found' in case we delete the game after idk
+- show details of game that has already ended - or show 'not found' in case we delete the game after or if the game code is not found - which returns a 406 from supabase
 - don't allow admin to join game to play- but only to be admin
 - error handling for invalid params on route game/gameCode
 - show callout hint on join game details for 'split'
