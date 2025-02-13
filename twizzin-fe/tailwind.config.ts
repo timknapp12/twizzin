@@ -26,6 +26,7 @@ const config: Config = {
       languageIconHover: 'var(--color-languageIconHover)',
       tertiary: 'var(--color-tertiary)',
       error: 'var(--color-error)',
+      success: 'var(--color-success)',
       // Static colors (these won't change with theme)
       lightPurple: '#8A65F9', // background for primary button on hover
       darkPurple: '#5C2FE5', // border for primary
@@ -103,7 +104,8 @@ const config: Config = {
           languageIcon: '#F5F5F5',
           languageIconHover: '#E5E5E5',
           tertiary: '#ECC51E', // mustard
-          error: '#FF3366',
+          error: '#FF3366', // red
+          success: '#00CE2D', // green
         },
         dark: {
           primary: '#7041FF', // primaryPurple
@@ -116,7 +118,8 @@ const config: Config = {
           languageIcon: '#2A2A2A',
           languageIconHover: '#3A3A3A',
           tertiary: '#ECC51E', // mustard
-          error: '#FF3366',
+          error: '#FF3366', // red
+          success: '#00CE2D', // green
         },
       },
       maxWidth: {

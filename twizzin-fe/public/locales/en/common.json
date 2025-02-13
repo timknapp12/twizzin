@@ -122,5 +122,7 @@
   "Join game": "Join game",
   "Leave game": "Leave game",
   "Start game": "Start game",
-  "The game is ready for you to start it": "The game is ready for you to start it"
+  "The game is ready for you to start it": "The game is ready for you to start it",
+  "Game joined successfully!": "Game joined successfully!",
+  "View transaction": "View transaction"
 }
