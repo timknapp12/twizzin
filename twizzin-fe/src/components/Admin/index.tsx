@@ -24,6 +24,7 @@ export const AdminComponent = () => {
   const [treasuryAddress, setTreasuryAddress] = useState('');
   const [treasuryFee, setTreasuryFee] = useState('');
   const [isClient, setIsClient] = useState(false);
+  const [isTwizzinAdmin, setIsTwizzinAdmin] = useState(false);
   const [status, setStatus] = useState<{
     loading: boolean;
     error: string | null;
@@ -37,6 +38,14 @@ export const AdminComponent = () => {
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  useEffect(() => {
+    const isTwizzinAdmin =
+      wallet.publicKey?.toBase58() ===
+      process.env.NEXT_PUBLIC_PROGRAM_AUTHORITY;
+    setIsTwizzinAdmin(isTwizzinAdmin);
+  }, [wallet.publicKey]);
+  console.log('isTwizzinAdmin', isTwizzinAdmin);
 
   const handleInitConfig = async () => {
     if (!program || !isWalletConnected) {
@@ -81,6 +90,21 @@ export const AdminComponent = () => {
 
   if (!isClient) {
     return null;
+  }
+
+  if (!isTwizzinAdmin) {
+    return (
+      <ScreenContainer>
+        <Header />
+        <InnerScreenContainer justify='start' className='mt-[7vh]'>
+          <PrimaryText className='text-center'>
+            {t(
+              'You are not authorized to access this page. You must connect your wallet as the Twizzin Admin'
+            )}
+          </PrimaryText>
+        </InnerScreenContainer>
+      </ScreenContainer>
+    );
   }
 
   return (
