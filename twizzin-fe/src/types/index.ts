@@ -215,8 +215,8 @@ export interface GameContextType {
     answeredCount: number;
     remainingCount: number;
   };
-  submitGame: () => Promise<void>;
   handleStartGame: () => Promise<void>;
+  handleSubmitAnswers: () => Promise<string | null | undefined>;
 }
 
 export interface JoinGameParams {
@@ -279,9 +279,16 @@ export interface GameAnswer {
 export interface StoredGameSession {
   gameCode: string;
   gamePubkey: string;
-  startTime: number | null; // When user started the game
-  answers: { [questionId: string]: GameAnswer }; // Map of questionId to answer
-  submittedTime: number | null; // When answers were submitted to Solana
+  startTime: number;
+  answers: {
+    [questionId: string]: {
+      displayOrder: number;
+      answer: string;
+      questionId: string;
+    };
+  };
+  submitted: boolean;
+  submittedTime?: number;
 }
 
 export interface GameStartStatus {
@@ -307,4 +314,53 @@ export interface GameStartedEvent {
   game: PublicKey;
   startTime: BN;
   endTime: BN;
+}
+
+export interface AnswerInput {
+  displayOrder: number;
+  answer: string;
+  questionId: string;
+  proof: number[][];
+}
+
+export interface SubmitAnswersParams {
+  admin: PublicKey;
+  gameCode: string;
+  answers: AnswerInput[];
+  clientFinishTime: number;
+}
+
+export interface GameSession {
+  answers: Array<{
+    displayOrder: number;
+    answer: string;
+    questionId: string;
+  }>;
+  startTime: number;
+  finishTime: number;
+  submitted: boolean;
+}
+
+export interface SubmitAnswersToDbParams {
+  gameId: string;
+  playerWallet: string;
+  gameSession: {
+    answers: VerifiedAnswer[];
+    finishTime: number;
+  };
+  solanaSignature: string;
+  numCorrect: number;
+}
+
+export interface VerifiedAnswer {
+  displayOrder: number;
+  answer: string;
+  questionId: string;
+  proof: number[][];
+  isCorrect: boolean;
+}
+
+export interface VerifyAnswersResult {
+  answers: VerifiedAnswer[];
+  numCorrect: number;
 }

@@ -15,6 +15,7 @@ import {
   JoinFullGame,
   GameAnswer,
   StoredGameSession,
+  GameSession,
 } from '@/types';
 import {
   getPartialGameFromDb,
@@ -31,6 +32,7 @@ import {
   supabase,
   startGameCombined,
   setGameStartStatus,
+  submitAnswersCombined,
 } from '@/utils';
 import { useAppContext, useProgram } from '.';
 import { PublicKey } from '@solana/web3.js';
@@ -288,27 +290,108 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
     setGameSession(updatedSession);
   };
 
-  const getCurrentAnswer = (questionId: string) => {
-    return gameSession?.answers[questionId];
+  const getCurrentAnswer = (questionId: string): GameAnswer | undefined => {
+    if (!gameSession || !gameSession.answers[questionId]) return undefined;
+    // Get the selected answer from game session
+    const selectedAnswer = gameSession.answers[questionId];
+    // Find the question in gameData
+    const question = gameData.questions.find((q) => q.id === questionId);
+    // Find the full answer data from the question's answers
+    const fullAnswer = question?.answers.find(
+      (a) =>
+        a.display_letter === selectedAnswer.answer ||
+        a.answer_text === selectedAnswer.answer
+    );
+    if (!fullAnswer) return undefined;
+    return {
+      answerId: fullAnswer.id, // Use actual answer ID
+      answerText: fullAnswer.answer_text, // Use actual answer text
+      displayOrder: fullAnswer.display_order,
+      questionId: fullAnswer.question_id,
+      timestamp: Date.now(),
+      displayLetter: fullAnswer.display_letter,
+    };
   };
 
   const getGameProgress = () => {
     return getGameCompletionStatus(gameCode, gameData.questions?.length ?? 0);
   };
 
-  const submitGame = async () => {
-    if (!gameSession || !program || !publicKey) return;
+  const handleSubmitAnswers = async () => {
+    if (!gameSession || !program || !publicKey || !gameData) {
+      console.error('Missing required parameters for game submission');
+      return;
+    }
 
     try {
-      // Mark the session as submitted first
-      const submittedSession = markSessionSubmitted(gameCode);
-      if (submittedSession) {
-        setGameSession(submittedSession);
+      // Convert StoredGameSession to GameSession format
+      const formattedGameSession = {
+        answers: Object.values(gameSession.answers).map((answer) => ({
+          displayOrder: answer.displayOrder,
+          answer: answer.answer,
+          questionId: answer.questionId,
+        })),
+        startTime: new Date(gameSession.startTime).getTime(),
+        finishTime: Date.now(), // Current time as finish time
+        submitted: gameSession.submitted,
+      };
+
+      // Wrap the markSessionSubmitted function to return correct type
+      const markSessionSubmittedWrapper = (
+        gameCode: string
+      ): GameSession | null => {
+        const storedSession = markSessionSubmitted(gameCode);
+        if (!storedSession) return null;
+
+        return {
+          answers: Object.values(storedSession.answers).map((answer) => ({
+            displayOrder: answer.displayOrder,
+            answer: answer.answer,
+            questionId: answer.questionId,
+          })),
+          startTime: new Date(storedSession.startTime).getTime(),
+          finishTime: Date.now(),
+          submitted: storedSession.submitted,
+        };
+      };
+
+      // Wrap setGameSession to handle type conversion
+      const setGameSessionWrapper = (session: GameSession) => {
+        const storedFormat = {
+          gameCode: gameSession.gameCode,
+          gamePubkey: gameSession.gamePubkey,
+          startTime: session.startTime,
+          answers: session.answers.reduce(
+            (acc, answer) => ({
+              ...acc,
+              [answer.questionId]: answer,
+            }),
+            {}
+          ),
+          submitted: session.submitted,
+          submittedTime: session.finishTime,
+        };
+
+        setGameSession(storedFormat);
+      };
+
+      const result = await submitAnswersCombined({
+        program,
+        connection,
+        publicKey,
+        sendTransaction,
+        gameData,
+        gameSession: formattedGameSession,
+        markSessionSubmitted: markSessionSubmittedWrapper,
+        setGameSession: setGameSessionWrapper,
+      });
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to submit game');
       }
 
-      // TODO: Implement the actual submission logic to Solana and Supabase
-      // This will be implemented in the next step
-    } catch (error) {
+      return result.solanaSignature;
+    } catch (error: any) {
       console.error('Error submitting game:', error);
       throw error;
     }
@@ -328,8 +411,8 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
         submitAnswer,
         getCurrentAnswer,
         getGameProgress,
-        submitGame,
         handleStartGame,
+        handleSubmitAnswers,
       }}
     >
       {children}
