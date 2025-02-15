@@ -127,5 +127,20 @@
   "View transaction": "View transaction",
   "Submit": "Submit",
   "Error submitting answers:": "Error submitting answers:",
-  "Answers submitted!": "Answers submitted!"
+  "Answers submitted!": "Answers submitted!",
+  "Game Complete!": "Game Complete!",
+  "You got": "You got",
+  "out of": "out of",
+  "correct": "correct",
+  "earned": "earned",
+  "Final Rank": "Final Rank",
+  "Your answer": "Your answer",
+  "No answer provided": "No answer provided",
+  "Correct answer": "Correct answer",
+  "End Game": "End Game",
+  "Game ended successfully": "Game ended successfully",
+  "Failed to end game": "Failed to end game",
+  "Time remaining": "Time remaining",
+  "Give time for players to submit answers": "Give time for players to submit answers",
+  "Game started successfully": "Game started successfully"
 }

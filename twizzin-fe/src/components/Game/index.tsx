@@ -14,13 +14,8 @@ import { getGameStartStatus } from '@/utils';
 const Game = () => {
   const params = useParams();
   const gameCode = params.gameCode;
-  const {
-    getGameByCode,
-    partialGameData,
-    gameData,
-    isGameStarted,
-    gameResult,
-  } = useGameContext();
+  const { getGameByCode, partialGameData, gameData, gameResult } =
+    useGameContext();
   const [isManuallyStarted, setIsManuallyStarted] = useState<boolean | null>(
     null
   );
@@ -51,7 +46,7 @@ const Game = () => {
   }
 
   // Game is only considered started when admin manually starts it
-  const hasGameStarted = isGameStarted || isManuallyStarted;
+  const hasGameStarted = gameData.status === 'active' || isManuallyStarted;
   console.log('hasGameStarted', hasGameStarted);
   return (
     <ScreenContainer>

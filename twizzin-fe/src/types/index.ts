@@ -207,7 +207,6 @@ export interface GameContextType {
   gameData: JoinFullGame;
   handleJoinGame: () => Promise<string | null>;
   isAdmin: boolean;
-  isGameStarted: boolean;
   submitAnswer: (answer: GameAnswer) => void;
   getCurrentAnswer: (questionId: string) => GameAnswer | undefined;
   getGameProgress: () => {
@@ -218,6 +217,8 @@ export interface GameContextType {
   handleStartGame: () => Promise<void>;
   handleSubmitAnswers: () => Promise<string | undefined>;
   gameResult: GameResultFromDb | null;
+  handleEndGame: () => Promise<void>;
+  canEndGame: boolean;
 }
 
 export interface JoinGameParams {
@@ -247,6 +248,7 @@ export interface JoinFullGame {
   img_url: string | null;
   question_count: number;
   questions: QuestionFromDb[];
+  status: string;
 }
 
 export interface QuestionFromDb {

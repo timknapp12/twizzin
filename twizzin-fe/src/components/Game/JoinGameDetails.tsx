@@ -104,6 +104,7 @@ const JoinGameDetails = ({
     setIsStartingGame(true);
     try {
       await handleStartGame();
+      toast.success(t('Game started successfully'));
     } catch (error: unknown) {
       console.error('Error starting game:', error);
       if (error instanceof Error) {

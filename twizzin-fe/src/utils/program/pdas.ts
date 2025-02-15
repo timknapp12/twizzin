@@ -17,7 +17,12 @@ export const deriveGamePDAs = (
     program.programId
   );
 
-  return { gamePda, vaultPda };
+  const [configPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('config')],
+    program.programId
+  );
+
+  return { gamePda, vaultPda, configPda };
 };
 
 export const derivePlayerPDA = (

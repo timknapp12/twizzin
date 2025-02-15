@@ -4,6 +4,7 @@ import { useGameContext, useAppContext } from '@/contexts';
 import { countDownGameTime, getCurrentConfig } from '@/utils';
 import { RiSurveyLine } from 'react-icons/ri';
 import { FaArrowLeft, FaArrowRight } from 'react-icons/fa';
+import EndGameButton from './EndGameButton';
 import { toast } from 'react-toastify';
 
 const { network } = getCurrentConfig();
@@ -12,10 +13,10 @@ const PlayGame = () => {
   const { t } = useAppContext();
   const {
     gameData,
-    isGameStarted,
     submitAnswer,
     getCurrentAnswer,
     handleSubmitAnswers,
+    isAdmin,
   } = useGameContext();
 
   const [remainingTime, setRemainingTime] = useState('');
@@ -30,7 +31,7 @@ const PlayGame = () => {
     : '';
 
   useEffect(() => {
-    if (!isGameStarted || !end_time) return;
+    if (gameData.status !== 'active' || !end_time) return;
 
     setRemainingTime(countDownGameTime(end_time));
     const timer = setInterval(() => {
@@ -38,7 +39,7 @@ const PlayGame = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [end_time, isGameStarted]);
+  }, [end_time, gameData.status]);
 
   const handlePreviousQuestion = () => {
     if (currentQuestionIndex > 0) {
@@ -112,7 +113,7 @@ const PlayGame = () => {
   if (!currentQuestion) return null;
 
   // Waiting for game to start state
-  if (!isGameStarted) {
+  if (gameData.status !== 'active') {
     return (
       <Column className='gap-4 w-full' justify='start'>
         <H2>{name}</H2>
@@ -189,7 +190,7 @@ const PlayGame = () => {
         <div className='w-[48%]'>
           <Button
             type='submit'
-            disabled={!selectedAnswer}
+            disabled={!selectedAnswer || isAdmin}
             className='flex items-center gap-2'
             isLoading={isSubmitting}
           >
@@ -202,6 +203,7 @@ const PlayGame = () => {
               </>
             )}
           </Button>
+          {isAdmin && <EndGameButton />}
         </div>
       </Row>
     </form>

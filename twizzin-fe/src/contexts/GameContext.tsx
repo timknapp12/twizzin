@@ -30,12 +30,12 @@ import {
   getGameCompletionStatus,
   markSessionSubmitted,
   calculateTotalTimeMs,
-  supabase,
   startGameCombined,
   setGameStartStatus,
   submitAnswersCombined,
   clearGameSession,
   clearGameStartStatus,
+  endGameCombined,
 } from '@/utils';
 import { useAppContext, useProgram } from '.';
 import { PublicKey } from '@solana/web3.js';
@@ -61,11 +61,11 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
   );
   const [gameData, setGameData] = useState<JoinFullGame>({} as JoinFullGame);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [isGameStarted, setIsGameStarted] = useState(false);
   const [gameSession, setGameSession] = useState<StoredGameSession | null>(
     null
   );
   const [gameResult, setGameResult] = useState<GameResultFromDb | null>(null);
+  const [canEndGame, setCanEndGame] = useState(false);
 
   const router = useRouter();
   const { program } = useProgram();
@@ -137,9 +137,8 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
                 ...prev,
                 start_time: new Date(actualStartTime).toISOString(),
                 end_time: new Date(actualEndTime).toISOString(),
+                status: 'active',
               }));
-
-              setIsGameStarted(true);
 
               // Save to local storage
               setGameStartStatus(
@@ -264,24 +263,32 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
       throw new Error('Invalid time calculation');
     }
 
-    const result = await startGameCombined(
-      program,
-      connection,
-      publicKey,
-      sendTransaction,
-      supabase,
-      {
-        gameId: gameData.id,
-        gameCode: gameData.game_code,
-        totalTimeMs,
-      }
-    );
+    try {
+      const result = await startGameCombined(
+        program,
+        connection,
+        publicKey,
+        sendTransaction,
+        {
+          gameId: gameData.id,
+          gameCode: gameData.game_code,
+          totalTimeMs,
+        }
+      );
 
-    if (result.success) {
-      console.log('Game start transaction successful');
-      setIsGameStarted(true);
-    } else {
-      console.error('Failed to start game:', result.error);
+      if (result.success) {
+        setGameData((prevGameData) => {
+          if (prevGameData) {
+            return { ...prevGameData, status: 'active' };
+          }
+          return prevGameData;
+        });
+      } else {
+        console.error('Failed to start game:', result.error);
+        throw new Error(t('Failed to start game'));
+      }
+    } catch (error: any) {
+      console.error('Error in handleStartGame:', error);
       throw new Error(t('Failed to start game'));
     }
   };
@@ -414,6 +421,83 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // Add useEffect to check if game can be ended
+  useEffect(() => {
+    if (gameData.status !== 'active' || !gameData || !isAdmin) return;
+
+    const checkEndGameEligibility = () => {
+      const now = Date.now();
+      const endTime = new Date(gameData.end_time).getTime();
+      const bufferTime = 30000; // 30 seconds after end_time
+
+      if (now >= endTime + bufferTime) {
+        setCanEndGame(true);
+      }
+    };
+
+    const timer = setInterval(checkEndGameEligibility, 5000); // Check every 5 seconds
+    checkEndGameEligibility(); // Initial check
+
+    return () => clearInterval(timer);
+  }, [gameData, isAdmin]);
+
+  const handleEndGame = async () => {
+    if (!program) throw new Error(t('Program not initialized'));
+    if (!gameData) throw new Error('Game data not found');
+    if (!publicKey) throw new Error(t('Please connect your wallet'));
+    if (!sendTransaction)
+      throw new Error(t('Wallet adapter not properly initialized'));
+    if (!isAdmin) throw new Error(t('Only admin can end the game'));
+
+    const now = Date.now();
+    const endTime = new Date(gameData.end_time).getTime();
+    const bufferTime = 30000; // 30 seconds buffer
+
+    if (now < endTime + bufferTime) {
+      throw new Error(
+        t('Please wait 30 seconds after game end time before ending the game')
+      );
+    }
+
+    try {
+      const result = await endGameCombined(
+        program,
+        connection,
+        publicKey,
+        sendTransaction,
+        {
+          gameId: gameData.id,
+          gameCode: gameData.game_code,
+          isNative: gameData.is_native,
+          vaultTokenAccount: gameData.is_native
+            ? undefined
+            : /* vault token account */ undefined,
+          adminTokenAccount: gameData.is_native
+            ? undefined
+            : /* admin token account */ undefined,
+          treasuryTokenAccount: gameData.is_native
+            ? undefined
+            : /* treasury token account */ undefined,
+        }
+      );
+
+      if (result.success) {
+        console.log('Game end transaction successful');
+        // Update game status in context
+        setGameData((prev) => ({
+          ...prev,
+          status: 'ended',
+        }));
+      } else {
+        console.error('Failed to end game:', result.error);
+        throw new Error(t('Failed to end game'));
+      }
+    } catch (error) {
+      console.error('Error ending game:', error);
+      throw error;
+    }
+  };
+
   return (
     <GameContext.Provider
       value={{
@@ -424,13 +508,14 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
         handleJoinGame,
         gameData,
         isAdmin,
-        isGameStarted,
         submitAnswer,
         getCurrentAnswer,
         getGameProgress,
         handleStartGame,
         handleSubmitAnswers,
         gameResult,
+        handleEndGame,
+        canEndGame,
       }}
     >
       {children}

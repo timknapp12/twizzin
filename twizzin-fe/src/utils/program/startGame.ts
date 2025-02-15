@@ -3,7 +3,7 @@ import { Program, BN } from '@coral-xyz/anchor';
 import { TwizzinIdl } from '@/types/idl';
 import { StartGameResult, GameStartedEvent } from '@/types';
 import { deriveGamePDAs } from './pdas';
-import { SupabaseClient } from '@supabase/supabase-js';
+import { supabase } from '@/utils/supabase';
 
 export const parseGameStartedEvent = (
   eventData: any
@@ -123,7 +123,6 @@ export const startGameCombined = async (
     // eslint-disable-next-line no-unused-vars
     connection: Connection
   ) => Promise<string>,
-  supabase: SupabaseClient,
   params: {
     gameId: string;
     gameCode: string;
