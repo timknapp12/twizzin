@@ -11,10 +11,35 @@ import { useWallet } from '@solana/wallet-adapter-react';
 
 const PlayerGameResults = () => {
   const { t } = useAppContext();
-  const { gameResult, gameData, isAdmin } = useGameContext();
+  const { gameResult, gameData, isAdmin, isLoadingResults, loadError } =
+    useGameContext();
   const { publicKey } = useWallet();
 
   if (!gameData) return null;
+
+  // Show loading state
+  if (isLoadingResults) {
+    return (
+      <div className='w-full max-w-4xl mx-auto'>
+        <H2>{gameData.name}</H2>
+        <div className='bg-white p-6 rounded-lg shadow-lg text-center'>
+          <Label>{t('Loading game results...')}</Label>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (loadError) {
+    return (
+      <div className='w-full max-w-4xl mx-auto'>
+        <H2>{gameData.name}</H2>
+        <div className='bg-white p-6 rounded-lg shadow-lg text-center'>
+          <Label className='text-red-600'>{loadError}</Label>
+        </div>
+      </div>
+    );
+  }
 
   // Early return with just winners/leaderboard for non-players and admins
   const isPlayer =
