@@ -35,7 +35,7 @@ import {
   submitAnswersCombined,
   clearGameSession,
   clearGameStartStatus,
-  endGameCombined,
+  endGameAndDeclareWinners,
 } from '@/utils';
 import { useAppContext, useProgram } from '.';
 import { PublicKey } from '@solana/web3.js';
@@ -460,7 +460,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      const result = await endGameCombined(
+      const result = await endGameAndDeclareWinners(
         program,
         connection,
         publicKey,
@@ -469,34 +469,90 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
           gameId: gameData.id,
           gameCode: gameData.game_code,
           isNative: gameData.is_native,
-          vaultTokenAccount: gameData.is_native
-            ? undefined
-            : /* vault token account */ undefined,
-          adminTokenAccount: gameData.is_native
-            ? undefined
-            : /* admin token account */ undefined,
-          treasuryTokenAccount: gameData.is_native
-            ? undefined
-            : /* treasury token account */ undefined,
+          vaultTokenAccount: gameData.is_native ? undefined : undefined, // Use actual vault token account
+          adminTokenAccount: gameData.is_native ? undefined : undefined, // Use actual admin token account
+          treasuryTokenAccount: gameData.is_native ? undefined : undefined, // Use actual treasury token account
         }
       );
 
-      if (result.success) {
-        console.log('Game end transaction successful');
-        // Update game status in context
-        setGameData((prev) => ({
-          ...prev,
-          status: 'ended',
-        }));
-      } else {
+      if (!result.success) {
         console.error('Failed to end game:', result.error);
         throw new Error(t('Failed to end game'));
       }
+
+      console.log('Game end transaction successful');
+
+      // Update game data with end status and results
+      setGameData((prev) => ({
+        ...prev,
+        status: 'ended',
+        winners: result.winners,
+        leaderboard: result.leaderboard,
+        end_time: gameData.end_time,
+      }));
+
+      // Return the transaction signature and results for any external handling
+      return result.signature;
     } catch (error) {
       console.error('Error ending game:', error);
       throw error;
     }
   };
+
+  // Add the following code to set up the `GameEnded` event listener
+  const winnersDeclaredEventListenerRef = React.useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!program || !gameData || !connection) return;
+
+    const setupGameEndedListener = async () => {
+      try {
+        const { gamePda } = deriveGamePDAs(
+          program,
+          new PublicKey(gameData.admin_wallet),
+          gameData.game_code
+        );
+
+        const listener = program.addEventListener(
+          'winnersDeclared',
+          async (event) => {
+            // Verify this event is for our game
+            // @ts-ignore
+            if (event.game.toString() === gamePda.toString()) {
+              console.log('Game ended event received:', event);
+              // Update game data status to 'ended'
+              setGameData((prev) => ({
+                ...prev,
+                status: 'ended',
+              }));
+
+              // Optionally, handle other event data like total_pot, treasury_fee, etc.
+              // For example:
+              // setTotalPot(event.total_pot);
+              // setTreasuryFee(event.treasury_fee);
+              // setAdminCommission(event.admin_commission);
+              // setEndTime(new Date(event.end_time.toNumber()).toISOString());
+            }
+          }
+        );
+
+        // Store listener ID for cleanup
+        winnersDeclaredEventListenerRef.current = listener;
+      } catch (error) {
+        console.error('Error setting up GameEnded listener:', error);
+      }
+    };
+
+    setupGameEndedListener();
+
+    // Cleanup function
+    return () => {
+      if (winnersDeclaredEventListenerRef.current !== null && program) {
+        program.removeEventListener(winnersDeclaredEventListenerRef.current);
+        winnersDeclaredEventListenerRef.current = null;
+      }
+    };
+  }, [program, gameData, connection]);
 
   return (
     <GameContext.Provider
