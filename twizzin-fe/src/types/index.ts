@@ -219,6 +219,8 @@ export interface GameContextType {
   gameResult: GameResultFromDb | null;
   handleEndGame: () => Promise<string | null>;
   canEndGame: boolean;
+  isLoadingResults: boolean;
+  loadError: string | null;
 }
 
 export interface JoinGameParams {

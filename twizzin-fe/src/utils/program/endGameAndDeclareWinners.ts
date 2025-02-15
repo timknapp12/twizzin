@@ -8,55 +8,11 @@ import {
   // getOrCreateAssociatedTokenAccount
 } from '@solana/spl-token';
 import { deriveGamePDAs } from './pdas';
-import { PlayerSubmission, GameResults } from '@/types';
 import { distributeGameXP } from '@/utils/supabase/xp';
-
-// Function to get all player submissions for a game
-async function getGameSubmissions(gameId: string): Promise<PlayerSubmission[]> {
-  const { data, error } = await supabase
-    .from('player_submissions')
-    .select('player_wallet, num_correct, finished_time, game_id')
-    .eq('game_id', gameId)
-    .order('num_correct', { ascending: false })
-    .order('finished_time', { ascending: true });
-
-  if (error)
-    throw new Error(`Failed to fetch game submissions: ${error.message}`);
-  return data || [];
-}
-
-// Function to determine winners and create full leaderboard
-function determineGameResults(
-  submissions: PlayerSubmission[],
-  maxWinners: number,
-  allAreWinners: boolean
-): GameResults {
-  if (!submissions.length) return { winners: [], allPlayers: [] };
-
-  const sortedSubmissions = [...submissions].sort((a, b) => {
-    if (a.num_correct !== b.num_correct) {
-      return b.num_correct - a.num_correct;
-    }
-    return a.finished_time - b.finished_time;
-  });
-
-  const numWinners = allAreWinners
-    ? Math.min(sortedSubmissions.length, maxWinners)
-    : Math.min(maxWinners, sortedSubmissions.length);
-
-  // Convert submissions to PlayerResults, using toString() for wallet addresses
-  const allPlayers = sortedSubmissions.map((sub, index) => ({
-    wallet: sub.player_wallet,
-    numCorrect: sub.num_correct,
-    finishTime: sub.finished_time,
-    rank: index + 1,
-    isWinner: index < numWinners,
-  }));
-
-  const winners = allPlayers.filter((player) => player.isWinner);
-
-  return { winners, allPlayers };
-}
+import {
+  fetchGameSubmissions,
+  determineWinnersAndLeaderboard,
+} from '@/utils/supabase/getGameResults';
 
 export async function endGameAndDeclareWinners(
   program: Program<TwizzinIdl>,
@@ -89,9 +45,9 @@ export async function endGameAndDeclareWinners(
       throw new Error(`Failed to fetch game data: ${gameError?.message}`);
     }
 
-    // Get and process submissions
-    const submissions = await getGameSubmissions(params.gameId);
-    const gameResults = determineGameResults(
+    // Get submissions and determine winners using utility functions
+    const submissions = await fetchGameSubmissions(params.gameId);
+    const gameResults = determineWinnersAndLeaderboard(
       submissions,
       gameData.max_winners,
       gameData.all_are_winners

@@ -36,10 +36,17 @@ import {
   clearGameSession,
   clearGameStartStatus,
   endGameAndDeclareWinners,
+  getGameEndedStatus,
+  supabase,
+  setGameEndedStatus,
 } from '@/utils';
 import { useAppContext, useProgram } from '.';
 import { PublicKey } from '@solana/web3.js';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
+import {
+  fetchGameLeaderboard,
+  fetchGameResult,
+} from '@/utils/supabase/getGameResults';
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
@@ -66,6 +73,8 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
   );
   const [gameResult, setGameResult] = useState<GameResultFromDb | null>(null);
   const [canEndGame, setCanEndGame] = useState(false);
+  const [isLoadingResults, setIsLoadingResults] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const router = useRouter();
   const { program } = useProgram();
@@ -488,7 +497,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Add the following code to set up the `GameEnded` event listener
+  // Event Listener for game end
   const winnersDeclaredEventListenerRef = React.useRef<number | null>(null);
 
   useEffect(() => {
@@ -505,27 +514,24 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
         const listener = program.addEventListener(
           'winnersDeclared',
           async (event) => {
-            // Verify this event is for our game
-            // @ts-ignore
-            if (event.game.toString() === gamePda.toString()) {
-              console.log('Game ended event received:', event);
-              // Update game data status to 'ended'
-              setGameData((prev) => ({
-                ...prev,
-                status: 'ended',
-              }));
+            try {
+              // @ts-ignore
+              if (event.game.toString() === gamePda.toString()) {
+                console.log('Game ended event received:', event);
 
-              // Optionally, handle other event data like total_pot, treasury_fee, etc.
-              // For example:
-              // setTotalPot(event.total_pot);
-              // setTreasuryFee(event.treasury_fee);
-              // setAdminCommission(event.admin_commission);
-              // setEndTime(new Date(event.end_time.toNumber()).toISOString());
+                // Update game status and persist to localStorage
+                setGameData((prev) => ({
+                  ...prev,
+                  status: 'ended',
+                }));
+                setGameEndedStatus(gameData.game_code);
+              }
+            } catch (error) {
+              console.error('Error processing game end event:', error);
             }
           }
         );
 
-        // Store listener ID for cleanup
         winnersDeclaredEventListenerRef.current = listener;
       } catch (error) {
         console.error('Error setting up GameEnded listener:', error);
@@ -534,7 +540,6 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
 
     setupGameEndedListener();
 
-    // Cleanup function
     return () => {
       if (winnersDeclaredEventListenerRef.current !== null && program) {
         program.removeEventListener(winnersDeclaredEventListenerRef.current);
@@ -542,6 +547,101 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
       }
     };
   }, [program, gameData, connection]);
+
+  // Data fetching when game ends
+  const RETRY_ATTEMPTS = 3;
+  const RETRY_DELAY = 2000;
+  useEffect(() => {
+    if (!gameData?.game_code) return;
+
+    const fetchGameResults = async (attempt = 1) => {
+      try {
+        setIsLoadingResults(true);
+        setLoadError(null);
+
+        // Prepare promises array
+        const promises = [
+          // Fetch updated game data
+          supabase
+            .from('games')
+            .select('*')
+            .eq('game_code', gameData.game_code)
+            .single()
+            .then(({ data, error }) => {
+              if (error) throw error;
+              return data;
+            }),
+          // Fetch game results using our utility
+          fetchGameLeaderboard(gameData.id),
+        ];
+
+        // Add user result fetch if not admin
+        if (!isAdmin && publicKey) {
+          promises.push(fetchGameResult(gameData.id, publicKey.toString()));
+        }
+
+        // Get all results
+        const [updatedGame, gameResults, userResult] = await Promise.all(
+          promises
+        );
+
+        if (!gameResults) {
+          throw new Error('Failed to fetch game results');
+        }
+
+        // Update game data with latest information
+        setGameData((prev) => ({
+          ...prev,
+          ...updatedGame,
+          status: 'ended',
+        }));
+
+        // Update user's game result if available
+        setGameResult((prevResult) => ({
+          ...(userResult || {}), // spread user's personal results if they exist
+          winners: gameResults.winners,
+          leaderboard: gameResults.allPlayers,
+          // Ensure we maintain any existing result data
+          ...(prevResult || {}),
+        }));
+
+        setIsLoadingResults(false);
+      } catch (error) {
+        console.error(
+          `Error fetching game results (attempt ${attempt}):`,
+          error
+        );
+
+        // Implement retry logic
+        if (attempt < RETRY_ATTEMPTS) {
+          setTimeout(() => {
+            fetchGameResults(attempt + 1);
+          }, RETRY_DELAY * attempt); // Exponential backoff
+        } else {
+          setIsLoadingResults(false);
+          setLoadError(
+            'Failed to load game results. Please try refreshing the page.'
+          );
+        }
+      }
+    };
+
+    // Check if game is ended either from state or localStorage
+    const isEnded =
+      gameData.status === 'ended' || getGameEndedStatus(gameData.game_code);
+
+    if (isEnded) {
+      fetchGameResults();
+    }
+
+    // Check localStorage on mount
+    if (!gameData.status && getGameEndedStatus(gameData.game_code)) {
+      setGameData((prev) => ({
+        ...prev,
+        status: 'ended',
+      }));
+    }
+  }, [gameData?.status, gameData?.game_code, gameData?.id, isAdmin, publicKey]);
 
   return (
     <GameContext.Provider
@@ -561,6 +661,8 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
         gameResult,
         handleEndGame,
         canEndGame,
+        isLoadingResults,
+        loadError,
       }}
     >
       {children}

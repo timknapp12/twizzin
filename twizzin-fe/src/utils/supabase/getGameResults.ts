@@ -1,4 +1,10 @@
-import { GameResultFromDb, GameResultQuestion, RawGameResult } from '@/types';
+import {
+  GameResultFromDb,
+  GameResultQuestion,
+  RawGameResult,
+  PlayerSubmission,
+  GameResults,
+} from '@/types';
 import { supabase } from './supabaseClient';
 
 export const fetchRawGameResult = async (
@@ -115,4 +121,104 @@ export const fetchGameResult = async (
   const rawResult = await fetchRawGameResult(gameId, playerWallet);
   if (!rawResult) return null;
   return formatGameResult(rawResult);
+};
+
+// New functions for winners and leaderboard
+export const fetchGameSubmissions = async (
+  gameId: string
+): Promise<PlayerSubmission[]> => {
+  const { data, error } = await supabase
+    .from('player_submissions')
+    .select('player_wallet, num_correct, finished_time, game_id')
+    .eq('game_id', gameId)
+    .order('num_correct', { ascending: false })
+    .order('finished_time', { ascending: true });
+
+  if (error)
+    throw new Error(`Failed to fetch game submissions: ${error.message}`);
+  return data || [];
+};
+
+export const determineWinnersAndLeaderboard = (
+  submissions: PlayerSubmission[],
+  maxWinners: number,
+  allAreWinners: boolean
+): GameResults => {
+  if (!submissions.length) return { winners: [], allPlayers: [] };
+
+  const sortedSubmissions = [...submissions].sort((a, b) => {
+    if (a.num_correct !== b.num_correct) {
+      return b.num_correct - a.num_correct;
+    }
+    return a.finished_time - b.finished_time;
+  });
+
+  const numWinners = allAreWinners
+    ? Math.min(sortedSubmissions.length, maxWinners)
+    : Math.min(maxWinners, sortedSubmissions.length);
+
+  const allPlayers = sortedSubmissions.map((sub, index) => ({
+    wallet: sub.player_wallet,
+    numCorrect: sub.num_correct,
+    finishTime: sub.finished_time,
+    rank: index + 1,
+    isWinner: index < numWinners,
+  }));
+
+  const winners = allPlayers.filter((player) => player.isWinner);
+
+  return { winners, allPlayers };
+};
+
+export const fetchGameLeaderboard = async (
+  gameId: string
+): Promise<GameResults | null> => {
+  try {
+    // Fetch game configuration
+    const { data: game, error: gameError } = await supabase
+      .from('games')
+      .select('max_winners, all_are_winners')
+      .eq('id', gameId)
+      .single();
+
+    if (gameError) throw gameError;
+    if (!game) return null;
+
+    // Fetch submissions
+    const submissions = await fetchGameSubmissions(gameId);
+
+    // Calculate winners and leaderboard
+    return determineWinnersAndLeaderboard(
+      submissions,
+      game.max_winners,
+      game.all_are_winners
+    );
+  } catch (error) {
+    console.error('Error fetching game leaderboard:', error);
+    throw error;
+  }
+};
+
+// Utility to fetch both game result and leaderboard
+export const fetchGameResultAndLeaderboard = async (
+  gameId: string,
+  playerWallet: string
+): Promise<{
+  playerResult: GameResultFromDb | null;
+  gameResults: GameResults | null;
+}> => {
+  try {
+    const [playerResult, gameResults] = await Promise.all([
+      fetchGameResult(gameId, playerWallet),
+      fetchGameLeaderboard(gameId),
+    ]);
+
+    return {
+      playerResult,
+      gameResults,
+    };
+  } catch (error) {
+    console.error('Error fetching game result and leaderboard:', error);
+    throw error;
+  }
 };

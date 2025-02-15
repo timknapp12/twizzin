@@ -2,6 +2,7 @@ import { GameAnswer, StoredGameSession, GameStartStatus } from '@/types';
 
 const GAME_SESSION_KEY = 'game_session';
 const GAME_START_STATUS_KEY = 'game_start_status';
+const GAME_STATUS_PREFIX = 'game_status_';
 
 // Save a game answer to local storage
 export const saveGameAnswer = (
@@ -272,4 +273,16 @@ export const clearGameStartStatus = (gameCode: string): void => {
   } catch (error) {
     console.error('Error clearing game start status:', error);
   }
+};
+
+const getGameStatusKey = (gameCode: string) => {
+  return `${GAME_STATUS_PREFIX}${gameCode}`;
+};
+
+export const setGameEndedStatus = (gameCode: string) => {
+  localStorage.setItem(getGameStatusKey(gameCode), 'ended');
+};
+
+export const getGameEndedStatus = (gameCode: string) => {
+  return localStorage.getItem(getGameStatusKey(gameCode)) === 'ended';
 };
