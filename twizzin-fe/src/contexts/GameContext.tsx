@@ -61,7 +61,7 @@ export const useGameContext = () => {
 };
 
 export const GameContextProvider = ({ children }: { children: ReactNode }) => {
-  const { t, language } = useAppContext();
+  const { t, language, fetchUserXPAndRewards } = useAppContext();
   const [gameCode, setGameCode] = useState('NYVWFN');
   const [partialGameData, setPartialGameData] = useState<PartialGame | null>(
     null
@@ -632,6 +632,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
 
     if (isEnded) {
       fetchGameResults();
+      fetchUserXPAndRewards();
     }
 
     // Check localStorage on mount
@@ -641,7 +642,14 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
         status: 'ended',
       }));
     }
-  }, [gameData?.status, gameData?.game_code, gameData?.id, isAdmin, publicKey]);
+  }, [
+    gameData?.status,
+    gameData?.game_code,
+    gameData?.id,
+    isAdmin,
+    publicKey,
+    fetchUserXPAndRewards,
+  ]);
 
   return (
     <GameContext.Provider
