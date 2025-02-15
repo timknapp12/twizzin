@@ -479,19 +479,8 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
         console.error('Failed to end game:', result.error);
         throw new Error(t('Failed to end game'));
       }
-
       console.log('Game end transaction successful');
-
-      // Update game data with end status and results
-      setGameData((prev) => ({
-        ...prev,
-        status: 'ended',
-        winners: result.winners,
-        leaderboard: result.leaderboard,
-        end_time: gameData.end_time,
-      }));
-
-      // Return the transaction signature and results for any external handling
+      // Return the transaction signature
       return result.signature;
     } catch (error) {
       console.error('Error ending game:', error);
