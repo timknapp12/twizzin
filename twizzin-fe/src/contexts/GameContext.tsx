@@ -328,6 +328,9 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
+      // Get or set finish time
+      const finishTime = gameSession.submittedTime || Date.now();
+
       // Convert StoredGameSession to GameSession format
       const formattedGameSession = {
         answers: Object.values(gameSession.answers).map((answer) => ({
@@ -336,7 +339,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
           questionId: answer.questionId,
         })),
         startTime: new Date(gameSession.startTime).getTime(),
-        finishTime: Date.now(),
+        finishTime,
         submitted: gameSession.submitted,
       };
 
@@ -344,7 +347,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
       const markSessionSubmittedWrapper = (
         gameCode: string
       ): GameSession | null => {
-        const storedSession = markSessionSubmitted(gameCode);
+        const storedSession = markSessionSubmitted(gameCode, finishTime);
         if (!storedSession) return null;
 
         return {
@@ -354,7 +357,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
             questionId: answer.questionId,
           })),
           startTime: new Date(storedSession.startTime).getTime(),
-          finishTime: formattedGameSession.finishTime,
+          finishTime: storedSession.submittedTime || finishTime,
           submitted: storedSession.submitted,
         };
       };
@@ -373,7 +376,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
             {}
           ),
           submitted: session.submitted,
-          submittedTime: session.finishTime,
+          submittedTime: finishTime,
         };
 
         setGameSession(storedFormat);

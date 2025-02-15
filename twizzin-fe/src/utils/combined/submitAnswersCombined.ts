@@ -11,10 +11,7 @@ import {
 import { submitAnswers } from '../program/submitAnswers';
 import { submitAnswersToDb } from '../supabase/submitAnswersToDb';
 import { verifyAndPrepareAnswers } from '../merkle/verifyUserAnswers';
-import {
-  getAnchorTimestamp,
-  getSupabaseTimestamp,
-} from '../helpers/timeHelpers';
+import { getSupabaseTimestamp } from '../helpers/timeHelpers';
 
 interface SubmitAnswersResult {
   success: boolean;
@@ -61,9 +58,8 @@ export const submitAnswersCombined = async ({
 
   try {
     // Format finish time for different uses
-    const finishDate = new Date(gameSession.finishTime);
-    const finishTimeAnchor = new BN(getAnchorTimestamp(finishDate));
-    const finishTimeDb = getSupabaseTimestamp(finishDate);
+    const finishTimeAnchor = new BN(gameSession.finishTime);
+    const finishTimeDb = getSupabaseTimestamp(new Date(gameSession.finishTime));
 
     // Use questions from gameData
     const questions = gameData.questions.map((q: QuestionFromDb) => ({

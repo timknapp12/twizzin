@@ -101,7 +101,8 @@ export const initializeGameSession = (
 
 // Mark game session as submitted
 export const markSessionSubmitted = (
-  gameCode: string
+  gameCode: string,
+  finishTime?: number // Optional parameter to allow setting initial finish time
 ): StoredGameSession | null => {
   if (typeof window === 'undefined') {
     return null;
@@ -111,7 +112,11 @@ export const markSessionSubmitted = (
     const session = getGameSession(gameCode);
     if (!session) return null;
 
-    session.submittedTime = Date.now();
+    // Only set submittedTime if it hasn't been set before
+    if (!session.submittedTime) {
+      session.submittedTime = finishTime || Date.now();
+    }
+
     localStorage.setItem(GAME_SESSION_KEY, JSON.stringify(session));
     return session;
   } catch (error) {
