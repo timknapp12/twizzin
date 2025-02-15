@@ -13,6 +13,8 @@ import {
   fetchGameSubmissions,
   determineWinnersAndLeaderboard,
 } from '@/utils/supabase/getGameResults';
+import { fetchGameWinners } from './getWinners';
+import { updateGameWinners } from '../supabase/updateWinners';
 
 export async function endGameAndDeclareWinners(
   program: Program<TwizzinIdl>,
@@ -142,6 +144,15 @@ export async function endGameAndDeclareWinners(
     if (updateError) {
       throw new Error(`Failed to update game status: ${updateError.message}`);
     }
+
+    // Fetch and update winner information
+    const onChainWinners = await fetchGameWinners(
+      program,
+      admin,
+      params.gameCode
+    );
+
+    await updateGameWinners(params.gameId, onChainWinners);
 
     // Distribute XP
     await distributeGameXP(
