@@ -1,25 +1,10 @@
 import { supabase } from '@/utils/supabase';
-import { PlayerResult } from '@/types';
-
-interface XPDistributionConfig {
-  baseParticipationXP: number; // XP for participating
-  winnerBaseXP: number; // Additional base XP for being a winner
-  firstPlaceBonus: number; // Additional XP for first place
-  answerXPMultiplier: number; // XP multiplier per correct answer
-}
-
-const DEFAULT_XP_CONFIG: XPDistributionConfig = {
-  baseParticipationXP: 50,
-  winnerBaseXP: 100,
-  firstPlaceBonus: 50,
-  answerXPMultiplier: 10,
-};
-
-interface XPAward {
-  wallet: string;
-  xpAmount: number;
-  reason: string;
-}
+import {
+  PlayerResult,
+  XPDistributionConfig,
+  DEFAULT_XP_CONFIG,
+  XPAward,
+} from '@/types';
 
 export async function distributeGameXP(
   gameId: string,
