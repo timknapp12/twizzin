@@ -33,6 +33,7 @@ const Game = () => {
   }, [gameCode, getGameByCode, partialGameData]);
 
   // Check if game was manually started by admin - only runs on client
+  // TODO - check to see if this is needed now that we have the gameData.status
   useEffect(() => {
     if (typeof gameCode === 'string') {
       const startStatus = getGameStartStatus(gameCode);

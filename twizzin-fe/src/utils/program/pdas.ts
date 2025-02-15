@@ -22,7 +22,12 @@ export const deriveGamePDAs = (
     program.programId
   );
 
-  return { gamePda, vaultPda, configPda };
+  const [winnersPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('winners'), adminPubkey.toBuffer(), Buffer.from(gameCode)],
+    program.programId
+  );
+
+  return { gamePda, vaultPda, configPda, winnersPda };
 };
 
 export const derivePlayerPDA = (

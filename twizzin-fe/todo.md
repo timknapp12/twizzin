@@ -2,6 +2,7 @@ Before DEMO:
 
 - add success toast for creating game and return game code
 - make sure wallet is connected before starting game
+- add input for username for creating a game and joining a game
 
 refactor after MVP:
 
@@ -22,6 +23,7 @@ Join Game
 - from game screen, allow admin to edit game
 - change the check for hasGameData to check some other variable - cuz switching from admin to another wallet does not reset it state
 - add username when player joins game or creates game
+- we might not need to check isManuallyStarted anymore
 
 - clean up imports from utils
 

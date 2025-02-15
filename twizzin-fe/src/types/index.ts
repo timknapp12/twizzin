@@ -217,7 +217,7 @@ export interface GameContextType {
   handleStartGame: () => Promise<void>;
   handleSubmitAnswers: () => Promise<string | undefined>;
   gameResult: GameResultFromDb | null;
-  handleEndGame: () => Promise<void>;
+  handleEndGame: () => Promise<string | null>;
   canEndGame: boolean;
 }
 
@@ -248,7 +248,7 @@ export interface JoinFullGame {
   img_url: string | null;
   question_count: number;
   questions: QuestionFromDb[];
-  status: string;
+  status: string | 'not_started';
 }
 
 export interface QuestionFromDb {
@@ -388,9 +388,13 @@ export interface GameResultFromDb {
   totalCorrect: number;
   totalQuestions: number;
   completedAt: string | null;
+  winners?: PlayerResult[];
+  leaderboard?: PlayerResult[];
   finalRank?: number;
   xpEarned?: number;
   rewardsEarned?: number;
+  startTime?: string;
+  endTime?: string;
 }
 
 interface PlayerAnswerFromDbResult {
@@ -427,4 +431,26 @@ interface AnswerFromDbResult {
 export interface RawGameResult {
   playerGame: PlayerGameFromDbResult;
   questions: QuestionFromDbResult[];
+}
+
+export interface PlayerSubmission {
+  player_wallet: string;
+  num_correct: number;
+  finished_time: number;
+  game_id: string;
+}
+
+export interface PlayerResult {
+  wallet: string;
+  numCorrect: number;
+  finishTime: number;
+  rank: number;
+  isWinner: boolean;
+  xpEarned?: number;
+  rewardsEarned?: number;
+}
+
+export interface GameResults {
+  winners: PlayerResult[];
+  allPlayers: PlayerResult[];
 }

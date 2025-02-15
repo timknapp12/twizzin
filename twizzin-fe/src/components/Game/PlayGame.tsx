@@ -113,7 +113,7 @@ const PlayGame = () => {
   if (!currentQuestion) return null;
 
   // Waiting for game to start state
-  if (gameData.status !== 'active') {
+  if (gameData.status === 'not_started') {
     return (
       <Column className='gap-4 w-full' justify='start'>
         <H2>{name}</H2>
