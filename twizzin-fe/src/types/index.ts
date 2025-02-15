@@ -13,6 +13,9 @@ export interface AppContextType {
   t: TFunction;
   currency: string;
   changeCurrency: (currency: string) => void;
+  userXP: number;
+  userRewards: GameReward[];
+  fetchUserXPAndRewards: () => Promise<void>;
 }
 
 export type GameDataChangeEvent = {
@@ -455,4 +458,65 @@ export interface PlayerResult {
 export interface GameResults {
   winners: PlayerResult[];
   allPlayers: PlayerResult[];
+}
+
+// user rewards
+export interface GameReward {
+  gameId: string;
+  gameName: string;
+  imageUrl: string | null;
+  rewardAmount: number;
+  tokenMint: string;
+  tokenSymbol: string;
+  claimed: boolean;
+}
+
+interface TokenInfo {
+  ticker: string;
+}
+
+// Supabase returns nested selects as arrays
+type SupabaseNested<T> = T[];
+
+export interface GameInfo {
+  name: string;
+  img_url: string | null;
+  token_mint: string;
+  tokens: SupabaseNested<TokenInfo>;
+}
+
+export interface PlayerGameReward {
+  game_id: string;
+  rewards_earned: number;
+  rewards_claimed: boolean;
+  games: SupabaseNested<GameInfo>;
+}
+
+// user XP
+export interface XPDistributionConfig {
+  baseParticipationXP: number; // XP for participating
+  winnerBaseXP: number; // Additional base XP for being a winner
+  firstPlaceBonus: number; // Additional XP for first place
+  answerXPMultiplier: number; // XP multiplier per correct answer
+}
+
+export const DEFAULT_XP_CONFIG: XPDistributionConfig = {
+  baseParticipationXP: 50,
+  winnerBaseXP: 100,
+  firstPlaceBonus: 50,
+  answerXPMultiplier: 10,
+};
+
+export interface XPAward {
+  wallet: string;
+  xpAmount: number;
+  reason: string;
+}
+
+// get winners
+export interface OnChainWinner {
+  player: PublicKey;
+  rank: number;
+  prizeAmount: bigint;
+  claimed: boolean;
 }

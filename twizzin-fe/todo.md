@@ -3,6 +3,16 @@ Before DEMO:
 - add success toast for creating game and return game code
 - make sure wallet is connected before starting game
 - add input for username for creating a game and joining a game
+- check after completing game:
+  1. user results goes to chain
+  2. user results goes to db
+  3. winners are declared on chain
+  4. user rewards and xp are updated in db
+  5. game results are shown on game results page
+  6. event listener for winners declared trigger for players
+  7. leaderboard is shown on game results page
+  8. winners are shown on game results page
+  9. xp and rewards fetched and shown on home page
 
 refactor after MVP:
 
