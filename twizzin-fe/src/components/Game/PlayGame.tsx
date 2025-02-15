@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Column, Label, Row, Button, H2, H3, H3Secondary } from '@/components';
 import { useGameContext, useAppContext } from '@/contexts';
-import { countDownGameTime } from '@/utils';
+import { countDownGameTime, getCurrentConfig } from '@/utils';
 import { RiSurveyLine } from 'react-icons/ri';
 import { FaArrowLeft, FaArrowRight } from 'react-icons/fa';
+import { toast } from 'react-toastify';
+
+const { network } = getCurrentConfig();
 
 const PlayGame = () => {
   const { t } = useAppContext();
@@ -69,8 +72,32 @@ const PlayGame = () => {
 
   const onSubmitAnswers = async () => {
     setIsSubmitting(true);
-    await handleSubmitAnswers();
-    setIsSubmitting(false);
+    try {
+      const signature = await handleSubmitAnswers();
+      if (signature) {
+        toast.success(
+          <div>
+            {t('Answers submitted!')}
+            <a
+              href={`https://explorer.solana.com/tx/${signature}?cluster=${network}`}
+              target='_blank'
+              rel='noopener noreferrer'
+              className='text-var(--color-success) ml-2'
+            >
+              {t('View transaction')}
+            </a>
+          </div>,
+          {
+            autoClose: false,
+            position: 'bottom-right',
+          }
+        );
+      }
+    } catch (error) {
+      toast.error(t('Error submitting answers:'));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleFormSubmit = async (event: React.FormEvent) => {

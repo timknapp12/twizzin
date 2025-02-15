@@ -33,13 +33,13 @@ export const submitAnswersCombined = async ({
   setGameSession: (session: GameSession) => void;
 }): Promise<{
   success: boolean;
-  solanaSignature: string | null;
+  signature: string | null;
   error: string | null;
 }> => {
   if (!gameSession || !program || !publicKey || !gameData) {
     return {
       success: false,
-      solanaSignature: null,
+      signature: null,
       error: 'Missing required parameters',
     };
   }
@@ -88,7 +88,7 @@ export const submitAnswersCombined = async ({
         ...gameSession,
         answers: verifiedAnswers,
       },
-      solanaSignature: solanaResult.signature!,
+      signature: solanaResult.signature!,
       numCorrect,
     });
 
@@ -98,14 +98,14 @@ export const submitAnswersCombined = async ({
 
     return {
       success: true,
-      solanaSignature: solanaResult.signature,
+      signature: solanaResult.signature,
       error: null,
     };
   } catch (error: any) {
     console.error('Error in submitAnswersCombined:', error);
     return {
       success: false,
-      solanaSignature: null,
+      signature: null,
       error: error.message || 'Failed to submit game',
     };
   }

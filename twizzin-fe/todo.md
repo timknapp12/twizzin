@@ -1,6 +1,7 @@
 Before DEMO:
 
 - add success toast for creating game and return game code
+- make sure wallet is connected before starting game
 
 refactor after MVP:
 

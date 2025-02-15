@@ -322,7 +322,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
   const handleSubmitAnswers = async () => {
     if (!gameSession || !program || !publicKey || !gameData) {
       console.error('Missing required parameters for game submission');
-      return;
+      return undefined;
     }
 
     try {
@@ -391,9 +391,12 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
       if (!result.success) {
         throw new Error(result.error || 'Failed to submit game');
       }
+      if (!result.signature) {
+        throw new Error('No signature returned from submission');
+      }
       clearGameSession(gameCode);
       clearGameStartStatus(gameCode);
-      return result.solanaSignature;
+      return result.signature;
     } catch (error: any) {
       console.error('Error submitting game:', error);
       throw error;

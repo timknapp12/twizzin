@@ -32,7 +32,7 @@ export const submitAnswersToDb = async ({
   gameId,
   playerWallet,
   gameSession,
-  solanaSignature,
+  signature,
   numCorrect,
 }: SubmitAnswersToDbParams): Promise<{
   success: boolean;
@@ -56,7 +56,7 @@ export const submitAnswersToDb = async ({
           finished_time: new Date(gameSession.finishTime),
           num_correct: numCorrect,
           answer_hash: answerHash,
-          solana_signature: solanaSignature,
+          solana_signature: signature,
         })
         .select('id')
         .single();

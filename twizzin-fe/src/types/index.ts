@@ -216,7 +216,7 @@ export interface GameContextType {
     remainingCount: number;
   };
   handleStartGame: () => Promise<void>;
-  handleSubmitAnswers: () => Promise<string | null | undefined>;
+  handleSubmitAnswers: () => Promise<string | undefined>;
 }
 
 export interface JoinGameParams {
@@ -348,7 +348,7 @@ export interface SubmitAnswersToDbParams {
     answers: VerifiedAnswer[];
     finishTime: number;
   };
-  solanaSignature: string;
+  signature: string;
   numCorrect: number;
 }
 
