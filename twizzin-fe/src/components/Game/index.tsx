@@ -8,13 +8,19 @@ import { useGameContext } from '@/contexts';
 import JoinGameDetails from './JoinGameDetails';
 import GameDetailsSkeleton from './GameDetailsSkeleton';
 import PlayGame from './PlayGame';
+import PlayerGameResults from './PlayerGameResults';
 import { getGameStartStatus } from '@/utils';
 
 const Game = () => {
   const params = useParams();
   const gameCode = params.gameCode;
-  const { getGameByCode, partialGameData, gameData, isGameStarted } =
-    useGameContext();
+  const {
+    getGameByCode,
+    partialGameData,
+    gameData,
+    isGameStarted,
+    gameResult,
+  } = useGameContext();
   const [isManuallyStarted, setIsManuallyStarted] = useState<boolean | null>(
     null
   );
@@ -51,7 +57,9 @@ const Game = () => {
     <ScreenContainer>
       <Header />
       <InnerScreenContainer>
-        {hasGameStarted && gameData ? (
+        {gameResult ? (
+          <PlayerGameResults />
+        ) : hasGameStarted && gameData ? (
           <PlayGame />
         ) : partialGameData ? (
           <JoinGameDetails partialGameData={partialGameData} />

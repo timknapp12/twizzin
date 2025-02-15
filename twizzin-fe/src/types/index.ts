@@ -217,6 +217,7 @@ export interface GameContextType {
   };
   handleStartGame: () => Promise<void>;
   handleSubmitAnswers: () => Promise<string | undefined>;
+  gameResult: GameResultFromDb | null;
 }
 
 export interface JoinGameParams {
@@ -346,7 +347,7 @@ export interface SubmitAnswersToDbParams {
   playerWallet: string;
   gameSession: {
     answers: VerifiedAnswer[];
-    finishTime: number;
+    finishTime: string;
   };
   signature: string;
   numCorrect: number;
@@ -363,4 +364,65 @@ export interface VerifiedAnswer {
 export interface VerifyAnswersResult {
   answers: VerifiedAnswer[];
   numCorrect: number;
+}
+
+export interface GameResultQuestion {
+  questionId: string;
+  questionText: string;
+  userAnswer: {
+    text: string;
+    displayLetter: string;
+  } | null;
+  correctAnswer: {
+    text: string;
+    displayLetter: string;
+  };
+  isCorrect: boolean;
+  displayOrder: number;
+}
+
+export interface GameResultFromDb {
+  answeredQuestions: GameResultQuestion[];
+  totalCorrect: number;
+  totalQuestions: number;
+  completedAt: string | null;
+  finalRank?: number;
+  xpEarned?: number;
+  rewardsEarned?: number;
+}
+
+interface PlayerAnswerFromDbResult {
+  question_id: string;
+  selected_answer: string;
+  is_correct: boolean;
+  answered_at: string;
+}
+
+interface PlayerGameFromDbResult {
+  id: string;
+  num_correct: number;
+  finished_time: string | null;
+  final_rank?: number;
+  xp_earned?: number;
+  rewards_earned?: number;
+  player_answers: PlayerAnswerFromDbResult[];
+}
+
+interface QuestionFromDbResult {
+  id: string;
+  question_text: string;
+  display_order: number;
+  answers: AnswerFromDbResult[];
+}
+
+interface AnswerFromDbResult {
+  id: string;
+  answer_text: string;
+  display_letter: string;
+  is_correct: boolean;
+}
+
+export interface RawGameResult {
+  playerGame: PlayerGameFromDbResult;
+  questions: QuestionFromDbResult[];
 }

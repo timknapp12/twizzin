@@ -16,6 +16,7 @@ import {
   GameAnswer,
   StoredGameSession,
   GameSession,
+  GameResultFromDb,
 } from '@/types';
 import {
   getPartialGameFromDb,
@@ -64,6 +65,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
   const [gameSession, setGameSession] = useState<StoredGameSession | null>(
     null
   );
+  const [gameResult, setGameResult] = useState<GameResultFromDb | null>(null);
 
   const router = useRouter();
   const { program } = useProgram();
@@ -319,7 +321,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
     return getGameCompletionStatus(gameCode, gameData.questions?.length ?? 0);
   };
 
-  const handleSubmitAnswers = async () => {
+  const handleSubmitAnswers = async (): Promise<string | undefined> => {
     if (!gameSession || !program || !publicKey || !gameData) {
       console.error('Missing required parameters for game submission');
       return undefined;
@@ -334,7 +336,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
           questionId: answer.questionId,
         })),
         startTime: new Date(gameSession.startTime).getTime(),
-        finishTime: Date.now(), // Current time as finish time
+        finishTime: Date.now(),
         submitted: gameSession.submitted,
       };
 
@@ -352,7 +354,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
             questionId: answer.questionId,
           })),
           startTime: new Date(storedSession.startTime).getTime(),
-          finishTime: Date.now(),
+          finishTime: formattedGameSession.finishTime,
           submitted: storedSession.submitted,
         };
       };
@@ -391,9 +393,15 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
       if (!result.success) {
         throw new Error(result.error || 'Failed to submit game');
       }
+
       if (!result.signature) {
         throw new Error('No signature returned from submission');
       }
+
+      if (result.gameResult) {
+        setGameResult(result.gameResult);
+      }
+
       clearGameSession(gameCode);
       clearGameStartStatus(gameCode);
       return result.signature;
@@ -419,6 +427,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
         getGameProgress,
         handleStartGame,
         handleSubmitAnswers,
+        gameResult,
       }}
     >
       {children}
