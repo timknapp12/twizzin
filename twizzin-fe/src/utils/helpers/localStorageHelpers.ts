@@ -15,6 +15,13 @@ export const saveGameAnswer = (
   try {
     const session = getGameSession(gameCode);
 
+    // Convert GameAnswer to stored answer format
+    const storedAnswer = {
+      displayOrder: answer.displayOrder,
+      answer: answer.answerText, // Using answerText as the stored answer
+      questionId: answer.questionId,
+    };
+
     // If no session exists, create one with start time
     if (!session) {
       const newSession: StoredGameSession = {
@@ -22,16 +29,17 @@ export const saveGameAnswer = (
         gamePubkey: '', // Will be set when joining game
         startTime: Date.now(),
         answers: {
-          [answer.questionId]: answer,
+          [answer.questionId]: storedAnswer,
         },
-        submittedTime: null,
+        submitted: false,
+        submittedTime: undefined, // Changed from null to undefined
       };
       localStorage.setItem(GAME_SESSION_KEY, JSON.stringify(newSession));
       return newSession;
     }
 
     // Add answer to existing session
-    session.answers[answer.questionId] = answer;
+    session.answers[answer.questionId] = storedAnswer;
     localStorage.setItem(GAME_SESSION_KEY, JSON.stringify(session));
     return session;
   } catch (error) {
@@ -74,7 +82,8 @@ export const initializeGameSession = (
       gamePubkey,
       startTime: Date.now(),
       answers: {},
-      submittedTime: null,
+      submitted: false,
+      submittedTime: undefined,
     };
 
     // Update gamePubkey if it wasn't set
@@ -136,9 +145,16 @@ export const getSortedGameAnswers = (gameCode: string): GameAnswer[] => {
   const session = getGameSession(gameCode);
   if (!session) return [];
 
-  return Object.values(session.answers).sort(
-    (a, b) => a.displayOrder - b.displayOrder
-  );
+  return Object.values(session.answers)
+    .map((storedAnswer) => ({
+      questionId: storedAnswer.questionId,
+      answerId: storedAnswer.questionId, // Using questionId as answerId
+      answerText: storedAnswer.answer,
+      displayOrder: storedAnswer.displayOrder,
+      timestamp: session.startTime, // Using session start time as timestamp
+      displayLetter: storedAnswer.answer, // Using stored answer as display letter
+    }))
+    .sort((a, b) => a.displayOrder - b.displayOrder);
 };
 
 // Check if all questions have been answered
@@ -231,5 +247,24 @@ export const setGameStartStatus = (
     localStorage.setItem(GAME_START_STATUS_KEY, JSON.stringify(statuses));
   } catch (error) {
     console.error('Error setting game start status:', error);
+  }
+};
+
+export const clearGameStartStatus = (gameCode: string): void => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  try {
+    const data = localStorage.getItem(GAME_START_STATUS_KEY);
+    if (!data) return;
+
+    const statuses: GameStartStatus = JSON.parse(data);
+    if (statuses[gameCode]) {
+      delete statuses[gameCode];
+      localStorage.setItem(GAME_START_STATUS_KEY, JSON.stringify(statuses));
+    }
+  } catch (error) {
+    console.error('Error clearing game start status:', error);
   }
 };

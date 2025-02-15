@@ -7,12 +7,17 @@ import { FaArrowLeft, FaArrowRight } from 'react-icons/fa';
 
 const PlayGame = () => {
   const { t } = useAppContext();
-  const { gameData, isGameStarted, submitAnswer, getCurrentAnswer } =
-    useGameContext();
+  const {
+    gameData,
+    isGameStarted,
+    submitAnswer,
+    getCurrentAnswer,
+    handleSubmitAnswers,
+  } = useGameContext();
 
   const [remainingTime, setRemainingTime] = useState('');
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { name, questions, end_time } = gameData || {};
   const currentQuestion = questions?.[currentQuestionIndex];
 
@@ -31,23 +36,6 @@ const PlayGame = () => {
 
     return () => clearInterval(timer);
   }, [end_time, isGameStarted]);
-
-  // Waiting for game to start state
-  if (!isGameStarted) {
-    return (
-      <Column className='gap-4 w-full' justify='start'>
-        <H2>{name}</H2>
-        <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg bg-[#FBF9E9] gap-4 w-full max-w-small mx-auto text-[16px] text-[#655B30] active:opacity-80'>
-          <Row className='gap-2'>
-            <RiSurveyLine size={28} className='text-yellow' />
-            <Label style={{ marginBottom: -4 }}>
-              {t('Waiting for game to start...')}
-            </Label>
-          </Row>
-        </div>
-      </Column>
-    );
-  }
 
   const handlePreviousQuestion = () => {
     if (currentQuestionIndex > 0) {
@@ -79,10 +67,42 @@ const PlayGame = () => {
     });
   };
 
+  const onSubmitAnswers = async () => {
+    setIsSubmitting(true);
+    await handleSubmitAnswers();
+    setIsSubmitting(false);
+  };
+
+  const handleFormSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (currentQuestionIndex === (questions?.length || 0) - 1) {
+      await onSubmitAnswers();
+    } else {
+      handleNextQuestion();
+    }
+  };
+
   if (!currentQuestion) return null;
 
+  // Waiting for game to start state
+  if (!isGameStarted) {
+    return (
+      <Column className='gap-4 w-full' justify='start'>
+        <H2>{name}</H2>
+        <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg bg-[#FBF9E9] gap-4 w-full max-w-small mx-auto text-[16px] text-[#655B30] active:opacity-80'>
+          <Row className='gap-2'>
+            <RiSurveyLine size={28} className='text-yellow' />
+            <Label style={{ marginBottom: -4 }}>
+              {t('Waiting for game to start...')}
+            </Label>
+          </Row>
+        </div>
+      </Column>
+    );
+  }
+
   return (
-    <Column className='gap-4 w-full' justify='start'>
+    <form onSubmit={handleFormSubmit} className='gap-4 w-full flex flex-col'>
       {/* Timer Header */}
       <H2>{name}</H2>
       <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg bg-[#E8F7EA] gap-4 w-full max-w-small mx-auto text-[16px] text-[#655B30] active:opacity-80'>
@@ -108,6 +128,7 @@ const PlayGame = () => {
           {currentQuestion.answers.map((answer) => (
             <button
               key={answer.id}
+              type='button'
               onClick={() => handleAnswerSelect(answer.id)}
               className={`w-full my-1 p-4 text-left rounded-lg border transition-colors ${
                 selectedAnswer === answer.id
@@ -129,6 +150,7 @@ const PlayGame = () => {
         <div className='w-[48%]'>
           <Button
             secondary
+            type='button'
             onClick={handlePreviousQuestion}
             disabled={currentQuestionIndex === 0}
             className='flex items-center gap-2'
@@ -139,16 +161,23 @@ const PlayGame = () => {
         </div>
         <div className='w-[48%]'>
           <Button
-            onClick={handleNextQuestion}
-            disabled={currentQuestionIndex === (questions?.length || 0) - 1}
+            type='submit'
+            disabled={!selectedAnswer}
             className='flex items-center gap-2'
+            isLoading={isSubmitting}
           >
-            {t('Next')}
-            <FaArrowRight size={16} />
+            {currentQuestionIndex === (questions?.length || 0) - 1 ? (
+              t('Submit')
+            ) : (
+              <>
+                {t('Next')}
+                <FaArrowRight size={16} />
+              </>
+            )}
           </Button>
         </div>
       </Row>
-    </Column>
+    </form>
   );
 };
 

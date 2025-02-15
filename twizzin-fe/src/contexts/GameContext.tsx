@@ -33,6 +33,8 @@ import {
   startGameCombined,
   setGameStartStatus,
   submitAnswersCombined,
+  clearGameSession,
+  clearGameStartStatus,
 } from '@/utils';
 import { useAppContext, useProgram } from '.';
 import { PublicKey } from '@solana/web3.js';
@@ -389,7 +391,8 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
       if (!result.success) {
         throw new Error(result.error || 'Failed to submit game');
       }
-
+      clearGameSession(gameCode);
+      clearGameStartStatus(gameCode);
       return result.solanaSignature;
     } catch (error: any) {
       console.error('Error submitting game:', error);
