@@ -57,9 +57,12 @@ export const submitAnswersCombined = async ({
   }
 
   try {
+    // Ensure finish time is not after game end time
+    const gameEndTime = new Date(gameData.end_time).getTime();
+    const submissionTime = Math.min(gameSession.finishTime, gameEndTime);
     // Format finish time for different uses
-    const finishTimeAnchor = new BN(gameSession.finishTime);
-    const finishTimeDb = getSupabaseTimestamp(new Date(gameSession.finishTime));
+    const finishTimeAnchor = new BN(submissionTime);
+    const finishTimeDb = getSupabaseTimestamp(new Date(submissionTime));
 
     // Use questions from gameData
     const questions = gameData.questions.map((q: QuestionFromDb) => ({

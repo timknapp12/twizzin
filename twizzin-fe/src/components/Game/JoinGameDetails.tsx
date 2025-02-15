@@ -80,7 +80,6 @@ const JoinGameDetails = ({
           </div>,
           {
             autoClose: false,
-            position: 'bottom-right',
           }
         );
       }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Column, Label, Row, Button, H2, H3, H3Secondary } from '@/components';
 import { useGameContext, useAppContext } from '@/contexts';
 import { countDownGameTime, getCurrentConfig } from '@/utils';
@@ -22,7 +22,8 @@ const PlayGame = () => {
   const [remainingTime, setRemainingTime] = useState('');
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { name, questions, end_time } = gameData || {};
+  const [isTimeExpired, setIsTimeExpired] = useState(false);
+  const { name, questions, end_time, status } = gameData || {};
   const currentQuestion = questions?.[currentQuestionIndex];
 
   // Get current answer from game session
@@ -30,16 +31,91 @@ const PlayGame = () => {
     ? getCurrentAnswer(currentQuestion.id)?.answerId
     : '';
 
-  useEffect(() => {
-    if (gameData.status !== 'active' || !end_time) return;
+  const handleAutoSubmitUnanswered = useCallback(() => {
+    if (!questions) return;
 
-    setRemainingTime(countDownGameTime(end_time));
-    const timer = setInterval(() => {
-      setRemainingTime(countDownGameTime(end_time));
-    }, 1000);
+    // For each question that doesn't have an answer
+    questions.forEach((question) => {
+      const existingAnswer = getCurrentAnswer(question.id);
+      if (!existingAnswer && question.answers.length > 0) {
+        // Auto-submit the first answer
+        const firstAnswer = question.answers[0];
+        submitAnswer({
+          questionId: question.id,
+          answerId: firstAnswer.id,
+          answerText: firstAnswer.answer_text,
+          displayOrder: question.display_order,
+          timestamp: new Date(end_time).getTime(), // Use game end time
+          displayLetter: firstAnswer.display_letter,
+        });
+      }
+    });
+  }, [questions, getCurrentAnswer, submitAnswer, end_time]);
+
+  // Handle time expiration
+  const handleTimeExpired = useCallback(async () => {
+    if (isTimeExpired) return;
+
+    setIsTimeExpired(true);
+    handleAutoSubmitUnanswered();
+    toast.error(t('Time has expired. Your answers have been submitted.'));
+    // Force submit all answers
+    try {
+      setIsSubmitting(true);
+      const signature = await handleSubmitAnswers();
+      if (signature) {
+        toast.success(
+          <div>
+            {t('Time expired - Answers submitted!')}
+            <a
+              href={`https://explorer.solana.com/tx/${signature}?cluster=${network}`}
+              target='_blank'
+              rel='noopener noreferrer'
+              className='text-var(--color-success) ml-2'
+            >
+              {t('View transaction')}
+            </a>
+          </div>,
+          {
+            autoClose: false,
+          }
+        );
+      }
+    } catch (error) {
+      toast.error(t('Error submitting answers when time expired'));
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [handleSubmitAnswers, handleAutoSubmitUnanswered, isTimeExpired, t]);
+
+  useEffect(() => {
+    if (status !== 'active' || !end_time) return;
+
+    const endTimeDate = new Date(end_time);
+    const now = new Date();
+
+    // Check if time has already expired
+    if (now >= endTimeDate) {
+      handleTimeExpired();
+      setRemainingTime('00:00');
+      return;
+    }
+
+    // Update timer
+    const updateTimer = () => {
+      const timeLeft = countDownGameTime(end_time);
+      setRemainingTime(timeLeft);
+
+      if (timeLeft === '00:00') {
+        handleTimeExpired();
+      }
+    };
+
+    updateTimer(); // Initial call
+    const timer = setInterval(updateTimer, 1000);
 
     return () => clearInterval(timer);
-  }, [end_time, gameData.status]);
+  }, [end_time, status, handleTimeExpired]);
 
   const handlePreviousQuestion = () => {
     if (currentQuestionIndex > 0) {
@@ -90,7 +166,6 @@ const PlayGame = () => {
           </div>,
           {
             autoClose: false,
-            position: 'bottom-right',
           }
         );
       }
@@ -157,6 +232,7 @@ const PlayGame = () => {
             <button
               key={answer.id}
               type='button'
+              disabled={isTimeExpired}
               onClick={() => handleAnswerSelect(answer.id)}
               className={`w-full my-1 p-4 text-left rounded-lg border transition-colors ${
                 selectedAnswer === answer.id
@@ -180,7 +256,7 @@ const PlayGame = () => {
             secondary
             type='button'
             onClick={handlePreviousQuestion}
-            disabled={currentQuestionIndex === 0}
+            disabled={currentQuestionIndex === 0 || isTimeExpired}
             className='flex items-center gap-2'
           >
             <FaArrowLeft size={16} />
@@ -190,7 +266,7 @@ const PlayGame = () => {
         <div className='w-[48%]'>
           <Button
             type='submit'
-            disabled={!selectedAnswer || isAdmin}
+            disabled={!selectedAnswer || isAdmin || isTimeExpired}
             className='flex items-center gap-2'
             isLoading={isSubmitting}
           >
