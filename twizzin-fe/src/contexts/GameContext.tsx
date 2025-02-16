@@ -501,22 +501,56 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
   const winnersDeclaredEventListenerRef = React.useRef<number | null>(null);
 
   useEffect(() => {
-    if (!program || !gameData || !connection) return;
+    // Validate all required dependencies are properly initialized
+    if (
+      !program ||
+      !gameData ||
+      !connection ||
+      !gameData.admin_wallet ||
+      !gameData.game_code
+    ) {
+      console.log('Missing required dependencies for game end listener');
+      return;
+    }
 
     const setupGameEndedListener = async () => {
       try {
+        // Validate admin wallet is a valid public key
+        let adminWallet: PublicKey;
+        try {
+          adminWallet = new PublicKey(gameData.admin_wallet);
+        } catch (error) {
+          console.error('Invalid admin wallet address:', error);
+          return;
+        }
+
+        // Get game PDA
         const { gamePda } = deriveGamePDAs(
           program,
-          new PublicKey(gameData.admin_wallet),
+          adminWallet,
           gameData.game_code
         );
 
+        if (!gamePda) {
+          console.error('Failed to derive game PDA');
+          return;
+        }
+
         const listener = program.addEventListener(
           'winnersDeclared',
-          async (event) => {
+          async (event: any) => {
+            // Explicitly type as any since we're using @ts-ignore
             try {
-              // @ts-ignore
-              if (event.game.toString() === gamePda.toString()) {
+              // Validate event structure
+              if (!event || !event.game) {
+                console.error('Invalid event structure:', event);
+                return;
+              }
+
+              const eventGameAddress = event.game.toString();
+              const expectedGameAddress = gamePda.toString();
+
+              if (eventGameAddress === expectedGameAddress) {
                 console.log('Game ended event received:', event);
 
                 // Update game status and persist to localStorage
@@ -540,10 +574,16 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
 
     setupGameEndedListener();
 
+    // Cleanup function
     return () => {
       if (winnersDeclaredEventListenerRef.current !== null && program) {
-        program.removeEventListener(winnersDeclaredEventListenerRef.current);
-        winnersDeclaredEventListenerRef.current = null;
+        try {
+          program.removeEventListener(winnersDeclaredEventListenerRef.current);
+        } catch (error) {
+          console.error('Error removing event listener:', error);
+        } finally {
+          winnersDeclaredEventListenerRef.current = null;
+        }
       }
     };
   }, [program, gameData, connection]);
