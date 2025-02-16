@@ -1,3 +1,5 @@
+'use client';
+
 import { GameAnswer, StoredGameSession, GameStartStatus } from '@/types';
 
 const GAME_SESSION_KEY = 'game_session';

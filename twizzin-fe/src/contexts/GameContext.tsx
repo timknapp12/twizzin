@@ -188,7 +188,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
 
   // Existing handleJoinGame implementation...
   const handleJoinGame = async (): Promise<string | null> => {
-    if (!program) throw new Error(t('Program not initialized'));
+    if (!program) throw new Error(t('Please connect your wallet'));
     if (!partialGameData) throw new Error('Game data not found');
     if (!publicKey) throw new Error(t('Please connect your wallet'));
     if (!sendTransaction)
