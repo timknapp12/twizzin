@@ -98,14 +98,22 @@ export async function getUserXPLevel(wallet: string): Promise<{
 }> {
   try {
     const { data, error } = await supabase
-      .from('users')
+      .from('players') // Changed from 'users' to 'players'
       .select('total_xp')
-      .eq('wallet', wallet)
+      .eq('wallet_address', wallet) // Changed from 'wallet' to 'wallet_address'
       .single();
 
-    if (error) throw error;
+    // If player not found or any error, return default values with 0 XP
+    if (error || !data) {
+      return {
+        currentXP: 0,
+        level: 0,
+        nextLevelXP: 100, // First level requires 100 XP
+        progress: 0,
+      };
+    }
 
-    const totalXP = data?.total_xp || 0;
+    const totalXP = data.total_xp || 0;
 
     // Calculate level based on XP (example progression)
     // Level N requires N^2 * 100 XP
@@ -123,6 +131,12 @@ export async function getUserXPLevel(wallet: string): Promise<{
     };
   } catch (error) {
     console.error('Error getting user XP level:', error);
-    throw error;
+    // Return default values instead of throwing
+    return {
+      currentXP: 0,
+      level: 0,
+      nextLevelXP: 100,
+      progress: 0,
+    };
   }
 }

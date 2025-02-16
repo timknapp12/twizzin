@@ -471,25 +471,17 @@ export interface GameReward {
   claimed: boolean;
 }
 
-interface TokenInfo {
-  ticker: string;
-}
-
-// Supabase returns nested selects as arrays
-type SupabaseNested<T> = T[];
-
-export interface GameInfo {
+interface GameInfo {
   name: string;
   img_url: string | null;
   token_mint: string;
-  tokens: SupabaseNested<TokenInfo>;
 }
 
 export interface PlayerGameReward {
   game_id: string;
   rewards_earned: number;
   rewards_claimed: boolean;
-  games: SupabaseNested<GameInfo>;
+  game: GameInfo[];
 }
 
 // user XP
