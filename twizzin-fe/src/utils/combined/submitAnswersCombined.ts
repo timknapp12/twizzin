@@ -64,16 +64,33 @@ export const submitAnswersCombined = async ({
     const finishTimeAnchor = new BN(submissionTime);
     const finishTimeDb = getSupabaseTimestamp(new Date(submissionTime));
 
-    // Use questions from gameData
+    // Extract questions with correct answers
     const questions = gameData.questions.map((q: QuestionFromDb) => ({
       id: q.id,
       correct_answer: q.correct_answer,
       display_order: q.display_order,
     }));
 
+    // Sort answers by display order
+    const sortedAnswers = [...gameSession.answers].sort(
+      (a, b) => a.displayOrder - b.displayOrder
+    );
+
+    // Format session for verification
+    const formattedSession: GameSession = {
+      answers: sortedAnswers.map((answer) => ({
+        displayOrder: answer.displayOrder,
+        answer: answer.answer,
+        questionId: answer.questionId,
+      })),
+      startTime: gameSession.startTime,
+      finishTime: submissionTime,
+      submitted: gameSession.submitted,
+    };
+
     // Verify and prepare answers
     const { answers: verifiedAnswers, numCorrect } =
-      await verifyAndPrepareAnswers(gameSession, questions);
+      await verifyAndPrepareAnswers(formattedSession, questions);
 
     // Mark the session as submitted
     const submittedSession = markSessionSubmitted(gameData.game_code);
@@ -104,7 +121,7 @@ export const submitAnswersCombined = async ({
       gameId: gameData.id,
       playerWallet: publicKey.toString(),
       gameSession: {
-        ...gameSession,
+        ...formattedSession,
         answers: verifiedAnswers,
         finishTime: finishTimeDb,
       },
@@ -140,7 +157,7 @@ export const submitAnswersCombined = async ({
             text: correctAnswer?.answer_text || '',
             displayLetter: correctAnswer?.display_letter || '',
           },
-          isCorrect: userAnswerDetails?.is_correct || false,
+          isCorrect: userAnswer?.isCorrect || false,
           displayOrder: question.display_order,
         };
       }

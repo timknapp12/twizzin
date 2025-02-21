@@ -1,4 +1,3 @@
-import { BN } from '@coral-xyz/anchor';
 import { PublicKey } from '@solana/web3.js';
 import { TFunction } from 'i18next';
 
@@ -81,7 +80,7 @@ export interface CreateGameContextType {
   handleUpdateQuestionData: (question: QuestionForDb) => void;
   handleDeleteQuestion: (displayOrder: number) => void;
   handleAddBlankQuestion: () => void;
-  handleCreateGame: () => Promise<void>;
+  handleCreateGame: () => Promise<GameCreationResult | null>;
   totalTime: number;
   creationResult: GameCreationResult | null;
   isCreating: boolean;
@@ -278,7 +277,7 @@ export interface AnswerFromDb {
 export interface GameAnswer {
   questionId: string;
   answerId: string;
-  answerText: string;
+  answer: string;
   displayOrder: number;
   timestamp: number;
   displayLetter: string;
@@ -314,14 +313,6 @@ export interface StartGameResult {
   error: string | null;
   startTime?: number;
   endTime?: number;
-}
-
-// Define the event interface from the IDL
-export interface GameStartedEvent {
-  admin: PublicKey;
-  game: PublicKey;
-  startTime: BN;
-  endTime: BN;
 }
 
 export interface AnswerInput {
@@ -442,7 +433,6 @@ export interface PlayerSubmission {
   player_wallet: string;
   num_correct: number;
   finished_time: number;
-  game_id: string;
 }
 
 export interface PlayerResult {

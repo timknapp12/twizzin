@@ -43,7 +43,7 @@ const PlayGame = () => {
         submitAnswer({
           questionId: question.id,
           answerId: firstAnswer.id,
-          answerText: firstAnswer.answer_text,
+          answer: firstAnswer.answer_text,
           displayOrder: question.display_order,
           timestamp: new Date(end_time).getTime(), // Use game end time
           displayLetter: firstAnswer.display_letter,
@@ -54,7 +54,7 @@ const PlayGame = () => {
 
   // Handle time expiration
   const handleTimeExpired = useCallback(async () => {
-    if (isTimeExpired) return;
+    if (isTimeExpired || isAdmin) return;
 
     setIsTimeExpired(true);
     handleAutoSubmitUnanswered();
@@ -71,7 +71,7 @@ const PlayGame = () => {
               href={`https://explorer.solana.com/tx/${signature}?cluster=${network}`}
               target='_blank'
               rel='noopener noreferrer'
-              className='text-var(--color-success) ml-2'
+              className='text-secondary hover:text-primary ml-2'
             >
               {t('View transaction')}
             </a>
@@ -86,7 +86,13 @@ const PlayGame = () => {
     } finally {
       setIsSubmitting(false);
     }
-  }, [handleSubmitAnswers, handleAutoSubmitUnanswered, isTimeExpired, t]);
+  }, [
+    handleSubmitAnswers,
+    handleAutoSubmitUnanswered,
+    isTimeExpired,
+    t,
+    isAdmin,
+  ]);
 
   useEffect(() => {
     if (status !== 'active' || !end_time) return;
@@ -136,7 +142,7 @@ const PlayGame = () => {
     submitAnswer({
       questionId: currentQuestion.id,
       answerId,
-      answerText:
+      answer:
         currentQuestion.answers.find((a) => a.id === answerId)?.answer_text ||
         '',
       displayOrder: currentQuestion.display_order,
@@ -159,7 +165,7 @@ const PlayGame = () => {
               href={`https://explorer.solana.com/tx/${signature}?cluster=${network}`}
               target='_blank'
               rel='noopener noreferrer'
-              className='text-var(--color-success) ml-2'
+              className='text-secondary hover:text-primary ml-2'
             >
               {t('View transaction')}
             </a>
@@ -185,6 +191,8 @@ const PlayGame = () => {
     }
   };
 
+  const isLastQuestion = currentQuestionIndex === (questions?.length || 0) - 1;
+  console.log('isLastQuestion', isLastQuestion);
   if (!currentQuestion) return null;
 
   // Waiting for game to start state
@@ -232,7 +240,7 @@ const PlayGame = () => {
             <button
               key={answer.id}
               type='button'
-              disabled={isTimeExpired}
+              disabled={isTimeExpired || isAdmin}
               onClick={() => handleAnswerSelect(answer.id)}
               className={`w-full my-1 p-4 text-left rounded-lg border transition-colors ${
                 selectedAnswer === answer.id
@@ -266,11 +274,15 @@ const PlayGame = () => {
         <div className='w-[48%]'>
           <Button
             type='submit'
-            disabled={!selectedAnswer || isAdmin || isTimeExpired}
+            disabled={
+              (!selectedAnswer && !isAdmin) ||
+              isTimeExpired ||
+              (isAdmin && isLastQuestion)
+            }
             className='flex items-center gap-2'
             isLoading={isSubmitting}
           >
-            {currentQuestionIndex === (questions?.length || 0) - 1 ? (
+            {isLastQuestion ? (
               t('Submit')
             ) : (
               <>
@@ -279,9 +291,9 @@ const PlayGame = () => {
               </>
             )}
           </Button>
-          {isAdmin && <EndGameButton />}
         </div>
       </Row>
+      {isAdmin && <EndGameButton />}
     </form>
   );
 };

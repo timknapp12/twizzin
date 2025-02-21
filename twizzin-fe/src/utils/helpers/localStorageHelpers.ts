@@ -21,7 +21,7 @@ export const saveGameAnswer = (
     // Convert GameAnswer to stored answer format
     const storedAnswer = {
       displayOrder: answer.displayOrder,
-      answer: answer.answerText, // Using answerText as the stored answer
+      answer: answer.answer, // Using answerText as the stored answer
       questionId: answer.questionId,
     };
 
@@ -157,7 +157,7 @@ export const getSortedGameAnswers = (gameCode: string): GameAnswer[] => {
     .map((storedAnswer) => ({
       questionId: storedAnswer.questionId,
       answerId: storedAnswer.questionId, // Using questionId as answerId
-      answerText: storedAnswer.answer,
+      answer: storedAnswer.answer,
       displayOrder: storedAnswer.displayOrder,
       timestamp: session.startTime, // Using session start time as timestamp
       displayLetter: storedAnswer.answer, // Using stored answer as display letter

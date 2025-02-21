@@ -128,9 +128,10 @@ export const fetchGameSubmissions = async (
   gameId: string
 ): Promise<PlayerSubmission[]> => {
   const { data, error } = await supabase
-    .from('player_submissions')
-    .select('player_wallet, num_correct, finished_time, game_id')
+    .from('player_games')
+    .select('player_wallet, num_correct, finished_time')
     .eq('game_id', gameId)
+    .not('finished_time', 'is', null) // Only get completed games
     .order('num_correct', { ascending: false })
     .order('finished_time', { ascending: true });
 

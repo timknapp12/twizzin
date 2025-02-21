@@ -73,7 +73,7 @@ const JoinGameDetails = ({
               href={`https://explorer.solana.com/tx/${signature}?cluster=${network}`}
               target='_blank'
               rel='noopener noreferrer'
-              className='text-var(--color-success) ml-2'
+              className='text-secondary hover:text-primary ml-2'
             >
               {t('View transaction')}
             </a>
@@ -125,7 +125,6 @@ const JoinGameDetails = ({
       : countdown;
 
   const hasGameData = gameData && gameData?.game_code?.length > 0;
-  console.log('hasGameData', hasGameData);
 
   const primaryColor = 'var(--color-primaryText)';
   const errorColor = 'var(--color-error)';

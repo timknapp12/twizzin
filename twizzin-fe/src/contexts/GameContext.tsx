@@ -62,7 +62,7 @@ export const useGameContext = () => {
 
 export const GameContextProvider = ({ children }: { children: ReactNode }) => {
   const { t, language, fetchUserXPAndRewards } = useAppContext();
-  const [gameCode, setGameCode] = useState('NYVWFN');
+  const [gameCode, setGameCode] = useState('YN9BJ9');
   const [partialGameData, setPartialGameData] = useState<PartialGame | null>(
     null
   );
@@ -325,7 +325,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
     if (!fullAnswer) return undefined;
     return {
       answerId: fullAnswer.id, // Use actual answer ID
-      answerText: fullAnswer.answer_text, // Use actual answer text
+      answer: fullAnswer.answer_text, // Use actual answer text
       displayOrder: fullAnswer.display_order,
       questionId: fullAnswer.question_id,
       timestamp: Date.now(),

@@ -1,11 +1,15 @@
-import { PublicKey, Connection, Transaction } from '@solana/web3.js';
+import {
+  PublicKey,
+  Connection,
+  Transaction,
+  SystemProgram,
+} from '@solana/web3.js';
 import { Program } from '@coral-xyz/anchor';
 import { TwizzinIdl } from '@/types/idl';
 import { supabase } from '@/utils/supabase';
 import {
   TOKEN_PROGRAM_ID,
   ASSOCIATED_TOKEN_PROGRAM_ID,
-  // getOrCreateAssociatedTokenAccount
 } from '@solana/spl-token';
 import { deriveGamePDAs } from './pdas';
 import { distributeGameXP } from '@/utils/supabase/xp';
@@ -21,10 +25,9 @@ export async function endGameAndDeclareWinners(
   connection: Connection,
   admin: PublicKey,
   sendTransaction: (
-    // eslint-disable-next-line no-unused-vars
     transaction: Transaction,
-    // eslint-disable-next-line no-unused-vars
-    connection: Connection
+    connection: Connection,
+    options?: { skipPreflight: boolean }
   ) => Promise<string>,
   params: {
     gameId: string;
@@ -55,10 +58,6 @@ export async function endGameAndDeclareWinners(
       gameData.all_are_winners
     );
 
-    if (!gameResults.winners.length) {
-      throw new Error('No eligible winners found');
-    }
-
     // Derive PDAs and fetch config
     const { gamePda, vaultPda, configPda, winnersPda } = deriveGamePDAs(
       program,
@@ -84,7 +83,7 @@ export async function endGameAndDeclareWinners(
         : params.treasuryTokenAccount,
       tokenProgram: TOKEN_PROGRAM_ID,
       associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-      systemProgram: program.programId,
+      systemProgram: SystemProgram.programId,
     };
 
     // Add endGame instruction
@@ -95,38 +94,46 @@ export async function endGameAndDeclareWinners(
       .instruction();
     transaction.add(endGameIx);
 
-    // Create winner PDAs and add declareWinners instruction
-    const winnerPDAs = await Promise.all(
-      gameResults.winners.map(async (winner) => {
-        const winnerPubkey = new PublicKey(winner.wallet);
-        const [playerPda] = PublicKey.findProgramAddressSync(
-          [Buffer.from('player'), gamePda.toBuffer(), winnerPubkey.toBuffer()],
-          program.programId
-        );
-        return playerPda;
-      })
-    );
+    // Only add declareWinners instruction if there are winners
+    if (gameResults.winners.length > 0) {
+      const winnerPDAs = await Promise.all(
+        gameResults.winners.map(async (winner) => {
+          const winnerPubkey = new PublicKey(winner.wallet);
+          const [playerPda] = PublicKey.findProgramAddressSync(
+            [
+              Buffer.from('player'),
+              gamePda.toBuffer(),
+              winnerPubkey.toBuffer(),
+            ],
+            program.programId
+          );
+          return playerPda;
+        })
+      );
 
-    const declareWinnersIx = await program.methods
-      .declareWinners(gameResults.winners.map((w) => new PublicKey(w.wallet)))
-      .accounts({
-        admin,
-        game: gamePda,
-        winners: winnersPda,
-        systemProgram: program.programId,
-      })
-      .remainingAccounts(
-        winnerPDAs.map((pda) => ({
-          pubkey: pda,
-          isWritable: false,
-          isSigner: false,
-        }))
-      )
-      .instruction();
-    transaction.add(declareWinnersIx);
+      const declareWinnersIx = await program.methods
+        .declareWinners(gameResults.winners.map((w) => new PublicKey(w.wallet)))
+        .accounts({
+          admin,
+          game: gamePda,
+          winners: winnersPda,
+          systemProgram: program.programId,
+        })
+        .remainingAccounts(
+          winnerPDAs.map((pda) => ({
+            pubkey: pda,
+            isWritable: false,
+            isSigner: false,
+          }))
+        )
+        .instruction();
+      transaction.add(declareWinnersIx);
+    }
 
     // Send and confirm transaction
-    const signature = await sendTransaction(transaction, connection);
+    const signature = await sendTransaction(transaction, connection, {
+      skipPreflight: true,
+    });
     const latestBlockhash = await connection.getLatestBlockhash();
     await connection.confirmTransaction({
       signature,
@@ -145,21 +152,24 @@ export async function endGameAndDeclareWinners(
       throw new Error(`Failed to update game status: ${updateError.message}`);
     }
 
-    // Fetch and update winner information
-    const onChainWinners = await fetchGameWinners(
-      program,
-      admin,
-      params.gameCode
-    );
+    // Only fetch and update winner information if there are winners
+    if (gameResults.winners.length > 0) {
+      const onChainWinners = await fetchGameWinners(
+        program,
+        admin,
+        params.gameCode
+      );
+      await updateGameWinners(params.gameId, onChainWinners);
+    }
 
-    await updateGameWinners(params.gameId, onChainWinners);
-
-    // Distribute XP
-    await distributeGameXP(
-      params.gameId,
-      gameResults.allPlayers,
-      gameData.even_split
-    );
+    // Distribute XP if there are players
+    if (gameResults.allPlayers.length > 0) {
+      await distributeGameXP(
+        params.gameId,
+        gameResults.allPlayers,
+        gameData.even_split
+      );
+    }
 
     return {
       success: true,

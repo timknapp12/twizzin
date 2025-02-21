@@ -48,7 +48,7 @@ const Game = () => {
 
   // Game is only considered started when admin manually starts it
   const hasGameStarted = gameData.status === 'active' || isManuallyStarted;
-  console.log('hasGameStarted', hasGameStarted);
+
   return (
     <ScreenContainer>
       <Header />
