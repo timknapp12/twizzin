@@ -5,6 +5,8 @@ import i18n from '../../i18n';
 import { ErrorBoundary, MainSkeleton } from '@/components';
 import dynamic from 'next/dynamic';
 import { ProgramContextProvider, AppContextProvider } from '@/contexts';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const WalletProviders = dynamic(
   () =>
@@ -32,7 +34,10 @@ export default function LayoutClient({ children, lang }: LayoutClientProps) {
       <WalletProviders>
         <ProgramContextProvider>
           <AppContextProvider>
-            <ErrorBoundary>{children}</ErrorBoundary>
+            <ErrorBoundary>
+              {children}
+              <ToastContainer position='bottom-right' />
+            </ErrorBoundary>
           </AppContextProvider>
         </ProgramContextProvider>
       </WalletProviders>

@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button, Column, Row, Label, Alert } from '@/components';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
@@ -8,8 +9,15 @@ import { TbListDetails } from 'react-icons/tb';
 import { GiSittingDog } from 'react-icons/gi';
 import { useAppContext, useGameContext } from '@/contexts';
 import { PartialGame } from '@/types';
-import { formatGameTime, getRemainingTime } from '@/utils';
-import { useEffect, useState } from 'react';
+import {
+  formatGameTime,
+  getRemainingTime,
+  formatSupabaseDate,
+  getCurrentConfig,
+} from '@/utils';
+import { toast } from 'react-toastify';
+
+const { network } = getCurrentConfig();
 
 const JoinGameDetails = ({
   partialGameData,
@@ -17,7 +25,8 @@ const JoinGameDetails = ({
   partialGameData: PartialGame;
 }) => {
   const { t, language } = useAppContext();
-  const { handleJoinGame, gameData } = useGameContext();
+  const { handleJoinGame, gameData, isAdmin, handleStartGame } =
+    useGameContext();
 
   const {
     game_code,
@@ -34,15 +43,12 @@ const JoinGameDetails = ({
     img_url,
   } = partialGameData || {};
 
-  const formatDate = (date: string | Date) => {
-    return new Date(date).toLocaleString();
-  };
-
   const totalTime =
     end_time && start_time ? formatGameTime(start_time, end_time) : 0;
 
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isStartingGame, setIsStartingGame] = useState(false);
   const [countdown, setCountdown] = useState<string>(
     getRemainingTime(start_time)
   );
@@ -58,7 +64,25 @@ const JoinGameDetails = ({
   const onJoinGame = async () => {
     setIsLoading(true);
     try {
-      await handleJoinGame();
+      const signature = await handleJoinGame();
+      if (signature) {
+        toast.success(
+          <div>
+            {t('Game joined successfully!')}
+            <a
+              href={`https://explorer.solana.com/tx/${signature}?cluster=${network}`}
+              target='_blank'
+              rel='noopener noreferrer'
+              className='text-secondary hover:text-primary ml-2'
+            >
+              {t('View transaction')}
+            </a>
+          </div>,
+          {
+            autoClose: false,
+          }
+        );
+      }
     } catch (error: unknown) {
       console.error('Error joining game:', error);
       if (error instanceof Error) {
@@ -73,14 +97,40 @@ const JoinGameDetails = ({
   };
 
   const router = useRouter();
-  const onLeaveGame = async () => router.push(`/${language}`);
+  const onLeaveGame = async () => router.push(`/${language}/join`);
+
+  const onStartGame = async () => {
+    setIsStartingGame(true);
+    try {
+      await handleStartGame();
+      toast.success(t('Game started successfully'));
+    } catch (error: unknown) {
+      console.error('Error starting game:', error);
+      if (error instanceof Error) {
+        setError(`${t('Error starting game')}: ${error.message}`);
+      } else {
+        setError(t('Error starting game'));
+      }
+      throw error;
+    } finally {
+      setIsStartingGame(false);
+    }
+  };
+
+  const countDownText =
+    countdown === 'Game has started!' && isAdmin
+      ? t('The game is ready for you to start it')
+      : countdown === 'Game has started!'
+      ? t('Waiting for admin to start game...')
+      : countdown;
 
   const hasGameData = gameData && gameData?.game_code?.length > 0;
-  console.log('hasGameData', hasGameData);
 
   const primaryColor = 'var(--color-primaryText)';
+  const errorColor = 'var(--color-error)';
+
   return (
-    <Column className='gap-4 w-full h-full flex-1' justify='between'>
+    <Column className='gap-4 w-full h-full flex-1 mt-2' justify='between'>
       {hasGameData ? (
         <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg  bg-[#af9aec] gap-4 w-full max-w-small mx-auto  text-[16px] active:opacity-80'>
           <Row className='gap-2'>
@@ -102,8 +152,10 @@ const JoinGameDetails = ({
         </div>
       )}
       <Row className='gap-2'>
-        <Label>{t('Time till game starts')}:</Label>
-        <Label style={{ color: primaryColor }}>{countdown}</Label>
+        {countdown !== 'Game has started!' ? (
+          <Label>{t('Time till game starts')}:</Label>
+        ) : null}
+        <Label style={{ color: errorColor }}>{countDownText}</Label>
       </Row>
       {img_url && (
         <div className='relative w-full max-w-[200px] min-w-[120px] aspect-square mx-auto'>
@@ -150,7 +202,7 @@ const JoinGameDetails = ({
         <Row className='gap-2'>
           <Label>{t('Game start time')}:</Label>
           <Label style={{ color: primaryColor }}>
-            {start_time ? formatDate(start_time) : '-'}
+            {start_time ? formatSupabaseDate(start_time) : '-'}
           </Label>
         </Row>
         <Row className='gap-2'>
@@ -177,10 +229,17 @@ const JoinGameDetails = ({
         />
       )}
       {hasGameData ? (
-        <Button onClick={onLeaveGame}>{t('Leave game')}</Button>
+        <Button secondary onClick={onLeaveGame}>
+          {t('Leave game')}
+        </Button>
       ) : (
         <Button onClick={onJoinGame} isLoading={isLoading}>
           {t('Join game')}
+        </Button>
+      )}
+      {hasGameData && isAdmin && (
+        <Button onClick={onStartGame} isLoading={isStartingGame}>
+          {t('Start game')}
         </Button>
       )}
     </Column>

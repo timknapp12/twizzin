@@ -20,10 +20,12 @@ import AddUpdateQuestion from './AddUpdateQuestion';
 import DisplayAddedGame from './DisplayAddedGame';
 import { FaPlus } from 'react-icons/fa6';
 import { GiBrain } from 'react-icons/gi';
-import { validateGame } from '@/utils';
+import { getCurrentConfig, validateGame } from '@/utils';
 import { useScreenSize } from '@/hooks/useScreenSize';
 import { GameDataChangeEvent } from '@/types';
+import { toast } from 'react-toastify';
 
+const { network } = getCurrentConfig();
 const AddUpdateGame = () => {
   const { t } = useAppContext();
   const {
@@ -114,10 +116,31 @@ const AddUpdateGame = () => {
         throw new Error(validationError);
       }
 
-      await handleCreateGame();
+      const result = await handleCreateGame();
 
       // Check creationResult from context
-      if (creationResult) {
+      if (result) {
+        const gameCode = result.database.game.game_code;
+        const signature = result.onChain.signature;
+        toast.success(
+          <div>
+            {`${t('Game created successfully!')} ${t(
+              'Save this code to share with players:'
+            )} `}
+            <span className='text-red font-bold'>{gameCode}</span>
+            <a
+              href={`https://explorer.solana.com/tx/${signature}?cluster=${network}`}
+              target='_blank'
+              rel='noopener noreferrer'
+              className='text-secondary hover:text-primary ml-2'
+            >
+              {t('View transaction')}
+            </a>
+          </div>,
+          {
+            autoClose: false,
+          }
+        );
         setIsEdit(false);
         // setShowGameCode(true);
       }

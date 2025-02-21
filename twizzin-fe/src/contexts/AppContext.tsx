@@ -6,12 +6,14 @@ import React, {
   useState,
   useEffect,
   ReactNode,
+  useCallback,
 } from 'react';
-import { AppContextType } from '@/types';
+import { useConnection, useWallet } from '@solana/wallet-adapter-react';
+import { AppContextType, GameReward } from '@/types';
 import { usePathname, useRouter } from 'next/navigation';
 import i18n from '@/i18n';
 import { useTranslation } from 'react-i18next';
-import { localeMap } from '@/utils';
+import { localeMap, getUserXPLevel, getUserRewards } from '@/utils';
 import { CreateGameProvider } from './CreateGameContext';
 import { GameContextProvider } from './GameContext';
 
@@ -30,6 +32,8 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [admin, setAdmin] = useState(null);
+  const [userXP, setUserXP] = useState<number>(0);
+  const [userRewards, setUserRewards] = useState<GameReward[]>([]);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -113,6 +117,28 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     // TODO - add logic here to convert prices
   };
 
+  const { connection } = useConnection();
+  const { publicKey } = useWallet();
+
+  const fetchUserXPAndRewards = useCallback(async () => {
+    if (!publicKey || !connection) return;
+    try {
+      const [xp, rewards] = await Promise.all([
+        getUserXPLevel(publicKey.toString()),
+        getUserRewards(publicKey.toString()),
+      ]);
+      setUserXP(xp.currentXP);
+      setUserRewards(rewards);
+    } catch (error) {
+      console.error('Failed to fetch XP and rewards:', error);
+    }
+  }, [publicKey, connection]);
+
+  useEffect(() => {
+    if (!publicKey || !connection) return;
+    fetchUserXPAndRewards();
+  }, [publicKey, connection, fetchUserXPAndRewards]);
+
   return (
     <AppContext.Provider
       value={{
@@ -129,6 +155,9 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         t,
         currency,
         changeCurrency,
+        userXP,
+        userRewards,
+        fetchUserXPAndRewards,
       }}
     >
       <CreateGameProvider>

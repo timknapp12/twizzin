@@ -12,6 +12,9 @@ export interface AppContextType {
   t: TFunction;
   currency: string;
   changeCurrency: (currency: string) => void;
+  userXP: number;
+  userRewards: GameReward[];
+  fetchUserXPAndRewards: () => Promise<void>;
 }
 
 export type GameDataChangeEvent = {
@@ -77,7 +80,7 @@ export interface CreateGameContextType {
   handleUpdateQuestionData: (question: QuestionForDb) => void;
   handleDeleteQuestion: (displayOrder: number) => void;
   handleAddBlankQuestion: () => void;
-  handleCreateGame: () => Promise<void>;
+  handleCreateGame: () => Promise<GameCreationResult | null>;
   totalTime: number;
   creationResult: GameCreationResult | null;
   isCreating: boolean;
@@ -204,7 +207,22 @@ export interface GameContextType {
   partialGameData: PartialGame | null;
   getGameByCode: (gameCode: string) => Promise<void>;
   gameData: JoinFullGame;
-  handleJoinGame: () => Promise<void>;
+  handleJoinGame: () => Promise<string | null>;
+  isAdmin: boolean;
+  submitAnswer: (answer: GameAnswer) => void;
+  getCurrentAnswer: (questionId: string) => GameAnswer | undefined;
+  getGameProgress: () => {
+    isComplete: boolean;
+    answeredCount: number;
+    remainingCount: number;
+  };
+  handleStartGame: () => Promise<void>;
+  handleSubmitAnswers: () => Promise<string | undefined>;
+  gameResult: GameResultFromDb | null;
+  handleEndGame: () => Promise<string | null>;
+  canEndGame: boolean;
+  isLoadingResults: boolean;
+  loadError: string | null;
 }
 
 export interface JoinGameParams {
@@ -233,4 +251,254 @@ export interface JoinFullGame {
   even_split: boolean;
   img_url: string | null;
   question_count: number;
+  questions: QuestionFromDb[];
+  status: string | 'not_started';
+}
+
+export interface QuestionFromDb {
+  id: string;
+  game_id: string;
+  question_text: string;
+  display_order: number;
+  correct_answer: string;
+  answers: AnswerFromDb[];
+}
+
+export interface AnswerFromDb {
+  id: string;
+  question_id: string;
+  answer_text: string;
+  display_letter: string;
+  display_order: number;
+  is_correct: boolean;
+}
+
+// Types for storage
+export interface GameAnswer {
+  questionId: string;
+  answerId: string;
+  answer: string;
+  displayOrder: number;
+  timestamp: number;
+  displayLetter: string;
+}
+
+export interface StoredGameSession {
+  gameCode: string;
+  gamePubkey: string;
+  startTime: number;
+  answers: {
+    [questionId: string]: {
+      displayOrder: number;
+      answer: string;
+      questionId: string;
+    };
+  };
+  submitted: boolean;
+  submittedTime?: number;
+}
+
+export interface GameStartStatus {
+  [gameCode: string]: {
+    isManuallyStarted: boolean; // Only true when admin explicitly starts the game
+    actualStartTime: number; // When admin started the game
+    actualEndTime: number; // Calculated end time from when admin started
+  };
+}
+
+// START GAME
+export interface StartGameResult {
+  success: boolean;
+  signature: string | null;
+  error: string | null;
+  startTime?: number;
+  endTime?: number;
+}
+
+export interface AnswerInput {
+  displayOrder: number;
+  answer: string;
+  questionId: string;
+  proof: number[][];
+}
+
+export interface SubmitAnswersParams {
+  admin: PublicKey;
+  gameCode: string;
+  answers: AnswerInput[];
+  clientFinishTime: number;
+}
+
+export interface GameSession {
+  answers: Array<{
+    displayOrder: number;
+    answer: string;
+    questionId: string;
+  }>;
+  startTime: number;
+  finishTime: number;
+  submitted: boolean;
+}
+
+export interface SubmitAnswersToDbParams {
+  gameId: string;
+  playerWallet: string;
+  gameSession: {
+    answers: VerifiedAnswer[];
+    finishTime: string;
+  };
+  signature: string;
+  numCorrect: number;
+}
+
+export interface VerifiedAnswer {
+  displayOrder: number;
+  answer: string;
+  questionId: string;
+  proof: number[][];
+  isCorrect: boolean;
+}
+
+export interface VerifyAnswersResult {
+  answers: VerifiedAnswer[];
+  numCorrect: number;
+}
+
+export interface GameResultQuestion {
+  questionId: string;
+  questionText: string;
+  userAnswer: {
+    text: string;
+    displayLetter: string;
+  } | null;
+  correctAnswer: {
+    text: string;
+    displayLetter: string;
+  };
+  isCorrect: boolean;
+  displayOrder: number;
+}
+
+export interface GameResultFromDb {
+  answeredQuestions: GameResultQuestion[];
+  totalCorrect: number;
+  totalQuestions: number;
+  completedAt: string | null;
+  winners?: PlayerResult[];
+  leaderboard?: PlayerResult[];
+  finalRank?: number;
+  xpEarned?: number;
+  rewardsEarned?: number;
+  startTime?: string;
+  endTime?: string;
+}
+
+interface PlayerAnswerFromDbResult {
+  question_id: string;
+  selected_answer: string;
+  is_correct: boolean;
+  answered_at: string;
+}
+
+interface PlayerGameFromDbResult {
+  id: string;
+  num_correct: number;
+  finished_time: string | null;
+  final_rank?: number;
+  xp_earned?: number;
+  rewards_earned?: number;
+  player_answers: PlayerAnswerFromDbResult[];
+}
+
+interface QuestionFromDbResult {
+  id: string;
+  question_text: string;
+  display_order: number;
+  answers: AnswerFromDbResult[];
+}
+
+interface AnswerFromDbResult {
+  id: string;
+  answer_text: string;
+  display_letter: string;
+  is_correct: boolean;
+}
+
+export interface RawGameResult {
+  playerGame: PlayerGameFromDbResult;
+  questions: QuestionFromDbResult[];
+}
+
+export interface PlayerSubmission {
+  player_wallet: string;
+  num_correct: number;
+  finished_time: number;
+}
+
+export interface PlayerResult {
+  wallet: string;
+  numCorrect: number;
+  finishTime: number;
+  rank: number;
+  isWinner: boolean;
+  xpEarned?: number;
+  rewardsEarned?: number;
+}
+
+export interface GameResults {
+  winners: PlayerResult[];
+  allPlayers: PlayerResult[];
+}
+
+// user rewards
+export interface GameReward {
+  gameId: string;
+  gameName: string;
+  imageUrl: string | null;
+  rewardAmount: number;
+  tokenMint: string;
+  tokenSymbol: string;
+  claimed: boolean;
+}
+
+interface GameInfo {
+  name: string;
+  img_url: string | null;
+  token_mint: string;
+}
+
+export interface PlayerGameReward {
+  game_id: string;
+  rewards_earned: number;
+  rewards_claimed: boolean;
+  game: GameInfo[];
+}
+
+// user XP
+export interface XPDistributionConfig {
+  baseParticipationXP: number; // XP for participating
+  winnerBaseXP: number; // Additional base XP for being a winner
+  firstPlaceBonus: number; // Additional XP for first place
+  answerXPMultiplier: number; // XP multiplier per correct answer
+}
+
+export const DEFAULT_XP_CONFIG: XPDistributionConfig = {
+  baseParticipationXP: 50,
+  winnerBaseXP: 100,
+  firstPlaceBonus: 50,
+  answerXPMultiplier: 10,
+};
+
+export interface XPAward {
+  wallet: string;
+  xpAmount: number;
+  reason: string;
+}
+
+// get winners
+export interface OnChainWinner {
+  player: PublicKey;
+  rank: number;
+  prizeAmount: bigint;
+  claimed: boolean;
 }

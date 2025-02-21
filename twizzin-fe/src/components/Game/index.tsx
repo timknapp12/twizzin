@@ -1,17 +1,29 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { ScreenContainer, InnerScreenContainer } from '@/components';
 import { Header } from '../Header';
 import { useGameContext } from '@/contexts';
 import JoinGameDetails from './JoinGameDetails';
 import GameDetailsSkeleton from './GameDetailsSkeleton';
+import PlayGame from './PlayGame';
+import PlayerGameResults from './PlayerGameResults';
+import { getGameStartStatus } from '@/utils';
 
 const Game = () => {
   const params = useParams();
   const gameCode = params.gameCode;
-  const { getGameByCode, partialGameData } = useGameContext();
+  const { getGameByCode, partialGameData, gameData, gameResult } =
+    useGameContext();
+  const [isManuallyStarted, setIsManuallyStarted] = useState<boolean | null>(
+    null
+  );
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!gameCode) return;
@@ -20,11 +32,32 @@ const Game = () => {
     }
   }, [gameCode, getGameByCode, partialGameData]);
 
+  // Check if game was manually started by admin - only runs on client
+  // TODO - check to see if this is needed now that we have the gameData.status
+  useEffect(() => {
+    if (typeof gameCode === 'string') {
+      const startStatus = getGameStartStatus(gameCode);
+      setIsManuallyStarted(startStatus);
+    }
+  }, [gameCode]);
+
+  // Don't render anything until we're mounted and have checked local storage
+  if (!isMounted) {
+    return <GameDetailsSkeleton />;
+  }
+
+  // Game is only considered started when admin manually starts it
+  const hasGameStarted = gameData.status === 'active' || isManuallyStarted;
+
   return (
     <ScreenContainer>
       <Header />
       <InnerScreenContainer>
-        {partialGameData ? (
+        {gameResult ? (
+          <PlayerGameResults />
+        ) : hasGameStarted && gameData ? (
+          <PlayGame />
+        ) : partialGameData ? (
           <JoinGameDetails partialGameData={partialGameData} />
         ) : (
           <GameDetailsSkeleton />

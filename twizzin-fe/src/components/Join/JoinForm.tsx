@@ -30,7 +30,7 @@ const JoinForm = () => {
       if (gameCode.length !== 6) {
         throw new Error(t('Game code must be 6 characters'));
       }
-      await getGameByCode(gameCode);
+      await getGameByCode(gameCode.toUpperCase());
     } catch (err: any) {
       console.log('err', err?.message);
       if (err?.message?.includes('multiple (or no) rows returned')) {

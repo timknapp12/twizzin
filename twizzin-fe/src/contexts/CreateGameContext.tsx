@@ -126,20 +126,20 @@ export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
     setImageFile(file);
   };
 
-  const handleCreateGame = async () => {
+  const handleCreateGame = async (): Promise<GameCreationResult | null> => {
     if (!program) {
       setError(t('Program not initialized'));
-      return;
+      return null;
     }
 
     if (!publicKey) {
       setError(t('Please connect your wallet'));
-      return;
+      return null;
     }
 
     if (!sendTransaction) {
       setError(t('Wallet adapter not properly initialized'));
-      return;
+      return null;
     }
 
     setIsCreating(true);
@@ -164,7 +164,7 @@ export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
       const result = await createGameCombined(
         program,
         connection,
-        publicKey!, // Add non-null assertion since we know publicKey exists at this point
+        publicKey!,
         sendTransaction,
         params
       );
@@ -174,6 +174,8 @@ export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
       setGameData(initialGameData);
       setQuestions([blankQuestion]);
       setImageFile(null);
+
+      return result;
     } catch (err: unknown) {
       console.error('Failed to create game CreateGameContext:', err);
       setError(
@@ -181,6 +183,7 @@ export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
           ? err.message
           : t('Failed to create game CreateGameContext')
       );
+      return null;
     } finally {
       setIsCreating(false);
     }

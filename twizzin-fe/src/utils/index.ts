@@ -5,3 +5,4 @@ export * from './supabase';
 export * from './program';
 export * from './merkle';
 export * from './helpers';
+export * from './getConfig';

@@ -42,6 +42,8 @@
 --     username TEXT
 -- );
 
+-- CREATE TYPE game_status AS ENUM ('not_started', 'active', 'ended');
+
 -- -- Games table
 -- CREATE TABLE games (
 --     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -61,6 +63,7 @@
 --     even_split BOOLEAN DEFAULT false,
 --     answer_merkle_root TEXT,
 --     img_url TEXT,
+--     status game_status DEFAULT 'not_started',
 --     created_at TIMESTAMPTZ DEFAULT NOW()
 -- );
 
@@ -101,6 +104,7 @@
 --     final_rank INTEGER,
 --     created_at TIMESTAMPTZ DEFAULT NOW(),
 --     UNIQUE(player_wallet, game_id)
+--     solana_signature TEXT
 -- );
 
 -- -- Player Answers table

@@ -49,6 +49,7 @@ export const getPartialGameFromDb = async (gameCode: string) => {
         all_are_winners,
         even_split,
         img_url,
+        status,
         questions:questions(count)
       `
       )
