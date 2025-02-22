@@ -117,7 +117,7 @@ export async function endGameAndDeclareWinners(
           admin,
           game: gamePda,
           winners: winnersPda,
-          systemProgram: program.programId,
+          systemProgram: SystemProgram.programId,
         })
         .remainingAccounts(
           winnerPDAs.map((pda) => ({

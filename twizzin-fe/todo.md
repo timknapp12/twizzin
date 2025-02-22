@@ -1,6 +1,9 @@
 Before DEMO:
 
-- add success toast for creating game and return game code
+- update start time for player game
+- make sure players get xp for the game
+- set start time for chain account way into the future
+- set rewards total and mint in the db - maybe mint can be joined
 - make sure wallet is connected before starting game
 - add input for username for creating a game and joining a game
 - add 1 XP per player for the game creator
@@ -41,10 +44,5 @@ refactor after MVP:
 - clean up imports from utils
 
 - write tests for helper functions - like getGameTimeInSeconds
-
-bugs with starting game
-
-admin - end game - Account has no data - screen shot
-2mT82fHRfX7MHF8aS7JhVtgzPJzKyPLaqKfmSuS7fmnj
 
 // https://app.timsol.org/

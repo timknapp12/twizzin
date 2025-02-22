@@ -169,7 +169,7 @@ const JoinGameDetails = ({
           />
         </div>
       )}
-      <Column className='gap-2 w-full p-4 bg-surface rounded-lg'>
+      <Column className='gap-2 w-full p-4 rounded-lg shadow-xl'>
         <Row className='gap-2'>
           <Label>{t('Game Title')}:</Label>
           <Label style={{ color: primaryColor }}>{game_name}</Label>
@@ -228,20 +228,22 @@ const JoinGameDetails = ({
           onClose={() => setError(null)}
         />
       )}
-      {hasGameData ? (
-        <Button secondary onClick={onLeaveGame}>
-          {t('Leave game')}
-        </Button>
-      ) : (
-        <Button onClick={onJoinGame} isLoading={isLoading}>
-          {t('Join game')}
-        </Button>
-      )}
-      {hasGameData && isAdmin && (
-        <Button onClick={onStartGame} isLoading={isStartingGame}>
-          {t('Start game')}
-        </Button>
-      )}
+      <Column className='gap-4 w-full'>
+        {hasGameData ? (
+          <Button secondary onClick={onLeaveGame}>
+            {t('Leave game')}
+          </Button>
+        ) : (
+          <Button onClick={onJoinGame} isLoading={isLoading}>
+            {t('Join game')}
+          </Button>
+        )}
+        {hasGameData && isAdmin && (
+          <Button onClick={onStartGame} isLoading={isStartingGame}>
+            {t('Start game')}
+          </Button>
+        )}
+      </Column>
     </Column>
   );
 };

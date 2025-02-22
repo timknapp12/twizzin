@@ -6,34 +6,30 @@ export async function updateGameWinners(
   winners: OnChainWinner[]
 ): Promise<void> {
   try {
-    // Start a transaction to update all winners
-    const { error } = await supabase.rpc('begin_transaction');
-    if (error) throw error;
+    // Prepare all updates as a single batch operation
+    const updates = winners.map((winner) => ({
+      game_id: gameId,
+      player_wallet: winner.player.toString(),
+      rewards_earned: winner.prizeAmount.toString(),
+      rewards_claimed: winner.claimed,
+      final_rank: winner.rank,
+    }));
 
-    try {
-      // Update each winner's record
-      for (const winner of winners) {
-        const { error: updateError } = await supabase
-          .from('player_games')
-          .update({
-            rewards_earned: winner.prizeAmount.toString(), // Convert BigInt to string
-            rewards_claimed: winner.claimed,
-            final_rank: winner.rank,
-          })
-          .eq('game_id', gameId)
-          .eq('player_wallet', winner.player.toString());
+    // Perform a single upsert operation
+    const { error } = await supabase.from('player_games').upsert(updates, {
+      onConflict: 'player_wallet,game_id',
+      ignoreDuplicates: false,
+    });
 
-        if (updateError) throw updateError;
-      }
-
-      // Commit the transaction
-      const { error: commitError } = await supabase.rpc('commit_transaction');
-      if (commitError) throw commitError;
-    } catch (error) {
-      // Rollback on any error
-      await supabase.rpc('rollback_transaction');
-      throw error;
+    for (const winner of winners) {
+      console.log(
+        `Updating winner: ${winner.player.toString()}, rank: ${
+          winner.rank
+        }, prize: ${winner.prizeAmount.toString()}`
+      );
     }
+
+    if (error) throw error;
   } catch (error) {
     console.error('Error updating game winners:', error);
     throw error;

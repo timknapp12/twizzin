@@ -42,7 +42,9 @@ export async function verifyAndPrepareAnswers(
     }
 
     const proof = tree.getProof(userAnswer.displayOrder);
-    const isCorrect = userAnswer.answer === question.correct_answer;
+    const isCorrect =
+      userAnswer.answer.trim().toUpperCase() ===
+      question.correct_answer.trim().toUpperCase();
 
     return {
       displayOrder: userAnswer.displayOrder,

@@ -62,7 +62,7 @@ export const useGameContext = () => {
 
 export const GameContextProvider = ({ children }: { children: ReactNode }) => {
   const { t, language, fetchUserXPAndRewards } = useAppContext();
-  const [gameCode, setGameCode] = useState('YN9BJ9');
+  const [gameCode, setGameCode] = useState('4WS2AX');
   const [partialGameData, setPartialGameData] = useState<PartialGame | null>(
     null
   );
@@ -305,8 +305,12 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
   // New answer management functions
   const submitAnswer = (answer: GameAnswer) => {
     if (!gameCode) return;
-
-    const updatedSession = saveGameAnswer(gameCode, answer);
+    // Make sure we're always using the display letter
+    const modifiedAnswer = {
+      ...answer,
+      answer: answer.displayLetter,
+    };
+    const updatedSession = saveGameAnswer(gameCode, modifiedAnswer);
     setGameSession(updatedSession);
   };
 
@@ -325,7 +329,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
     if (!fullAnswer) return undefined;
     return {
       answerId: fullAnswer.id, // Use actual answer ID
-      answer: fullAnswer.answer_text, // Use actual answer text
+      answer: fullAnswer.display_letter, // Use display letter
       displayOrder: fullAnswer.display_order,
       questionId: fullAnswer.question_id,
       timestamp: Date.now(),

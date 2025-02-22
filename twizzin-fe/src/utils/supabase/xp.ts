@@ -54,38 +54,74 @@ export async function distributeGameXP(
       });
     }
 
-    // Batch insert XP awards into database
-    const { error } = await supabase.from('xp_transactions').insert(
-      xpAwards.map((award) => ({
-        wallet: award.wallet,
-        amount: award.xpAmount,
-        reason: award.reason,
-        game_id: gameId,
-        created_at: new Date().toISOString(),
-      }))
-    );
-
-    if (error) {
-      throw new Error(`Failed to insert XP awards: ${error.message}`);
-    }
-
-    // Update total XP for each player
+    // Update player_games with XP earned
     for (const award of xpAwards) {
-      const { error: updateError } = await supabase.rpc('update_user_xp', {
-        p_wallet: award.wallet,
-        p_xp_amount: award.xpAmount,
-      });
+      try {
+        const { error: pgUpdateError } = await supabase
+          .from('player_games')
+          .update({ xp_earned: award.xpAmount })
+          .eq('game_id', gameId)
+          .eq('player_wallet', award.wallet);
 
-      if (updateError) {
+        if (pgUpdateError) {
+          console.error(
+            `Failed to update xp_earned for ${award.wallet}:`,
+            pgUpdateError
+          );
+        }
+
+        // Get current player data to check if they exist and get current XP
+        const { data: playerData, error: fetchError } = await supabase
+          .from('players')
+          .select('total_xp')
+          .eq('wallet_address', award.wallet)
+          .single();
+
+        if (fetchError && fetchError.code !== 'PGRST116') {
+          // Not found error code
+          console.error(`Error fetching player ${award.wallet}:`, fetchError);
+          continue;
+        }
+
+        if (playerData) {
+          // Player exists, update their total XP
+          const newTotal = (playerData.total_xp || 0) + award.xpAmount;
+          const { error: updateError } = await supabase
+            .from('players')
+            .update({ total_xp: newTotal })
+            .eq('wallet_address', award.wallet);
+
+          if (updateError) {
+            console.error(
+              `Failed to update total_xp for ${award.wallet}:`,
+              updateError
+            );
+          }
+        } else {
+          // Player doesn't exist, create them
+          const { error: insertError } = await supabase.from('players').insert({
+            wallet_address: award.wallet,
+            total_xp: award.xpAmount,
+          });
+
+          if (insertError) {
+            console.error(
+              `Failed to create player ${award.wallet}:`,
+              insertError
+            );
+          }
+        }
+      } catch (playerError) {
+        // Log error but continue with other players
         console.error(
-          `Failed to update total XP for wallet ${award.wallet}:`,
-          updateError
+          `Error processing XP for player ${award.wallet}:`,
+          playerError
         );
       }
     }
   } catch (error) {
     console.error('Error distributing XP:', error);
-    throw error;
+    // Don't throw - this makes it more resilient
   }
 }
 

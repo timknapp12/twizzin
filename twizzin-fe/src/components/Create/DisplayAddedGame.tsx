@@ -35,7 +35,7 @@ const DisplayAddedGame: React.FC<DisplayAddedGameProps> = ({
 }) => {
   const { t } = useAppContext();
   const { creationResult } = useCreateGameContext();
-  console.log('creationResult', creationResult);
+
   const totalTime = questions.reduce(
     (acc, question) => acc + question.timeLimit,
     0

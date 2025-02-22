@@ -42,8 +42,6 @@ const AddUpdateGame = () => {
     handleImageChange,
   } = useCreateGameContext();
 
-  console.log('creationResult', creationResult);
-
   const { connection } = useConnection();
   const { publicKey } = useWallet();
 
@@ -54,7 +52,7 @@ const AddUpdateGame = () => {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showGameCode, setShowGameCode] = useState(false);
-  console.log('isEdit', isEdit);
+
   const doesGameCodeExist = gameData.gameCode && gameData.gameCode.length > 0;
   // console.log('doesGameCodeExist', doesGameCodeExist);
   const handleDateChange = (date: Date | null) => {

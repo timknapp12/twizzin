@@ -77,10 +77,12 @@ const HomeView = ({ onSetView }: HomeViewProps) => {
           />
         ))}
       </Row>
-      <Button onClick={onCreateGame}>{t('Create a new game')}</Button>
-      <Button secondary onClick={onJoinGame}>
-        {t('Join a game')}
-      </Button>
+      <Column className='gap-4 w-full'>
+        <Button secondary onClick={onCreateGame}>
+          {t('Create a new game')}
+        </Button>
+        <Button onClick={onJoinGame}>{t('Join a game')}</Button>
+      </Column>
     </Column>
   );
 };

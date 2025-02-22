@@ -45,7 +45,6 @@ export const AdminComponent = () => {
       process.env.NEXT_PUBLIC_PROGRAM_AUTHORITY;
     setIsTwizzinAdmin(isTwizzinAdmin);
   }, [wallet.publicKey]);
-  console.log('isTwizzinAdmin', isTwizzinAdmin);
 
   const handleInitConfig = async () => {
     if (!program || !isWalletConnected) {

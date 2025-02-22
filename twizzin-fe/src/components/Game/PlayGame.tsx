@@ -192,7 +192,7 @@ const PlayGame = () => {
   };
 
   const isLastQuestion = currentQuestionIndex === (questions?.length || 0) - 1;
-  console.log('isLastQuestion', isLastQuestion);
+
   if (!currentQuestion) return null;
 
   // Waiting for game to start state
@@ -231,7 +231,7 @@ const PlayGame = () => {
       </H3Secondary>
 
       {/* Question Text */}
-      <div className='bg-white p-6 rounded-lg shadow-lg'>
+      <div className='p-6 rounded-lg shadow-xl'>
         <H3 className='mb-4'>{currentQuestion.question_text}</H3>
 
         {/* Answer Options */}
