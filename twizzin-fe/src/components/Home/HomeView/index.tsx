@@ -50,9 +50,17 @@ const HomeView = ({ onSetView }: HomeViewProps) => {
   const router = useRouter();
 
   const [selectedItem, setSelectedItem] = useState<number>(0);
+  const [isCreateLoading, setIsCreateLoading] = useState(false);
+  const [isJoinLoading, setIsJoinLoading] = useState(false);
 
-  const onCreateGame = () => router.push(`/${language}/create`);
-  const onJoinGame = () => router.push(`/${language}/join`);
+  const onCreateGame = () => {
+    setIsCreateLoading(true);
+    router.push(`/${language}/create`);
+  };
+  const onJoinGame = () => {
+    setIsJoinLoading(true);
+    router.push(`/${language}/join`);
+  };
 
   return (
     <Column className='gap-4'>
@@ -78,10 +86,12 @@ const HomeView = ({ onSetView }: HomeViewProps) => {
         ))}
       </Row>
       <Column className='gap-4 w-full'>
-        <Button secondary onClick={onCreateGame}>
+        <Button isLoading={isCreateLoading} secondary onClick={onCreateGame}>
           {t('Create a new game')}
         </Button>
-        <Button onClick={onJoinGame}>{t('Join a game')}</Button>
+        <Button isLoading={isJoinLoading} onClick={onJoinGame}>
+          {t('Join a game')}
+        </Button>
       </Column>
     </Column>
   );
