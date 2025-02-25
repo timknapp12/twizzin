@@ -215,6 +215,8 @@ export interface PartialGame {
 }
 
 export interface GameContextType {
+  username: string;
+  setUsername: (value: string) => void;
   gameCode: string;
   setGameCode: (value: string) => void;
   partialGameData: PartialGame | null;

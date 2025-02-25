@@ -61,8 +61,9 @@ export const useGameContext = () => {
 };
 
 export const GameContextProvider = ({ children }: { children: ReactNode }) => {
-  const { t, language, fetchUserXPAndRewards } = useAppContext();
-  const [gameCode, setGameCode] = useState('VUBGYP');
+  const { t, language, fetchUserXPAndRewards, userProfile } = useAppContext();
+  const [username, setUsername] = useState('');
+  const [gameCode, setGameCode] = useState('7Y762Y');
   const [partialGameData, setPartialGameData] = useState<PartialGame | null>(
     null
   );
@@ -81,6 +82,12 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
   const { connection } = useConnection();
   const wallet = useWallet();
   const { publicKey, sendTransaction } = wallet;
+
+  useEffect(() => {
+    if (userProfile?.username) {
+      setUsername(userProfile.username);
+    }
+  }, [userProfile?.username]);
 
   // Load game session when game code changes
   useEffect(() => {
@@ -193,7 +200,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
     if (!publicKey) throw new Error(t('Please connect your wallet'));
     if (!sendTransaction)
       throw new Error(t('Wallet adapter not properly initialized'));
-
+    if (!username) throw new Error(t('Username is required'));
     try {
       const { gamePda } = deriveGamePDAs(
         program,
@@ -231,6 +238,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
         admin: new PublicKey(partialGameData.admin_wallet),
         tokenMint: new PublicKey(partialGameData.token_mint),
         entryFee: partialGameData.entry_fee,
+        username: username,
       };
 
       const result = await joinGameCombined(
@@ -698,6 +706,8 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
   return (
     <GameContext.Provider
       value={{
+        username,
+        setUsername,
         gameCode,
         setGameCode,
         partialGameData,

@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button, Column, Row, Label, Alert } from '@/components';
+import { Button, Column, Row, Label, Alert, Input } from '@/components';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { TbListDetails } from 'react-icons/tb';
 import { GiSittingDog } from 'react-icons/gi';
@@ -25,8 +25,14 @@ const JoinGameDetails = ({
   partialGameData: PartialGame;
 }) => {
   const { t, language } = useAppContext();
-  const { handleJoinGame, gameData, isAdmin, handleStartGame } =
-    useGameContext();
+  const {
+    username,
+    setUsername,
+    handleJoinGame,
+    gameData,
+    isAdmin,
+    handleStartGame,
+  } = useGameContext();
 
   const {
     game_code,
@@ -229,6 +235,16 @@ const JoinGameDetails = ({
         />
       )}
       <Column className='gap-4 w-full'>
+        {!isAdmin && !hasGameData && (
+          <Input
+            label={t('Username')}
+            value={username}
+            required
+            maxLength={20}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder={t('Enter your username')}
+          />
+        )}
         {hasGameData ? (
           <Button secondary onClick={onLeaveGame}>
             {t('Leave game')}

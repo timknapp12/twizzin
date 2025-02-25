@@ -1,9 +1,7 @@
 Before DEMO:
 
-- update start time for player game
-- make sure players get xp for the game
-- set start time for chain account way into the future
-- set rewards total and mint in the db - maybe mint can be joined
+- set start time for chain account way into the future - ✅
+- set rewards total and mint in the db - maybe mint can be joined - ✅
 - make sure wallet is connected before starting game
 - add input for username for creating a game and joining a game
 - add 1 XP per player for the game creator
@@ -20,6 +18,7 @@ Before DEMO:
 
 refactor after MVP:
 
+- update join time for player game
 - handle page reloads during game
 - accept SPL tokens - change in create game and JoinComponent
 - delete game from db and on-chain before game ever starts

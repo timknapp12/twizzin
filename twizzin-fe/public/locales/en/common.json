@@ -153,5 +153,7 @@
   "Game created successfully!": "Game created successfully!",
   "Save this code to share with players:": "Save this code to share with players:",
   "Your username": "Your username",
-  "Username is required": "Username is required"
+  "Username is required": "Username is required",
+  "Username": "Username",
+  "Enter your username": "Enter your username"
 }
