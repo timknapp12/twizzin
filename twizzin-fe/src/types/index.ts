@@ -1,6 +1,8 @@
 import { PublicKey } from '@solana/web3.js';
 import { TFunction } from 'i18next';
 
+export * from './dbTypes';
+
 /* eslint-disable no-unused-vars */
 export interface AppContextType {
   isSignedIn: boolean;
@@ -15,6 +17,14 @@ export interface AppContextType {
   userXP: number;
   userRewards: GameReward[];
   fetchUserXPAndRewards: () => Promise<void>;
+  userProfile: UserProfile | null;
+}
+
+export interface UserProfile {
+  walletAddress: string;
+  username: string;
+  totalXP: number;
+  createdAt: string;
 }
 
 export type GameDataChangeEvent = {
@@ -107,6 +117,7 @@ export interface GameInputForDb {
   evenSplit: boolean;
   answerMerkleRoot: string;
   imgUrl?: string;
+  username?: string;
 }
 
 export interface QuestionForDb {
@@ -157,6 +168,7 @@ export interface CreateGameData {
   // answers: AnswerToBeHashed[];
   evenSplit: boolean;
   allAreWinners: boolean;
+  username?: string;
 }
 
 export interface CreateGameCombinedParams {
@@ -173,6 +185,7 @@ export interface CreateGameCombinedParams {
   adminTokenAccount?: PublicKey;
   questions: QuestionForDb[];
   imageFile: File | null;
+  username?: string;
 }
 
 export interface CarouselItem {
@@ -232,6 +245,7 @@ export interface JoinGameParams {
   playerTokenAccount?: PublicKey;
   vaultTokenAccount?: PublicKey;
   entryFee: number;
+  username?: string;
 }
 
 export interface JoinFullGame {
@@ -345,6 +359,7 @@ export interface SubmitAnswersToDbParams {
   playerWallet: string;
   gameSession: {
     answers: VerifiedAnswer[];
+    startTime?: number | string;
     finishTime: string;
   };
   signature: string;

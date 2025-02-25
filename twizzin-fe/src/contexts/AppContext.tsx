@@ -9,11 +9,12 @@ import React, {
   useCallback,
 } from 'react';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
-import { AppContextType, GameReward } from '@/types';
+import { AppContextType, GameReward, UserProfile } from '@/types';
 import { usePathname, useRouter } from 'next/navigation';
 import i18n from '@/i18n';
 import { useTranslation } from 'react-i18next';
-import { localeMap, getUserXPLevel, getUserRewards } from '@/utils';
+import { localeMap, getPlayerDataWithRewards } from '@/utils';
+import { processPlayerRewardsResponse } from '@/types/dbTypes'; // Import the helper function
 import { CreateGameProvider } from './CreateGameContext';
 import { GameContextProvider } from './GameContext';
 
@@ -34,6 +35,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [admin, setAdmin] = useState(null);
   const [userXP, setUserXP] = useState<number>(0);
   const [userRewards, setUserRewards] = useState<GameReward[]>([]);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -120,25 +122,39 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const { connection } = useConnection();
   const { publicKey } = useWallet();
 
+  // Fetch user data (profile, XP, and rewards) in a single function
   const fetchUserXPAndRewards = useCallback(async () => {
     if (!publicKey || !connection) return;
+
     try {
-      const [xp, rewards] = await Promise.all([
-        getUserXPLevel(publicKey.toString()),
-        getUserRewards(publicKey.toString()),
-      ]);
-      setUserXP(xp.currentXP);
-      setUserRewards(rewards);
+      // Get player data from the new function
+      const playerData = await getPlayerDataWithRewards(publicKey.toString());
+
+      if (playerData) {
+        // Process the data into the format your app expects
+        const { userProfile, gameRewards } =
+          processPlayerRewardsResponse(playerData);
+
+        // Update state with the processed data
+        setUserProfile(userProfile);
+        setUserXP(userProfile.totalXP);
+        setUserRewards(gameRewards);
+      } else {
+        // Handle case where player data doesn't exist yet
+        console.log('No player data found for wallet:', publicKey.toString());
+      }
     } catch (error) {
-      console.error('Failed to fetch XP and rewards:', error);
+      console.error('Failed to fetch user data:', error);
     }
   }, [publicKey, connection]);
 
+  // Use the fetch function when wallet connects
   useEffect(() => {
     if (!publicKey || !connection) return;
     fetchUserXPAndRewards();
   }, [publicKey, connection, fetchUserXPAndRewards]);
-
+  console.log('userProfile', userProfile?.username);
+  console.log('userRewards', userRewards);
   return (
     <AppContext.Provider
       value={{
@@ -158,6 +174,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         userXP,
         userRewards,
         fetchUserXPAndRewards,
+        userProfile,
       }}
     >
       <CreateGameProvider>
