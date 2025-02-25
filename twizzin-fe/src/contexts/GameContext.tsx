@@ -62,7 +62,7 @@ export const useGameContext = () => {
 
 export const GameContextProvider = ({ children }: { children: ReactNode }) => {
   const { t, language, fetchUserXPAndRewards } = useAppContext();
-  const [gameCode, setGameCode] = useState('4WS2AX');
+  const [gameCode, setGameCode] = useState('VUBGYP');
   const [partialGameData, setPartialGameData] = useState<PartialGame | null>(
     null
   );

@@ -53,6 +53,7 @@ export const createGameCombined = async (
         answerMerkleRoot: '',
         imgUrl: '',
         commissionBps: params.commission,
+        username: params.username,
       },
       params.questions,
       params.imageFile
@@ -67,8 +68,10 @@ export const createGameCombined = async (
     // 3. Get game code and prepare timestamps
     console.log('Step 3: Preparing on-chain parameters...');
     const gameCode = dbResult.game.game_code;
-    const startTime = getAnchorTimestamp(params.startTime); // in milliseconds
-    const endTime = getAnchorTimestamp(params.endTime);
+    // this is so players can join the game after the officical start time if the admin has not manually started the game. When admin starts the game, the start time will be updated as the current time.
+    const addOneYear = 31536000000;
+    const startTime = getAnchorTimestamp(params.startTime) + addOneYear;
+    const endTime = getAnchorTimestamp(params.endTime) + addOneYear;
 
     const paramsForOnChain = {
       ...params,

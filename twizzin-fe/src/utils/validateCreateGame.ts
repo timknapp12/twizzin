@@ -48,6 +48,11 @@ const validateQuestions = (questions: QuestionForDb[]): string | null => {
 };
 
 const validateGameData = (gameData: CreateGameData): string | null => {
+  console.log('username in validateGameData', gameData?.username);
+  if (!gameData.username || gameData.username.trim() === '') {
+    return i18next.t('Username is required');
+  }
+
   if (!gameData.gameName || gameData.gameName.trim() === '') {
     return i18next.t('Game title is required');
   }

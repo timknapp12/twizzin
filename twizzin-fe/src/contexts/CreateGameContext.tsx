@@ -1,6 +1,12 @@
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useEffect,
+} from 'react';
 import { NATIVE_MINT } from '@solana/spl-token';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import {
@@ -30,7 +36,7 @@ export const useCreateGameContext = () => {
 };
 
 export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
-  const { t } = useAppContext();
+  const { t, userProfile } = useAppContext();
   const { program } = useProgram();
   const wallet = useWallet();
   const { connection } = useConnection();
@@ -47,9 +53,19 @@ export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
     // answers: [],
     evenSplit: false,
     allAreWinners: false,
+    username: '',
   };
 
   const [gameData, setGameData] = useState<CreateGameData>(initialGameData);
+
+  useEffect(() => {
+    if (userProfile?.username) {
+      setGameData((prevData) => ({
+        ...prevData,
+        username: userProfile.username,
+      }));
+    }
+  }, [userProfile?.username]);
 
   const handleGameData = (e: GameDataChangeEvent) => {
     const { name, type } = e.target;
@@ -159,6 +175,7 @@ export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
         allAreWinners: gameData.allAreWinners,
         questions: questions,
         imageFile: imageFile,
+        username: gameData.username,
       };
 
       const result = await createGameCombined(
@@ -189,7 +206,7 @@ export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // console.log('gameData', gameData);
+  console.log('gameData', gameData);
   return (
     <CreateGameContext.Provider
       value={{

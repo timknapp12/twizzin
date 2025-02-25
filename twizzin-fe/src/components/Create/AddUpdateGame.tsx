@@ -179,6 +179,14 @@ const AddUpdateGame = () => {
         <Grid min={adjustedMin} gapSize='1rem' className='w-full p-4'>
           <Input
             type='text'
+            name='username'
+            value={gameData.username}
+            onChange={handleInputChange}
+            placeholder={t('Your username')}
+            label={t('Your username')}
+          />
+          <Input
+            type='text'
             name='gameName'
             value={gameData.gameName}
             onChange={handleInputChange}

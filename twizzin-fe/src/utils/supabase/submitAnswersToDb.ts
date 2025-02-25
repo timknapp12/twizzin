@@ -45,14 +45,21 @@ export const submitAnswersToDb = async ({
     // First insert/update the player_games record and get the ID
     const { data: playerGame, error: playerGameError } = await supabase
       .from('player_games')
-      .upsert({
-        player_wallet: playerWallet,
-        game_id: gameId,
-        finished_time: new Date(gameSession.finishTime).toISOString(),
-        num_correct: numCorrect,
-        answer_hash: answerHash,
-        solana_signature: signature,
-      })
+      .upsert(
+        {
+          player_wallet: playerWallet,
+          game_id: gameId,
+          finished_time: new Date(gameSession.finishTime).toISOString(),
+          num_correct: numCorrect,
+          answer_hash: answerHash,
+          solana_signature: signature,
+        },
+        {
+          // Add this configuration to match recordPlayerJoinGame
+          onConflict: 'player_wallet,game_id',
+          ignoreDuplicates: false,
+        }
+      )
       .select('id')
       .single();
 
@@ -83,7 +90,11 @@ export const submitAnswersToDb = async ({
     // Insert all player answers
     const { error: answersError } = await supabase
       .from('player_answers')
-      .upsert(playerAnswers);
+      .upsert(playerAnswers, {
+        // Also add this configuration for player_answers
+        onConflict: 'player_game_id,question_id',
+        ignoreDuplicates: false,
+      });
 
     if (answersError) {
       console.error('Error inserting player answers:', answersError);

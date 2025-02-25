@@ -49,7 +49,7 @@ const deleteGameImage = async (fileName: string) => {
 };
 
 // Function to create or get player
-const ensurePlayerExists = async (walletAddress: string) => {
+const ensurePlayerExists = async (walletAddress: string, username?: string) => {
   try {
     // First try to get existing player
     const { data: existingPlayer } = await supabase
@@ -58,12 +58,37 @@ const ensurePlayerExists = async (walletAddress: string) => {
       .eq('wallet_address', walletAddress)
       .single();
 
-    if (existingPlayer) return existingPlayer;
+    if (existingPlayer) {
+      // If player exists but username is provided and different from current one,
+      // update the username
+      if (username && existingPlayer.username !== username) {
+        const { data: updatedPlayer, error: updateError } = await supabase
+          .from('players')
+          .update({ username })
+          .eq('wallet_address', walletAddress)
+          .select()
+          .single();
 
-    // If player doesn't exist, create them
+        if (updateError) throw updateError;
+        return updatedPlayer;
+      }
+
+      return existingPlayer;
+    }
+
+    // If player doesn't exist, create them with the username if provided
+    const playerData: { wallet_address: string; username?: string } = {
+      wallet_address: walletAddress,
+    };
+
+    // Add username to player data if provided
+    if (username) {
+      playerData.username = username;
+    }
+
     const { data: newPlayer, error } = await supabase
       .from('players')
-      .insert([{ wallet_address: walletAddress }])
+      .insert([playerData])
       .select()
       .single();
 
@@ -79,7 +104,7 @@ const ensurePlayerExists = async (walletAddress: string) => {
 const createGame = async (gameData: GameInputForDb) => {
   try {
     // Ensure player exists before creating game
-    await ensurePlayerExists(gameData.adminWallet);
+    await ensurePlayerExists(gameData.adminWallet, gameData.username);
 
     const { data: game, error: gameError } = await supabase
       .from('games')
@@ -205,33 +230,3 @@ export const createGameWithQuestions = async (
     throw err;
   }
 };
-
-// Example usage:
-/*
-const gameData = {
-  gamePubkey: "your_game_pubkey",
-  adminWallet: "admin_wallet_address",
-  name: "Trivia Game #1",
-  // ... other game fields
-};
-
-const questions = [
-  {
-    questionText: "What is the capital of France?",
-    displayOrder: 1,
-    correctAnswer: "a",
-    answers: [
-      { answerText: "Paris", displayLetter: "a" },
-      { answerText: "London", displayLetter: "b" },
-      { answerText: "Berlin", displayLetter: "c" }
-    ]
-  }
-];
-
-try {
-  const result = await createGameWithQuestions(gameData, questions, imageFile);
-  console.log('Game created successfully:', result);
-} catch (error) {
-  console.error('Failed to create game:', error);
-}
-*/
