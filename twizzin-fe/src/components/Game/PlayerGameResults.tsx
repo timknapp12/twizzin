@@ -66,35 +66,35 @@ const PlayerGameResults = () => {
   const getRankColor = (rank: number) => {
     switch (rank) {
       case 1:
-        return 'bg-yellow-50 border-yellow-200';
+        return 'bg-yellow-50 border-yellow';
       case 2:
-        return 'bg-gray-50 border-gray-200';
+        return 'bg-gray-50 border-gray';
       case 3:
-        return 'bg-orange-50 border-orange-200';
+        return 'bg-orange-50 border-orange';
       default:
-        return 'bg-white border-gray-100';
+        return ' border-gray';
     }
   };
 
   const getRankIcon = (rank: number) => {
     switch (rank) {
       case 1:
-        return <RiTrophyFill className='w-6 h-6 text-yellow-500' />;
+        return <RiTrophyFill className='w-6 h-6 text-yellow' />;
       case 2:
-        return <RiMedalFill className='w-6 h-6 text-gray-400' />;
+        return <RiMedalFill className='w-6 h-6 text-gray' />;
       case 3:
-        return <RiMedalFill className='w-6 h-6 text-orange-400' />;
+        return <RiMedalFill className='w-6 h-6 text-orange' />;
       default:
         return null;
     }
   };
 
   return (
-    <Column className='gap-6 w-full max-w-4xl mx-auto'>
+    <Column className='gap-6 w-full'>
       <H2>{gameData.name}</H2>
 
       {/* Status banner */}
-      <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg bg-[#E8F7EA] gap-4 w-full max-w-small mx-auto text-[16px] active:opacity-80'>
+      <div className='flex p-4 justify-center items-center self-stretch rounded-lg bg-[#E8F7EA] gap-4 w-full text-[16px] active:opacity-80'>
         <Row className='gap-2'>
           <RiCheckFill size={28} color='var(--color-success)' />
           <Label style={{ color: 'var(--color-success)', marginBottom: -4 }}>
@@ -105,7 +105,7 @@ const PlayerGameResults = () => {
 
       {/* Show player's personal results only if they played */}
       {isPlayer && gameResult && (
-        <div className='bg-white p-6 rounded-lg shadow-xl text-center'>
+        <div className=' p-6 rounded-lg shadow-xl text-center'>
           <H3 className='mb-4'>{t('Your Results')}</H3>
           <div className='flex flex-col md:flex-row justify-center gap-6 items-center md:items-start'>
             <div className='flex flex-col items-center'>
@@ -146,29 +146,11 @@ const PlayerGameResults = () => {
         </div>
       )}
 
-      {/* Show message for admin */}
-      {isAdmin && (
-        <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg bg-[#af9aec] gap-4 w-full max-w-small mx-auto text-[16px] active:opacity-80'>
-          <Label style={{ color: 'white', marginBottom: -4 }}>
-            {t('You are viewing this game as an admin')}
-          </Label>
-        </div>
-      )}
-
-      {/* Show message for spectators */}
-      {!isPlayer && !isAdmin && (
-        <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg bg-[#FBF9E9] gap-4 w-full max-w-small mx-auto text-[16px] active:opacity-80'>
-          <Label style={{ marginBottom: -4 }}>
-            {t('You are viewing this game as a spectator')}
-          </Label>
-        </div>
-      )}
-
       {/* Winners Section - shown to everyone */}
       {winners.length > 0 && (
-        <div className='bg-white p-6 rounded-lg shadow-xl'>
+        <div className='p-6 rounded-lg shadow-xl w-full'>
           <H3 className='mb-4'>{t('Winners')}</H3>
-          <div className='space-y-3'>
+          <div className='space-y-2'>
             {winners.map((winner, index) => (
               <div
                 key={winner.wallet}
@@ -176,7 +158,7 @@ const PlayerGameResults = () => {
                   index + 1
                 )}`}
               >
-                <div className='flex items-center gap-3'>
+                <Row className='gap-2'>
                   {getRankIcon(index + 1)}
                   <div>
                     <Label className='font-semibold'>
@@ -190,7 +172,7 @@ const PlayerGameResults = () => {
                       {new Date(winner.finishTime).toLocaleTimeString()}
                     </Label>
                   </div>
-                </div>
+                </Row>
                 {winner.xpEarned && (
                   <Label className='text-green-600 font-medium text-lg'>
                     +{winner.xpEarned} XP
@@ -204,20 +186,20 @@ const PlayerGameResults = () => {
 
       {/* Leaderboard Section - shown to everyone */}
       {leaderboard.length > 0 && (
-        <div className='bg-white p-6 rounded-lg shadow-xl'>
+        <div className='p-6 rounded-lg shadow-xl w-full'>
           <H3 className='mb-4'>{t('Leaderboard')}</H3>
-          <div className='space-y-3'>
+          <div className='space-y-2'>
             {leaderboard.map((player) => (
               <div
                 key={player.wallet}
                 className={`p-4 rounded-lg border ${
                   player.wallet === publicKey?.toString()
                     ? 'bg-primary-50 border-primary-200'
-                    : 'bg-white border-gray-100'
+                    : ' border-gray-100'
                 }`}
               >
                 <div className='flex items-center justify-between'>
-                  <div className='flex items-center gap-3'>
+                  <div className='flex items-center 2'>
                     <div className='w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center'>
                       <Label className='font-medium'>#{player.rank}</Label>
                     </div>
@@ -250,12 +232,12 @@ const PlayerGameResults = () => {
 
       {/* Questions Review - only shown to players */}
       {isPlayer && gameResult?.answeredQuestions && (
-        <div className='space-y-4'>
+        <div className='space-y-4 w-full'>
           <H3>{t('Your Answers')}</H3>
           {gameResult.answeredQuestions.map((question, index) => (
             <div
               key={question.questionId}
-              className='bg-white p-6 rounded-lg shadow-xl'
+              className=' p-6 rounded-lg shadow-xl'
             >
               <div className='flex items-start gap-4'>
                 <div className='flex-shrink-0'>
@@ -273,7 +255,7 @@ const PlayerGameResults = () => {
                   <H3 className='text-lg font-semibold mb-4'>
                     {index + 1}. {question.questionText}
                   </H3>
-                  <div className='space-y-3'>
+                  <div className='space-y-2'>
                     {question.userAnswer ? (
                       <div
                         className={`p-4 rounded-lg ${
@@ -284,7 +266,7 @@ const PlayerGameResults = () => {
                       >
                         <Label className='font-medium'>
                           {t('Your answer')}:{' '}
-                          <span className='inline-block w-6 h-6 rounded-full bg-white text-center leading-6 mr-2'>
+                          <span className='inline-block w-6 h-6 rounded-full  text-center leading-6 mr-2'>
                             {question.userAnswer.displayLetter}
                           </span>
                           {question.userAnswer.text}
@@ -301,7 +283,7 @@ const PlayerGameResults = () => {
                       <div className='p-4 rounded-lg bg-green-50 border border-green-200'>
                         <Label className='font-medium'>
                           {t('Correct answer')}:{' '}
-                          <span className='inline-block w-6 h-6 rounded-full bg-white text-center leading-6 mr-2'>
+                          <span className='inline-block w-6 h-6 rounded-full  text-center leading-6 mr-2'>
                             {question.correctAnswer.displayLetter}
                           </span>
                           {question.correctAnswer.text}
