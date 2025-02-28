@@ -37,16 +37,12 @@ import {
   clearGameStartStatus,
   endGameAndDeclareWinners,
   getGameEndedStatus,
-  supabase,
+  fetchCompleteGameResults,
   setGameEndedStatus,
 } from '@/utils';
 import { useAppContext, useProgram } from '.';
 import { PublicKey } from '@solana/web3.js';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
-import {
-  fetchGameLeaderboard,
-  fetchGameResult,
-} from '@/utils/supabase/getGameResults';
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
@@ -63,7 +59,7 @@ export const useGameContext = () => {
 export const GameContextProvider = ({ children }: { children: ReactNode }) => {
   const { t, language, fetchUserXPAndRewards, userProfile } = useAppContext();
   const [username, setUsername] = useState('');
-  const [gameCode, setGameCode] = useState('74T2TR');
+  const [gameCode, setGameCode] = useState('F5BCWQ');
   const [partialGameData, setPartialGameData] = useState<PartialGame | null>(
     null
   );
@@ -430,7 +426,61 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
       }
 
       if (result.gameResult) {
-        setGameResult(result.gameResult);
+        // Get the game result returned from submission
+        const gameResult = result.gameResult;
+
+        // Update the gameResult with user answers from gameSession before setting state
+        if (
+          gameResult.answeredQuestions &&
+          gameResult.answeredQuestions.length > 0
+        ) {
+          // Create a map of answers from the gameSession for quick lookup
+          const sessionAnswers = Object.values(gameSession.answers).reduce<
+            Record<string, (typeof gameSession.answers)[number]>
+          >((map, answer) => {
+            map[answer.questionId] = answer;
+            return map;
+          }, {});
+
+          // For each question in the result, set the user answer if it's missing
+          const updatedQuestions = gameResult.answeredQuestions.map(
+            (question) => {
+              // If question already has a userAnswer, keep it
+              if (question.userAnswer) return question;
+
+              // Get user's answer from session
+              const userSessionAnswer = sessionAnswers[question.questionId];
+
+              if (!userSessionAnswer) return question;
+
+              // Find the matching answer in the game data
+              const questionData = gameData.questions.find(
+                (q) => q.id === question.questionId
+              );
+              const answerData = questionData?.answers.find(
+                (a) => a.display_letter === userSessionAnswer.answer
+              );
+
+              if (!answerData) return question;
+
+              // Return updated question with user answer
+              return {
+                ...question,
+                userAnswer: {
+                  text: answerData.answer_text,
+                  displayLetter: answerData.display_letter,
+                },
+              };
+            }
+          );
+
+          setGameResult({
+            ...gameResult,
+            answeredQuestions: updatedQuestions,
+          });
+        } else {
+          setGameResult(gameResult);
+        }
       }
 
       clearGameSession(gameCode);
@@ -601,104 +651,80 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [program, gameData, connection]);
 
-  // Data fetching when game ends
-  const RETRY_ATTEMPTS = 3;
-  const RETRY_DELAY = 2000;
   useEffect(() => {
-    if (!gameData?.game_code) return;
+    // Early return if we don't have game code or ID
+    if (!gameData?.game_code || !gameData?.id) return;
 
-    const fetchGameResults = async (attempt = 1) => {
+    // Check localStorage on mount or if status is undefined
+    if (!gameData.status || gameData.status === '') {
+      const isEndedInStorage = getGameEndedStatus(gameData.game_code);
+      if (isEndedInStorage) {
+        setGameData((prev) => ({
+          ...prev,
+          status: 'ended',
+        }));
+        return; // Exit early as the status change will trigger this effect again
+      }
+    }
+
+    // Only run when the game has ended status
+    const isEnded =
+      gameData.status === 'ended' || getGameEndedStatus(gameData.game_code);
+    if (!isEnded) return;
+
+    const loadCompleteResults = async () => {
       try {
         setIsLoadingResults(true);
         setLoadError(null);
 
-        // Prepare promises array
-        const promises = [
-          // Fetch updated game data
-          supabase
-            .from('games')
-            .select('*')
-            .eq('game_code', gameData.game_code)
-            .single()
-            .then(({ data, error }) => {
-              if (error) throw error;
-              return data;
-            }),
-          // Fetch game results using our utility
-          fetchGameLeaderboard(gameData.id),
-        ];
+        const INITIAL_DELAY = 3000;
+        console.log(
+          `Waiting ${INITIAL_DELAY / 1000} seconds before fetching results...`
+        );
+        await new Promise((resolve) => setTimeout(resolve, INITIAL_DELAY));
 
-        // Add user result fetch if not admin
-        if (!isAdmin && publicKey) {
-          promises.push(fetchGameResult(gameData.id, publicKey.toString()));
-        }
-
-        // Get all results
-        const [updatedGame, gameResults, userResult] = await Promise.all(
-          promises
+        const results = await fetchCompleteGameResults(
+          gameData.id,
+          gameData.game_code,
+          publicKey?.toString()
         );
 
-        if (!gameResults) {
-          throw new Error('Failed to fetch game results');
-        }
-
+        console.log('Results:', results);
         // Update game data with latest information
         setGameData((prev) => ({
           ...prev,
-          ...updatedGame,
+          ...results.gameData,
           status: 'ended',
         }));
 
-        // Update user's game result if available
-        setGameResult((prevResult) => ({
-          ...(prevResult || {}), // First include existing data
-          ...(userResult || {}), // Then override with fresh user data
-          winners: gameResults.winners,
-          leaderboard: gameResults.allPlayers,
-        }));
+        // Update game result with complete data
+        setGameResult((prevResult) => {
+          if (!results.playerResult) return null;
+          return {
+            ...(prevResult || {}),
+            ...results.playerResult,
+            winners: results.winners,
+            leaderboard: results.leaderboard,
+          } as GameResultFromDb;
+        });
 
         setIsLoadingResults(false);
+        fetchUserXPAndRewards();
       } catch (error) {
-        console.error(
-          `Error fetching game results (attempt ${attempt}):`,
-          error
+        console.error('Error loading complete game results:', error);
+        setLoadError(
+          'Failed to load game results. Please try refreshing the page.'
         );
-
-        // Implement retry logic
-        if (attempt < RETRY_ATTEMPTS) {
-          setTimeout(() => {
-            fetchGameResults(attempt + 1);
-          }, RETRY_DELAY * attempt); // Exponential backoff
-        } else {
-          setIsLoadingResults(false);
-          setLoadError(
-            'Failed to load game results. Please try refreshing the page.'
-          );
-        }
+        setIsLoadingResults(false);
       }
     };
 
-    // Check if game is ended either from state or localStorage
-    const isEnded =
-      gameData.status === 'ended' || getGameEndedStatus(gameData.game_code);
-
-    if (isEnded) {
-      fetchGameResults();
-      fetchUserXPAndRewards();
-    }
-
-    // Check localStorage on mount
-    if (!gameData.status && getGameEndedStatus(gameData.game_code)) {
-      setGameData((prev) => ({
-        ...prev,
-        status: 'ended',
-      }));
-    }
+    // Kick off the data loading
+    loadCompleteResults();
   }, [
     gameData?.status,
     gameData?.game_code,
     gameData?.id,
-    isAdmin,
     publicKey,
     fetchUserXPAndRewards,
   ]);

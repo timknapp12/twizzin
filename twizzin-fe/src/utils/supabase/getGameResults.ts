@@ -4,6 +4,7 @@ import {
   RawGameResult,
   PlayerSubmission,
   GameResults,
+  PlayerResult,
 } from '@/types';
 import { supabase } from './supabaseClient';
 
@@ -220,6 +221,78 @@ export const fetchGameResultAndLeaderboard = async (
     };
   } catch (error) {
     console.error('Error fetching game result and leaderboard:', error);
+    throw error;
+  }
+};
+
+// Data fetching when game ends
+const RETRY_ATTEMPTS = 3;
+const RETRY_DELAY = 2000;
+
+export const fetchCompleteGameResults = async (
+  gameId: string,
+  gameCode: string,
+  playerWallet?: string,
+  attempt = 1
+): Promise<{
+  gameData: GameResultFromDb;
+  leaderboard: PlayerResult[];
+  winners: PlayerResult[];
+  playerResult: GameResultFromDb | null;
+}> => {
+  try {
+    // Step 1: Fetch core game data (always needed)
+    const { data: gameData, error: gameError } = await supabase
+      .from('games')
+      .select('*')
+      .eq('id', gameId)
+      .single();
+
+    if (gameError) throw gameError;
+
+    // Step 2: Fetch leaderboard data (for all users)
+    const gameResults = await fetchGameLeaderboard(gameId);
+
+    // Step 3: Fetch player-specific data if a wallet was provided
+    let playerResult = null;
+    if (playerWallet) {
+      playerResult = await fetchGameResult(gameId, playerWallet);
+    }
+
+    // Log the fetched data for debugging
+    console.log('Complete game results fetched:', {
+      gameData,
+      leaderboard: gameResults?.allPlayers,
+      winners: gameResults?.winners,
+      playerResult,
+      timestamp: new Date().toISOString(),
+    });
+
+    // Step 4: Return combined results
+    return {
+      gameData,
+      leaderboard: gameResults?.allPlayers || [],
+      winners: gameResults?.winners || [],
+      playerResult,
+    };
+  } catch (error) {
+    console.error(
+      `Error fetching complete game results (attempt ${attempt}):`,
+      error
+    );
+
+    if (attempt < RETRY_ATTEMPTS) {
+      await new Promise((resolve) =>
+        setTimeout(resolve, RETRY_DELAY * attempt)
+      );
+      return fetchCompleteGameResults(
+        gameId,
+        gameCode,
+        playerWallet,
+        attempt + 1
+      );
+    }
+
     throw error;
   }
 };
