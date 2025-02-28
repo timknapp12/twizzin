@@ -7,9 +7,7 @@ import art1 from '../../assets/illustration1.png';
 
 const JoinForm = () => {
   const { t } = useAppContext();
-  const { gameCode, setGameCode, getGameByCode, partialGameData } =
-    useGameContext();
-  console.log('partialGameData', partialGameData);
+  const { gameCode, setGameCode, getGameByCode } = useGameContext();
 
   const [isLoading, setIsLoading] = useState(false);
   const [findGameError, setFindGameError] = useState('');
@@ -38,7 +36,6 @@ const JoinForm = () => {
       } else {
         setFindGameError(err?.message || 'An error occurred');
       }
-    } finally {
       setIsLoading(false);
     }
   };

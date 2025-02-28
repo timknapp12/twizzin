@@ -61,8 +61,9 @@ export const useGameContext = () => {
 };
 
 export const GameContextProvider = ({ children }: { children: ReactNode }) => {
-  const { t, language, fetchUserXPAndRewards } = useAppContext();
-  const [gameCode, setGameCode] = useState('YN9BJ9');
+  const { t, language, fetchUserXPAndRewards, userProfile } = useAppContext();
+  const [username, setUsername] = useState('');
+  const [gameCode, setGameCode] = useState('74T2TR');
   const [partialGameData, setPartialGameData] = useState<PartialGame | null>(
     null
   );
@@ -81,6 +82,12 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
   const { connection } = useConnection();
   const wallet = useWallet();
   const { publicKey, sendTransaction } = wallet;
+
+  useEffect(() => {
+    if (userProfile?.username) {
+      setUsername(userProfile.username);
+    }
+  }, [userProfile?.username]);
 
   // Load game session when game code changes
   useEffect(() => {
@@ -193,7 +200,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
     if (!publicKey) throw new Error(t('Please connect your wallet'));
     if (!sendTransaction)
       throw new Error(t('Wallet adapter not properly initialized'));
-
+    if (!username) throw new Error(t('Username is required'));
     try {
       const { gamePda } = deriveGamePDAs(
         program,
@@ -231,6 +238,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
         admin: new PublicKey(partialGameData.admin_wallet),
         tokenMint: new PublicKey(partialGameData.token_mint),
         entryFee: partialGameData.entry_fee,
+        username: username,
       };
 
       const result = await joinGameCombined(
@@ -305,8 +313,12 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
   // New answer management functions
   const submitAnswer = (answer: GameAnswer) => {
     if (!gameCode) return;
-
-    const updatedSession = saveGameAnswer(gameCode, answer);
+    // Make sure we're always using the display letter
+    const modifiedAnswer = {
+      ...answer,
+      answer: answer.displayLetter,
+    };
+    const updatedSession = saveGameAnswer(gameCode, modifiedAnswer);
     setGameSession(updatedSession);
   };
 
@@ -325,7 +337,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
     if (!fullAnswer) return undefined;
     return {
       answerId: fullAnswer.id, // Use actual answer ID
-      answer: fullAnswer.answer_text, // Use actual answer text
+      answer: fullAnswer.display_letter, // Use display letter
       displayOrder: fullAnswer.display_order,
       questionId: fullAnswer.question_id,
       timestamp: Date.now(),
@@ -489,6 +501,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
         throw new Error(t('Failed to end game'));
       }
       console.log('Game end transaction successful');
+      fetchUserXPAndRewards();
       // Return the transaction signature
       return result.signature;
     } catch (error) {
@@ -638,11 +651,10 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
 
         // Update user's game result if available
         setGameResult((prevResult) => ({
-          ...(userResult || {}), // spread user's personal results if they exist
+          ...(prevResult || {}), // First include existing data
+          ...(userResult || {}), // Then override with fresh user data
           winners: gameResults.winners,
           leaderboard: gameResults.allPlayers,
-          // Ensure we maintain any existing result data
-          ...(prevResult || {}),
         }));
 
         setIsLoadingResults(false);
@@ -694,6 +706,8 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
   return (
     <GameContext.Provider
       value={{
+        username,
+        setUsername,
         gameCode,
         setGameCode,
         partialGameData,

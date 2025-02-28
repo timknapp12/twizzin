@@ -88,6 +88,7 @@ export const startGameCombined = async (
 ): Promise<StartGameResult> => {
   try {
     // 1. Start game on Anchor
+    // the anchor program will mark the start time as the current time when the program ix is called
     const result = await startGame(
       program,
       connection,

@@ -50,37 +50,51 @@ const HomeView = ({ onSetView }: HomeViewProps) => {
   const router = useRouter();
 
   const [selectedItem, setSelectedItem] = useState<number>(0);
+  const [isCreateLoading, setIsCreateLoading] = useState(false);
+  const [isJoinLoading, setIsJoinLoading] = useState(false);
 
-  const onCreateGame = () => router.push(`/${language}/create`);
-  const onJoinGame = () => router.push(`/${language}/join`);
+  const onCreateGame = () => {
+    setIsCreateLoading(true);
+    router.push(`/${language}/create`);
+  };
+  const onJoinGame = () => {
+    setIsJoinLoading(true);
+    router.push(`/${language}/join`);
+  };
 
   return (
-    <Column className='gap-4'>
-      <div className='w-full'>
-        {connected ? (
-          <ClaimRewardsRow onSetView={onSetView} />
-        ) : (
-          <ConnectWalletForRewardsButton />
-        )}
-      </div>
-      <Carousel
-        items={items}
-        setSelectedItem={setSelectedItem}
-        selectedItem={selectedItem}
-      />
-      <Row className='gap-2'>
-        {items.map((item, index) => (
-          <Dot
-            key={item.order}
-            isSelected={index === selectedItem}
-            onClick={() => setSelectedItem(index)}
-          />
-        ))}
-      </Row>
-      <Button onClick={onCreateGame}>{t('Create a new game')}</Button>
-      <Button secondary onClick={onJoinGame}>
-        {t('Join a game')}
-      </Button>
+    <Column className='gap-4 justify-between h-full flex flex-1'>
+      <Column className='gap-4'>
+        <div className='w-full'>
+          {connected ? (
+            <ClaimRewardsRow onSetView={onSetView} />
+          ) : (
+            <ConnectWalletForRewardsButton />
+          )}
+        </div>
+        <Carousel
+          items={items}
+          setSelectedItem={setSelectedItem}
+          selectedItem={selectedItem}
+        />
+        <Row className='gap-2'>
+          {items.map((item, index) => (
+            <Dot
+              key={item.order}
+              isSelected={index === selectedItem}
+              onClick={() => setSelectedItem(index)}
+            />
+          ))}
+        </Row>
+      </Column>
+      <Column className='gap-4 w-full'>
+        <Button isLoading={isCreateLoading} secondary onClick={onCreateGame}>
+          {t('Create a new game')}
+        </Button>
+        <Button isLoading={isJoinLoading} onClick={onJoinGame}>
+          {t('Join a game')}
+        </Button>
+      </Column>
     </Column>
   );
 };

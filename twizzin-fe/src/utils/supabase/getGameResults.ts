@@ -68,6 +68,7 @@ export const formatGameResult = (
   rawResult: RawGameResult
 ): GameResultFromDb => {
   const { playerGame, questions } = rawResult;
+  console.log('Raw player game data from DB:', playerGame);
 
   // Map through questions to create result data
   const answeredQuestions: GameResultQuestion[] = questions.map((question) => {
@@ -75,10 +76,9 @@ export const formatGameResult = (
       (pa) => pa.question_id === question.id
     );
     const correctAnswer = question.answers.find((a) => a.is_correct);
-
     // Find the full answer details for the user's selected answer
     const userSelectedAnswer = question.answers.find(
-      (a) => a.answer_text === playerAnswer?.selected_answer
+      (a) => a.display_letter === playerAnswer?.selected_answer
     );
 
     return {

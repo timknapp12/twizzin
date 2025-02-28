@@ -1,6 +1,12 @@
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useEffect,
+} from 'react';
 import { NATIVE_MINT } from '@solana/spl-token';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import {
@@ -14,6 +20,7 @@ import {
 import { createGameCombined } from '@/utils';
 import { useProgram } from './ProgramContext';
 import { useAppContext } from './AppContext';
+import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 
 const CreateGameContext = createContext<CreateGameContextType | undefined>(
   undefined
@@ -30,7 +37,7 @@ export const useCreateGameContext = () => {
 };
 
 export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
-  const { t } = useAppContext();
+  const { t, userProfile } = useAppContext();
   const { program } = useProgram();
   const wallet = useWallet();
   const { connection } = useConnection();
@@ -47,9 +54,19 @@ export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
     // answers: [],
     evenSplit: false,
     allAreWinners: false,
+    username: '',
   };
 
   const [gameData, setGameData] = useState<CreateGameData>(initialGameData);
+
+  useEffect(() => {
+    if (userProfile?.username) {
+      setGameData((prevData) => ({
+        ...prevData,
+        username: userProfile.username,
+      }));
+    }
+  }, [userProfile?.username]);
 
   const handleGameData = (e: GameDataChangeEvent) => {
     const { name, type } = e.target;
@@ -146,19 +163,24 @@ export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
     setError(null);
 
     try {
+      // TODO = get correct decimals for token from db
+      const entryFeeInLamports = gameData.entryFee * LAMPORTS_PER_SOL;
+      const donationInLamports = gameData.donation * LAMPORTS_PER_SOL;
+
       const params: CreateGameCombinedParams = {
         name: gameData.gameName,
-        entryFee: gameData.entryFee,
+        entryFee: entryFeeInLamports, // Already in lamports
         commission: gameData.commission * 100,
         startTime: gameData.startTime,
         endTime: new Date(gameData.startTime.getTime() + totalTime * 1000),
         maxWinners: gameData.maxWinners,
         tokenMint: NATIVE_MINT,
-        donationAmount: gameData.donation,
+        donationAmount: donationInLamports, // Already in lamports
         evenSplit: gameData.evenSplit,
         allAreWinners: gameData.allAreWinners,
         questions: questions,
         imageFile: imageFile,
+        username: gameData.username,
       };
 
       const result = await createGameCombined(
@@ -189,7 +211,6 @@ export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // console.log('gameData', gameData);
   return (
     <CreateGameContext.Provider
       value={{

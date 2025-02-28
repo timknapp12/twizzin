@@ -4,3 +4,4 @@ export * from './createGame';
 export * from './supabaseClient';
 export * from './rewards';
 export * from './xp';
+export * from './getUserProfile';

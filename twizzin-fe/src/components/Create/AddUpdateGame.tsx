@@ -42,8 +42,6 @@ const AddUpdateGame = () => {
     handleImageChange,
   } = useCreateGameContext();
 
-  console.log('creationResult', creationResult);
-
   const { connection } = useConnection();
   const { publicKey } = useWallet();
 
@@ -54,7 +52,7 @@ const AddUpdateGame = () => {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showGameCode, setShowGameCode] = useState(false);
-  console.log('isEdit', isEdit);
+
   const doesGameCodeExist = gameData.gameCode && gameData.gameCode.length > 0;
   // console.log('doesGameCodeExist', doesGameCodeExist);
   const handleDateChange = (date: Date | null) => {
@@ -170,15 +168,23 @@ const AddUpdateGame = () => {
   return (
     <Column className='w-full h-full flex-grow gap-12' justify='between'>
       <Column className='w-full'>
-        <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg bg-[#E8F7EA] gap-4 w-full max-w-small mx-auto  text-[16px] text-[#655B30] active:opacity-80'>
+        <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg bg-[#E8F7EA] gap-4 w-full max-w-small mx-auto  text-[16px] text-green active:opacity-80'>
           <Row className='gap-2'>
-            <GiBrain size={20} className='text-green' />
+            <GiBrain size={20} />
             {doesGameCodeExist
               ? `${t('Update game')}: ${gameData.gameCode}`
               : t('Create a Twizzin game')}
           </Row>
         </div>
         <Grid min={adjustedMin} gapSize='1rem' className='w-full p-4'>
+          <Input
+            type='text'
+            name='username'
+            value={gameData.username}
+            onChange={handleInputChange}
+            placeholder={t('Your username')}
+            label={t('Your username')}
+          />
           <Input
             type='text'
             name='gameName'

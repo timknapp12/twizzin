@@ -192,7 +192,7 @@ const PlayGame = () => {
   };
 
   const isLastQuestion = currentQuestionIndex === (questions?.length || 0) - 1;
-  console.log('isLastQuestion', isLastQuestion);
+
   if (!currentQuestion) return null;
 
   // Waiting for game to start state
@@ -216,10 +216,10 @@ const PlayGame = () => {
     <form onSubmit={handleFormSubmit} className='gap-4 w-full flex flex-col'>
       {/* Timer Header */}
       <H2>{name}</H2>
-      <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg bg-[#E8F7EA] gap-4 w-full max-w-small mx-auto text-[16px] text-[#655B30] active:opacity-80'>
+      <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg bg-[#E8F7EA] gap-4 w-full max-w-small mx-auto text-[16px] text-green active:opacity-80'>
         <Row className='gap-2'>
-          <RiSurveyLine size={28} className='text-green' />
-          <Label style={{ marginBottom: -4 }}>
+          <RiSurveyLine size={28} />
+          <Label style={{ marginBottom: -4, color: 'var(--color-success)' }}>
             {`${t('Game in progress')}: ${remainingTime}`}
           </Label>
         </Row>
@@ -231,7 +231,7 @@ const PlayGame = () => {
       </H3Secondary>
 
       {/* Question Text */}
-      <div className='bg-white p-6 rounded-lg shadow-lg'>
+      <div className='p-6 rounded-lg shadow-xl'>
         <H3 className='mb-4'>{currentQuestion.question_text}</H3>
 
         {/* Answer Options */}

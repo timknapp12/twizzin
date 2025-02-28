@@ -54,7 +54,8 @@ export const joinGame = async (
       const transferInstruction = SystemProgram.transfer({
         fromPubkey: publicKey,
         toPubkey: vaultPda,
-        lamports: params.entryFee,
+        // the anchor program will automatically pull the correct amount from game state
+        lamports: 0,
       });
       transaction.add(transferInstruction);
     }

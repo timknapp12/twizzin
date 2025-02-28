@@ -1,10 +1,5 @@
 import { Program } from '@coral-xyz/anchor';
-import {
-  Connection,
-  LAMPORTS_PER_SOL,
-  PublicKey,
-  Transaction,
-} from '@solana/web3.js';
+import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { NATIVE_MINT } from '@solana/spl-token';
 import { initializeGame } from '../program/initGame';
 import { createGameWithQuestions } from '../supabase/createGame';
@@ -40,19 +35,18 @@ export const createGameCombined = async (
         adminWallet: publicKey.toString(),
         name: params.name,
         tokenMint: params.tokenMint.toString(),
-        entryFee: params.entryFee * LAMPORTS_PER_SOL,
+        entryFee: params.entryFee,
         startTime: getSupabaseTimestamp(params.startTime),
         endTime: getSupabaseTimestamp(params.endTime),
         maxWinners: params.maxWinners,
-        donationAmount: params.donationAmount
-          ? params.donationAmount * LAMPORTS_PER_SOL
-          : 0,
+        donationAmount: params.donationAmount ? params.donationAmount : 0,
         isNative: isNative,
         allAreWinners: params.allAreWinners || false,
         evenSplit: params.evenSplit || false,
         answerMerkleRoot: '',
         imgUrl: '',
         commissionBps: params.commission,
+        username: params.username,
       },
       params.questions,
       params.imageFile
@@ -67,8 +61,10 @@ export const createGameCombined = async (
     // 3. Get game code and prepare timestamps
     console.log('Step 3: Preparing on-chain parameters...');
     const gameCode = dbResult.game.game_code;
-    const startTime = getAnchorTimestamp(params.startTime); // in milliseconds
-    const endTime = getAnchorTimestamp(params.endTime);
+    // this is so players can join the game after the officical start time if the admin has not manually started the game. When admin starts the game, the start time will be updated as the current time.
+    const addOneYear = 31536000000;
+    const startTime = getAnchorTimestamp(params.startTime) + addOneYear;
+    const endTime = getAnchorTimestamp(params.endTime) + addOneYear;
 
     const paramsForOnChain = {
       ...params,

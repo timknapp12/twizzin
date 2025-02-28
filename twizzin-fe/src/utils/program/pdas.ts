@@ -23,7 +23,7 @@ export const deriveGamePDAs = (
   );
 
   const [winnersPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('winners'), adminPubkey.toBuffer(), Buffer.from(gameCode)],
+    [Buffer.from('winners'), gamePda.toBuffer()],
     program.programId
   );
 

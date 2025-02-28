@@ -13,20 +13,20 @@ export const Header: React.FC = () => {
   const { language } = useAppContext();
   return (
     <header className='bg-background w-full flex justify-between items-center relative z-50'>
-      <div className='flex items-center gap-2'>
-        <Link href={`/${language}`}>
+      <Link href={`/${language}`}>
+        <div className='flex items-center gap-2'>
           <Image
             src={twizzinIcon}
             alt='Twizzin Icon'
             className='h-9 w-auto mt-1'
           />
-        </Link>
-        <Image
-          src={twizzin}
-          alt='Twizzin text'
-          className='hidden md:block h-6 w-auto'
-        />
-      </div>
+          <Image
+            src={twizzin}
+            alt='Twizzin text'
+            className='hidden md:block h-6 w-auto'
+          />
+        </div>
+      </Link>
       <div className='flex items-center gap-1 md:gap-2'>
         <LanguageIconButton
           imageSrc={sol.src}
