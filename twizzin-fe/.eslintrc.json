@@ -2,15 +2,5 @@
   "extends": ["next/core-web-vitals"],
   "rules": {
     "no-unused-vars": "warn"
-  },
-  "overrides": [
-    {
-      "files": ["**/*.test.ts", "**/*.test.tsx"],
-      "env": {
-        "jest": true
-      },
-      "extends": ["plugin:jest/recommended"],
-      "plugins": ["jest"]
-    }
-  ]
+  }
 }

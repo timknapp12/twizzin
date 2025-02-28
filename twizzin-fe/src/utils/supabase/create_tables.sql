@@ -39,7 +39,8 @@
 --     wallet_address TEXT PRIMARY KEY,
 --     created_at TIMESTAMPTZ DEFAULT NOW(),
 --     total_xp INTEGER DEFAULT 0,
---     username TEXT
+--     username TEXT,
+--     profile_image_url TEXT
 -- );
 
 -- CREATE TYPE game_status AS ENUM ('not_started', 'active', 'ended');
@@ -103,7 +104,7 @@
 --     xp_earned INTEGER DEFAULT 0,
 --     final_rank INTEGER,
 --     created_at TIMESTAMPTZ DEFAULT NOW(),
---     UNIQUE(player_wallet, game_id)
+--     UNIQUE(player_wallet, game_id),
 --     solana_signature TEXT
 -- );
 
@@ -163,49 +164,7 @@
 --     'solana'
 -- );
 
--- Create the transaction management functions
--- create or replace function public.begin_transaction()
--- returns void
--- language plpgsql
--- security definer
--- as $$
--- begin
---   -- Start a new transaction
---   begin
---     -- The transaction is automatically started
---     -- We just need this function to exist
---   end;
--- end;
--- $$;
-
--- create or replace function public.commit_transaction()
--- returns void
--- language plpgsql
--- security definer
--- as $$
--- begin
---   -- Commit the current transaction
---   commit;
--- end;
--- $$;
-
--- create or replace function public.rollback_transaction()
--- returns void
--- language plpgsql
--- security definer
--- as $$
--- begin
---   -- Rollback the current transaction
---   rollback;
--- end;
--- $$;
-
--- -- Grant access to these functions
--- grant execute on function public.begin_transaction to authenticated;
--- grant execute on function public.commit_transaction to authenticated;
--- grant execute on function public.rollback_transaction to authenticated;
-
--- IMAGES - storage bucket
+-- -- IMAGES - storage bucket
 -- -- First, check if the bucket exists and create it if it doesn't
 -- INSERT INTO storage.buckets (id, name, public)
 -- VALUES ('game-images', 'game-images', true)

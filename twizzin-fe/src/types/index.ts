@@ -456,7 +456,7 @@ export interface PlayerResult {
   wallet: string;
   numCorrect: number;
   finishTime: number;
-  rank: number;
+  rank?: number | null;
   isWinner: boolean;
   xpEarned?: number;
   rewardsEarned?: number;
