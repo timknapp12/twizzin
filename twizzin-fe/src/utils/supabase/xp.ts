@@ -38,7 +38,7 @@ export async function distributeGameXP(
         } else if (!isEvenSplit) {
           // For tiered games, give diminishing bonuses to other winners
           const placementBonus = Math.floor(
-            config.firstPlaceBonus / 2 ** (player.rank - 1)
+            config.firstPlaceBonus / 2 ** ((player.rank ?? 999) - 1)
           );
           if (placementBonus > 0) {
             totalXP += placementBonus;
