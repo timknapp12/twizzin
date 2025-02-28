@@ -20,6 +20,7 @@ import {
 import { createGameCombined } from '@/utils';
 import { useProgram } from './ProgramContext';
 import { useAppContext } from './AppContext';
+import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 
 const CreateGameContext = createContext<CreateGameContextType | undefined>(
   undefined
@@ -162,15 +163,19 @@ export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
     setError(null);
 
     try {
+      // TODO = get correct decimals for token from db
+      const entryFeeInLamports = gameData.entryFee * LAMPORTS_PER_SOL;
+      const donationInLamports = gameData.donation * LAMPORTS_PER_SOL;
+
       const params: CreateGameCombinedParams = {
         name: gameData.gameName,
-        entryFee: gameData.entryFee,
+        entryFee: entryFeeInLamports, // Already in lamports
         commission: gameData.commission * 100,
         startTime: gameData.startTime,
         endTime: new Date(gameData.startTime.getTime() + totalTime * 1000),
         maxWinners: gameData.maxWinners,
         tokenMint: NATIVE_MINT,
-        donationAmount: gameData.donation,
+        donationAmount: donationInLamports, // Already in lamports
         evenSplit: gameData.evenSplit,
         allAreWinners: gameData.allAreWinners,
         questions: questions,

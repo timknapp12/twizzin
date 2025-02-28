@@ -216,10 +216,10 @@ const PlayGame = () => {
     <form onSubmit={handleFormSubmit} className='gap-4 w-full flex flex-col'>
       {/* Timer Header */}
       <H2>{name}</H2>
-      <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg bg-[#E8F7EA] gap-4 w-full max-w-small mx-auto text-[16px] text-[#655B30] active:opacity-80'>
+      <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg bg-[#E8F7EA] gap-4 w-full max-w-small mx-auto text-[16px] text-green active:opacity-80'>
         <Row className='gap-2'>
-          <RiSurveyLine size={28} className='text-green' />
-          <Label style={{ marginBottom: -4 }}>
+          <RiSurveyLine size={28} />
+          <Label style={{ marginBottom: -4, color: 'var(--color-success)' }}>
             {`${t('Game in progress')}: ${remainingTime}`}
           </Label>
         </Row>

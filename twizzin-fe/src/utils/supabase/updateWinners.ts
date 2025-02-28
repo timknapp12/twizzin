@@ -28,14 +28,15 @@ export async function updateGameWinners(
       }
 
       // Convert the prize amount to a number instead of a string
-      // Use parseFloat to ensure we get a decimal number if needed
-      const prizeAmount = parseFloat(winner.prizeAmount.toString());
+      const prizeAmount = winner.prizeAmount.toString();
+      console.log('prizeAmount', prizeAmount);
+      console.log('Raw prize amount BN:', winner.prizeAmount);
 
       // Prepare the update with the winner data
       const updateData: any = {
         game_id: gameId,
         player_wallet: winner.player.toString(),
-        rewards_earned: prizeAmount, // Now a number, not a string
+        rewards_earned: prizeAmount,
         rewards_claimed: winner.claimed,
         final_rank: winner.rank,
       };

@@ -63,7 +63,7 @@ export const useGameContext = () => {
 export const GameContextProvider = ({ children }: { children: ReactNode }) => {
   const { t, language, fetchUserXPAndRewards, userProfile } = useAppContext();
   const [username, setUsername] = useState('');
-  const [gameCode, setGameCode] = useState('7Y762Y');
+  const [gameCode, setGameCode] = useState('74T2TR');
   const [partialGameData, setPartialGameData] = useState<PartialGame | null>(
     null
   );
@@ -501,6 +501,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
         throw new Error(t('Failed to end game'));
       }
       console.log('Game end transaction successful');
+      fetchUserXPAndRewards();
       // Return the transaction signature
       return result.signature;
     } catch (error) {
@@ -650,11 +651,10 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
 
         // Update user's game result if available
         setGameResult((prevResult) => ({
-          ...(userResult || {}), // spread user's personal results if they exist
+          ...(prevResult || {}), // First include existing data
+          ...(userResult || {}), // Then override with fresh user data
           winners: gameResults.winners,
           leaderboard: gameResults.allPlayers,
-          // Ensure we maintain any existing result data
-          ...(prevResult || {}),
         }));
 
         setIsLoadingResults(false);

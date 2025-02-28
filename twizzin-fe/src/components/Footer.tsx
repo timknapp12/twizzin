@@ -10,7 +10,7 @@ export const Footer = () => {
   const { t } = useAppContext();
 
   return (
-    <footer className='footer text-secondaryText flex flex-col gap-2'>
+    <footer className='footer text-secondaryText flex flex-col gap-2 p-2'>
       <Row className='gap-2'>
         <a
           href='https://x.com/twizzinapp'

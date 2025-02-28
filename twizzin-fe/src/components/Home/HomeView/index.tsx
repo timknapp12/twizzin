@@ -63,28 +63,30 @@ const HomeView = ({ onSetView }: HomeViewProps) => {
   };
 
   return (
-    <Column className='gap-4'>
-      <div className='w-full'>
-        {connected ? (
-          <ClaimRewardsRow onSetView={onSetView} />
-        ) : (
-          <ConnectWalletForRewardsButton />
-        )}
-      </div>
-      <Carousel
-        items={items}
-        setSelectedItem={setSelectedItem}
-        selectedItem={selectedItem}
-      />
-      <Row className='gap-2'>
-        {items.map((item, index) => (
-          <Dot
-            key={item.order}
-            isSelected={index === selectedItem}
-            onClick={() => setSelectedItem(index)}
-          />
-        ))}
-      </Row>
+    <Column className='gap-4 justify-between h-full flex flex-1'>
+      <Column className='gap-4'>
+        <div className='w-full'>
+          {connected ? (
+            <ClaimRewardsRow onSetView={onSetView} />
+          ) : (
+            <ConnectWalletForRewardsButton />
+          )}
+        </div>
+        <Carousel
+          items={items}
+          setSelectedItem={setSelectedItem}
+          selectedItem={selectedItem}
+        />
+        <Row className='gap-2'>
+          {items.map((item, index) => (
+            <Dot
+              key={item.order}
+              isSelected={index === selectedItem}
+              onClick={() => setSelectedItem(index)}
+            />
+          ))}
+        </Row>
+      </Column>
       <Column className='gap-4 w-full'>
         <Button isLoading={isCreateLoading} secondary onClick={onCreateGame}>
           {t('Create a new game')}

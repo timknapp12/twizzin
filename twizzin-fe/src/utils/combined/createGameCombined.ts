@@ -1,10 +1,5 @@
 import { Program } from '@coral-xyz/anchor';
-import {
-  Connection,
-  LAMPORTS_PER_SOL,
-  PublicKey,
-  Transaction,
-} from '@solana/web3.js';
+import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { NATIVE_MINT } from '@solana/spl-token';
 import { initializeGame } from '../program/initGame';
 import { createGameWithQuestions } from '../supabase/createGame';
@@ -40,13 +35,11 @@ export const createGameCombined = async (
         adminWallet: publicKey.toString(),
         name: params.name,
         tokenMint: params.tokenMint.toString(),
-        entryFee: params.entryFee * LAMPORTS_PER_SOL,
+        entryFee: params.entryFee,
         startTime: getSupabaseTimestamp(params.startTime),
         endTime: getSupabaseTimestamp(params.endTime),
         maxWinners: params.maxWinners,
-        donationAmount: params.donationAmount
-          ? params.donationAmount * LAMPORTS_PER_SOL
-          : 0,
+        donationAmount: params.donationAmount ? params.donationAmount : 0,
         isNative: isNative,
         allAreWinners: params.allAreWinners || false,
         evenSplit: params.evenSplit || false,
