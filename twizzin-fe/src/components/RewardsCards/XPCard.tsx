@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Column } from '@/components/containers';
-import { PrimaryText } from '@/components/texts';
+import { H6, PrimaryText } from '@/components/texts';
 import { PiShootingStarFill } from 'react-icons/pi';
 import RewardsCardsContainer from './RewardsCardsContainer';
 import { useAppContext } from '@/contexts';
@@ -9,12 +9,14 @@ interface XPCardProps {
   progressPercentage?: number;
   xp?: number;
   onClick?: () => void;
+  level?: number;
 }
 
 export const XPCard = ({
   progressPercentage = 70,
-  xp = 5,
+  xp = 0,
   onClick,
+  level = 0,
 }: XPCardProps) => {
   const { t } = useAppContext();
   const [progress, setProgress] = useState(0);
@@ -35,13 +37,13 @@ export const XPCard = ({
       const duration = 1000;
       const steps = 60;
       const stepDuration = duration / steps;
-      const increment = xp / steps;
+      const increment = level / steps;
 
       let current = 0;
       const timer = setInterval(() => {
         current += increment;
-        if (current >= xp) {
-          setCurrentLevel(xp);
+        if (current >= level) {
+          setCurrentLevel(level);
           clearInterval(timer);
         } else {
           setCurrentLevel(current);
@@ -50,7 +52,7 @@ export const XPCard = ({
 
       return () => clearInterval(timer);
     }, 100);
-  }, [progressPercentage, xp]);
+  }, [progressPercentage, level]);
 
   return (
     <RewardsCardsContainer onClick={onClick}>

@@ -21,7 +21,7 @@ export const HomeComponent = () => {
       <Header />
       <InnerScreenContainer>
         <div
-          className='flex-grow flex flex-col justify-center items-center w-full'
+          className='flex-grow flex flex-col items-center w-full'
           style={{ marginTop: '7vh' }}
         >
           {view === 'home' && <HomeView onSetView={onSetView} />}
