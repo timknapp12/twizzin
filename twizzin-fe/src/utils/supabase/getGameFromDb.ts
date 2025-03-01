@@ -2,7 +2,7 @@ import { supabase } from './supabaseClient';
 
 export const getGameFromDb = async (gameCode: string) => {
   try {
-    // Fetch game data
+    // First, fetch the game data without the join
     const { data: game, error: gameError } = await supabase
       .from('games')
       .select(
@@ -20,7 +20,23 @@ export const getGameFromDb = async (gameCode: string) => {
     if (gameError) throw gameError;
     if (!game) throw new Error('Game not found');
 
-    return game;
+    // Fetch username in a separate query
+    let username = null;
+    if (game.admin_wallet) {
+      const { data: playerData } = await supabase
+        .from('players')
+        .select('username')
+        .eq('wallet_address', game.admin_wallet)
+        .single();
+
+      username = playerData?.username || null;
+    }
+
+    // Add the username to the returned data
+    return {
+      ...game,
+      username,
+    };
   } catch (error) {
     console.error('Error fetching game:', error);
     throw error;
@@ -59,13 +75,29 @@ export const getPartialGameFromDb = async (gameCode: string) => {
     if (gameError) throw gameError;
     if (!game) throw new Error('Game not found');
 
+    // Fetch the creator's username in a separate query
+    let username = null;
+    if (game.admin_wallet) {
+      const { data: playerData } = await supabase
+        .from('players')
+        .select('username')
+        .eq('wallet_address', game.admin_wallet)
+        .single();
+
+      username = playerData?.username || null;
+    }
+
     // Transform the questions count to be more directly accessible
-    const gameWithQuestionCount = {
+    const gameWithExtras = {
       ...game,
       question_count: game.questions[0].count,
+      username, // Add the username directly
     };
+    // Create a new object without the questions property
+    // eslint-disable-next-line no-unused-vars
+    const { questions, ...gameWithoutQuestions } = gameWithExtras;
 
-    return gameWithQuestionCount;
+    return gameWithoutQuestions;
   } catch (error) {
     console.error('Error fetching partial game data:', error);
     throw error;

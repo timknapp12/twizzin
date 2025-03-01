@@ -212,6 +212,7 @@ export interface PartialGame {
   even_split: boolean;
   img_url: string | null;
   question_count: number;
+  username: string | null;
 }
 
 export interface GameContextType {
@@ -269,6 +270,7 @@ export interface JoinFullGame {
   question_count: number;
   questions: QuestionFromDb[];
   status: string | 'not_started';
+  username: string | null;
 }
 
 export interface QuestionFromDb {
@@ -450,6 +452,7 @@ export interface PlayerSubmission {
   player_wallet: string;
   num_correct: number;
   finished_time: number;
+  username?: string;
 }
 
 export interface PlayerResult {
@@ -460,6 +463,7 @@ export interface PlayerResult {
   isWinner: boolean;
   xpEarned?: number;
   rewardsEarned?: number;
+  username?: string | null;
 }
 
 export interface GameResults {
