@@ -47,6 +47,8 @@ const JoinGameDetails = ({
     all_are_winners,
     even_split,
     img_url,
+    username: creator_username,
+    admin_wallet,
   } = partialGameData || {};
 
   const totalTime =
@@ -135,6 +137,9 @@ const JoinGameDetails = ({
   const primaryColor = 'var(--color-primaryText)';
   const errorColor = 'var(--color-error)';
 
+  const shortAdminWallet =
+    admin_wallet?.slice(0, 4) + '...' + admin_wallet?.slice(-4);
+
   return (
     <Column className='gap-4 w-full h-full flex-1 mt-2' justify='between'>
       <Column className='gap-4 w-full'>
@@ -180,6 +185,12 @@ const JoinGameDetails = ({
           <Row className='gap-2'>
             <Label>{t('Game Title')}:</Label>
             <Label style={{ color: primaryColor }}>{game_name}</Label>
+          </Row>
+          <Row className='gap-2'>
+            <Label>{`${t('Created by')}:`}</Label>
+            <Label
+              style={{ color: primaryColor }}
+            >{`${creator_username} (${shortAdminWallet})`}</Label>
           </Row>
           <Row className='gap-2'>
             <Label>{t('Entry Fee')}:</Label>

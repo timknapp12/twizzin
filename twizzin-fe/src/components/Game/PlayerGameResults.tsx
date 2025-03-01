@@ -1,5 +1,14 @@
 import React from 'react';
-import { Column, H2, H3, H5, Label, Row, Button } from '@/components';
+import {
+  Column,
+  H2,
+  H3,
+  H5,
+  Label,
+  Row,
+  Button,
+  SecondaryText,
+} from '@/components';
 import { useGameContext, useAppContext } from '@/contexts';
 import {
   RiCheckFill,
@@ -11,10 +20,11 @@ import {
 } from 'react-icons/ri';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { formatDetailedGameTime } from '@/utils';
 
 const PlayerGameResults = () => {
   const { t } = useAppContext();
-  const { gameResult, gameData, isLoadingResults, loadError } =
+  const { gameResult, gameData, isLoadingResults, loadError, isAdmin } =
     useGameContext();
   const { publicKey } = useWallet();
 
@@ -89,10 +99,20 @@ const PlayerGameResults = () => {
         return null;
     }
   };
-
+  const primaryColor = 'var(--color-primaryText)';
+  const shortAdminWallet =
+    gameData.admin_wallet?.slice(0, 4) +
+    '...' +
+    gameData.admin_wallet?.slice(-4);
   return (
-    <Column className='gap-6 w-full'>
+    <Column className='gap-4 w-full'>
       <H2>{gameData.name}</H2>
+      <Row className='gap-2'>
+        <Label>{`${t('Created by')}:`}</Label>
+        <Label
+          style={{ color: primaryColor }}
+        >{`${gameData.username} (${shortAdminWallet})`}</Label>
+      </Row>
 
       {/* Status banner - changes based on game state */}
       <div
@@ -112,9 +132,9 @@ const PlayerGameResults = () => {
             </>
           ) : (
             <>
-              <RiTimeLine size={28} color='var(--color-warning)' />
+              <RiTimeLine size={28} color='var(--color-primaryText)' />
               <Label
-                style={{ color: 'var(--color-warning)', marginBottom: -2 }}
+                style={{ color: 'var(--color-primaryText)', marginBottom: -2 }}
               >
                 {t('Waiting for game to end...')}
               </Label>
@@ -124,242 +144,253 @@ const PlayerGameResults = () => {
       </div>
 
       {/* Show player's personal results if they submitted answers */}
-      {hasSubmittedAnswers && (
-        <div className='p-6 rounded-lg shadow-xl text-center w-full bg-surface'>
-          <H5 className='mb-4'>{t('Your Results')}</H5>
-          <div className='flex flex-col md:flex-row justify-center gap-6 items-center md:items-start'>
-            <div className='flex flex-col items-center'>
-              <H5>
-                {Math.round(
-                  (gameResult.totalCorrect / gameResult.totalQuestions) * 100
+      {hasSubmittedAnswers && !isAdmin && (
+        <Column className='gap-4 w-full'>
+          <div className='p-4 rounded-lg shadow-xl text-center w-full bg-surface gap-4'>
+            <H5>{t('Your Results')}</H5>
+            <div className='flex flex-col md:flex-row justify-center gap-4 items-center md:items-start'>
+              <div className='flex flex-col items-center'>
+                <H5>
+                  {Math.round(
+                    (gameResult.totalCorrect / gameResult.totalQuestions) * 100
+                  )}
+                  %
+                </H5>
+                <Label>{t('Score')}</Label>
+              </div>
+
+              <div className='flex flex-col items-center'>
+                <H5>
+                  {gameResult.totalCorrect}/{gameResult.totalQuestions}
+                </H5>
+                <Label>{t('Correct Answers')}</Label>
+              </div>
+
+              {gameEnded && (
+                <div className='flex flex-col items-center'>
+                  <H5>{gameResult?.xpEarned || 'N/A'}</H5>
+                  <Label>{t('XP Earned')}</Label>
+                </div>
+              )}
+
+              {gameEnded && gameResult.rewardsEarned && (
+                <div className='flex flex-col items-center'>
+                  <H5>{gameResult.rewardsEarned / LAMPORTS_PER_SOL} SOL</H5>
+                  <Label>{t('Rewards Earned')}</Label>
+                </div>
+              )}
+
+              {gameEnded && gameResult.finalRank && (
+                <div className='flex flex-col items-center'>
+                  <H5>#{gameResult.finalRank}</H5>
+                  <Label>{t('Final Rank')}</Label>
+                </div>
+              )}
+            </div>
+
+            {!gameEnded && (
+              <div className='text-sm text-gray'>
+                {t(
+                  'Additional rewards and ranking will be available when the game ends'
                 )}
-                %
-              </H5>
-              <Label>{t('Score')}</Label>
-            </div>
-
-            <div className='flex flex-col items-center'>
-              <H5>
-                {gameResult.totalCorrect}/{gameResult.totalQuestions}
-              </H5>
-              <Label>{t('Correct Answers')}</Label>
-            </div>
-
-            {gameEnded && gameResult.xpEarned && (
-              <div className='flex flex-col items-center'>
-                <H5>+{gameResult.xpEarned}</H5>
-                <Label>{t('XP Earned')}</Label>
-              </div>
-            )}
-
-            {gameEnded && gameResult.rewardsEarned && (
-              <div className='flex flex-col items-center'>
-                <H5>+{gameResult.rewardsEarned / LAMPORTS_PER_SOL} SOL</H5>
-                <Label>{t('Rewards Earned')}</Label>
-              </div>
-            )}
-
-            {gameEnded && gameResult.finalRank && (
-              <div className='flex flex-col items-center'>
-                <H5>#{gameResult.finalRank}</H5>
-                <Label>{t('Final Rank')}</Label>
               </div>
             )}
           </div>
-
-          {!gameEnded && (
-            <div className='mt-4 text-sm text-gray-600'>
-              {t(
-                'Additional rewards and ranking will be available when the game ends'
-              )}
-            </div>
+          {gameResult?.completedAt && (
+            <Row className='gap-2'>
+              <Label>{t('Total time taken')}:</Label>
+              <Label>
+                {formatDetailedGameTime(
+                  gameData.start_time,
+                  gameResult?.completedAt
+                )}
+              </Label>
+            </Row>
           )}
-        </div>
+        </Column>
       )}
 
-      <Row className='flex flex-col lg:flex-row gap-6 w-full'>
-        {/* Questions Review - always shown if player has submitted answers */}
-        {hasSubmittedAnswers && (
-          <div className='space-y-4 w-full lg:w-1/2'>
-            <H3>{t('Your Answers')}</H3>
-            {gameResult.answeredQuestions.map((question, index) => (
-              <div
-                key={question.questionId}
-                className='p-6 rounded-lg shadow-xl'
-              >
-                <div className='flex items-start gap-4'>
-                  <div className='flex-shrink-0'>
-                    {question.isCorrect ? (
-                      <div className='w-8 h-8 rounded-full bg-green-100 flex items-center justify-center'>
-                        <RiCheckFill className='w-5 h-5 text-green' />
+      {/* Questions Review - always shown if player has submitted answers */}
+      {hasSubmittedAnswers && !isAdmin && (
+        <div className='space-y-4 w-full rounded-lg shadow-xl'>
+          <H3>{t('Your Answers')}</H3>
+          {gameResult.answeredQuestions.map((question, index) => (
+            <div key={question.questionId} className='p-4'>
+              <div className='flex items-start gap-4'>
+                <div className='flex-shrink-0'>
+                  {question.isCorrect ? (
+                    <div className='w-8 h-8 rounded-full flex items-center justify-center'>
+                      <RiCheckFill size={24} className='text-green' />
+                    </div>
+                  ) : (
+                    <div className='w-8 h-8 rounded-full flex items-center justify-center'>
+                      <RiCloseFill size={24} className='text-red' />
+                    </div>
+                  )}
+                </div>
+                <div className='flex-grow gap-4'>
+                  <H3 className='text-lg font-semibold'>
+                    {index + 1}. {question.questionText}
+                  </H3>
+                  <div className='space-y-2'>
+                    {question.userAnswer && !question.isCorrect ? (
+                      <div className='p-4 rounded-lg bg-red-50 border border-red'>
+                        <Label className='font-medium'>
+                          {t('Your answer')}:{' '}
+                          <span className='inline-block w-6 h-6 rounded-full text-center leading-6 mr-[2px]'>
+                            {question.userAnswer.displayLetter}
+                          </span>
+                          {question.userAnswer.text}
+                        </Label>
                       </div>
-                    ) : (
-                      <div className='w-8 h-8 rounded-full flex items-center justify-center'>
-                        <RiCloseFill className='w-5 h-5 text-red' />
+                    ) : question.userAnswer && question.isCorrect ? null : (
+                      <div className='p-4 rounded-lg border border-gray'>
+                        <Label className='font-medium'>
+                          {t('No answer provided')}
+                        </Label>
                       </div>
                     )}
-                  </div>
-                  <div className='flex-grow'>
-                    <H3 className='text-lg font-semibold mb-4'>
-                      {index + 1}. {question.questionText}
-                    </H3>
-                    <div className='space-y-2'>
-                      {question.userAnswer ? (
-                        <div
-                          className={`p-4 rounded-lg ${
-                            question.isCorrect
-                              ? 'bg-green-50 border border-green'
-                              : 'bg-red-50 border border-red'
-                          }`}
-                        >
-                          <Label className='font-medium'>
-                            {t('Your answer')}:{' '}
-                            <span className='inline-block w-6 h-6 rounded-full text-center leading-6 mr-2'>
-                              {question.userAnswer.displayLetter}
-                            </span>
-                            {question.userAnswer.text}
-                          </Label>
-                        </div>
-                      ) : (
-                        <div className='p-4 rounded-lg border border-gray'>
-                          <Label className='font-medium'>
-                            {t('No answer provided')}
-                          </Label>
-                        </div>
-                      )}
-                      {/* Show correct answer for incorrect responses and while waiting */}
-                      {(!question.isCorrect || !gameEnded) && (
-                        <div className='p-4 rounded-lg bg-green-50 border border-green'>
-                          <Label className='font-medium'>
-                            {t('Correct answer')}:{' '}
-                            <span className='inline-block w-6 h-6 rounded-full text-center leading-6 mr-2'>
-                              {question.correctAnswer.displayLetter}
-                            </span>
-                            {question.correctAnswer.text}
-                          </Label>
-                        </div>
-                      )}
+                    {/* Show correct answer for incorrect responses and while waiting */}
+                    {/* {(!question.isCorrect || !gameEnded) && ( */}
+                    <div className='p-4 rounded-lg bg-green-50 border border-green'>
+                      <Label className='font-medium'>
+                        {t('Correct answer')}:{' '}
+                        <span className='inline-block w-6 h-6 rounded-full text-center leading-6 mr-[2px]'>
+                          {question.correctAnswer.displayLetter}
+                        </span>
+                        {question.correctAnswer.text}
+                      </Label>
                     </div>
+                    {/* )} */}
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
+            </div>
+          ))}
+        </div>
+      )}
 
-        {/* Leaderboard column - only shown if game has ended */}
-        {gameEnded && (
-          <Column className='w-full lg:w-1/2'>
-            {/* Winners Section */}
-            {winners.length > 0 && (
-              <div className='p-6 rounded-lg shadow-xl w-full'>
-                <H3 className='mb-4'>{t('Winners')}</H3>
-                <div className='space-y-2'>
-                  {winners.map((winner, index) => (
-                    <div
-                      key={winner.wallet}
-                      className={`p-4 rounded-lg border flex items-center justify-between ${getRankColor(
-                        index + 1
-                      )}`}
-                    >
-                      <Row className='gap-2'>
-                        {getRankIcon(index + 1)}
+      {/* Leaderboard column - only shown if game has ended */}
+      {gameEnded && (
+        <Column className='w-full'>
+          {/* Winners Section */}
+          {winners.length > 0 && (
+            <div className='p-4 rounded-lg shadow-lg w-full gap-4'>
+              <H3>{t('Winners')}</H3>
+              <div className='space-y-2'>
+                {winners.map((winner, index) => (
+                  <div
+                    key={winner.wallet}
+                    className={`p-4 rounded-lg border flex items-center justify-between ${getRankColor(
+                      index + 1
+                    )}`}
+                  >
+                    <Row className='gap-2'>
+                      {getRankIcon(index + 1)}
+                      <div>
+                        <Label className='font-semibold'>
+                          {`${winner.username} (${winner.wallet.slice(
+                            0,
+                            4
+                          )}...${winner.wallet.slice(-4)})`}
+                          {winner.wallet === publicKey?.toString() && (
+                            <span className='ml-2 text-primary'>
+                              {t('(You)')}
+                            </span>
+                          )}
+                        </Label>
+                        <Label className='text-sm text-gray'>
+                          {`${winner.numCorrect} ${t('correct')} - ${t(
+                            'Finish time'
+                          )}: ${formatDetailedGameTime(
+                            gameData.start_time,
+                            winner.finishTime
+                          )}`}
+                        </Label>
+                      </div>
+                    </Row>
+                    {winner.xpEarned && (
+                      <Label className='text-green font-medium text-lg'>
+                        +{winner.xpEarned} XP
+                      </Label>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Leaderboard Section */}
+          {leaderboard.length > 0 && (
+            <div className='p-4 rounded-lg shadow-lg w-full gap-4'>
+              <H3>{t('Leaderboard')}</H3>
+              <div className='space-y-2'>
+                {leaderboard.map((player) => (
+                  <div
+                    key={player.wallet}
+                    className={`p-4 rounded-lg border ${
+                      player.wallet === publicKey?.toString()
+                        ? 'border-primary'
+                        : 'border-gray'
+                    }`}
+                  >
+                    <div className='flex items-center justify-between'>
+                      <div className='flex items-center gap-2'>
+                        <div className='w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center'>
+                          <Label className='font-medium'>#{player.rank}</Label>
+                        </div>
                         <div>
                           <Label className='font-semibold'>
-                            {winner.wallet.slice(0, 4)}...
-                            {winner.wallet.slice(-4)}
-                            {winner.wallet === publicKey?.toString() && (
+                            {`${player.username} (${player.wallet.slice(
+                              0,
+                              4
+                            )}...${player.wallet.slice(-4)})`}
+                            {player.wallet === publicKey?.toString() && (
                               <span className='ml-2 text-primary'>
                                 {t('(You)')}
                               </span>
                             )}
                           </Label>
                           <Label className='text-sm text-gray'>
-                            {winner.numCorrect} {t('correct')} •{' '}
-                            {new Date(winner.finishTime).toLocaleTimeString()}
+                            {`${player.numCorrect} ${t('correct')} - ${t(
+                              'Finish time'
+                            )}: ${formatDetailedGameTime(
+                              gameData.start_time,
+                              player.finishTime
+                            )}`}
                           </Label>
                         </div>
-                      </Row>
-                      {winner.xpEarned && (
-                        <Label className='text-green font-medium text-lg'>
-                          +{winner.xpEarned} XP
+                      </div>
+                      {player.xpEarned && (
+                        <Label className='text-green font-medium'>
+                          +{player.xpEarned} XP
                         </Label>
                       )}
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))}
               </div>
-            )}
+            </div>
+          )}
+        </Column>
+      )}
 
-            {/* Leaderboard Section */}
-            {leaderboard.length > 0 && (
-              <div className='p-6 rounded-lg shadow-xl w-full'>
-                <H3 className='mb-4'>{t('Leaderboard')}</H3>
-                <div className='space-y-2'>
-                  {leaderboard.map((player) => (
-                    <div
-                      key={player.wallet}
-                      className={`p-4 rounded-lg border ${
-                        player.wallet === publicKey?.toString()
-                          ? 'bg-primary-50 border-primary-200'
-                          : ' border-gray-100'
-                      }`}
-                    >
-                      <div className='flex items-center justify-between'>
-                        <div className='flex items-center gap-2'>
-                          <div className='w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center'>
-                            <Label className='font-medium'>
-                              #{player.rank}
-                            </Label>
-                          </div>
-                          <div>
-                            <Label className='font-semibold'>
-                              {player.wallet.slice(0, 4)}...
-                              {player.wallet.slice(-4)}
-                              {player.wallet === publicKey?.toString() && (
-                                <span className='ml-2 text-primary'>
-                                  {t('(You)')}
-                                </span>
-                              )}
-                            </Label>
-                            <Label className='text-sm text-gray'>
-                              {player.numCorrect} {t('correct')} •{' '}
-                              {new Date(player.finishTime).toLocaleTimeString()}
-                            </Label>
-                          </div>
-                        </div>
-                        {player.xpEarned && (
-                          <Label className='text-green font-medium'>
-                            +{player.xpEarned} XP
-                          </Label>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+      {/* If game hasn't ended, show waiting message in place of leaderboard */}
+      {!gameEnded && hasSubmittedAnswers && (
+        <div className='w-full p-4 rounded-lg shadow-lg flex flex-col items-center justify-center'>
+          <RiTimeLine size={48} className='text-secondaryText' />
+          <H3 className='text-center'>{t('Waiting for game to end')}</H3>
+          <SecondaryText className='text-center'>
+            {t(
+              'The admin will end the game shortly. Leaderboard and rewards will be available once the game has ended.'
             )}
-          </Column>
-        )}
-
-        {/* If game hasn't ended, show waiting message in place of leaderboard */}
-        {!gameEnded && hasSubmittedAnswers && (
-          <div className='w-full lg:w-1/2 p-6 rounded-lg shadow-xl flex flex-col items-center justify-center'>
-            <RiTimeLine size={48} className='text-gray-400 mb-4' />
-            <H3 className='text-center mb-2'>{t('Waiting for game to end')}</H3>
-            <p className='text-gray-600 text-center'>
-              {t(
-                'The admin will end the game shortly. Leaderboard and rewards will be available once the game has ended.'
-              )}
-            </p>
-          </div>
-        )}
-      </Row>
+          </SecondaryText>
+        </div>
+      )}
 
       {/* Share Results Button - only show when game has ended */}
       {gameEnded && hasSubmittedAnswers && (
         <Button
-          className='mt-4'
           onClick={() => {
             // Share functionality would go here
             alert('Share functionality would go here');
