@@ -39,6 +39,10 @@ import {
   getGameEndedStatus,
   fetchCompleteGameResults,
   setGameEndedStatus,
+  setupPlayerResultSubscription,
+  cleanupPlayerResultSubscription,
+  supabase,
+  fetchGameLeaderboard,
 } from '@/utils';
 import { useAppContext, useProgram } from '.';
 import { PublicKey } from '@solana/web3.js';
@@ -59,7 +63,7 @@ export const useGameContext = () => {
 export const GameContextProvider = ({ children }: { children: ReactNode }) => {
   const { t, language, fetchUserXPAndRewards, userProfile } = useAppContext();
   const [username, setUsername] = useState('');
-  const [gameCode, setGameCode] = useState('F5BCWQ');
+  const [gameCode, setGameCode] = useState('');
   const [partialGameData, setPartialGameData] = useState<PartialGame | null>(
     null
   );
@@ -562,7 +566,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
 
   // Event Listener for game end
   const winnersDeclaredEventListenerRef = React.useRef<number | null>(null);
-
+  const subscriptionRef = React.useRef(null);
   useEffect(() => {
     // Validate all required dependencies are properly initialized
     if (
@@ -622,6 +626,19 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
                   status: 'ended',
                 }));
                 setGameEndedStatus(gameData.game_code);
+
+                // Start listening for database updates if we're a player
+                if (!isAdmin && publicKey) {
+                  console.log(
+                    'Setting up database subscription for updates...'
+                  );
+                  setupPlayerResultSubscription(
+                    gameData.id,
+                    publicKey.toString(),
+                    subscriptionRef,
+                    setGameResult
+                  );
+                }
               }
             } catch (error) {
               console.error('Error processing game end event:', error);
@@ -677,36 +694,89 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
         setIsLoadingResults(true);
         setLoadError(null);
 
-        const INITIAL_DELAY = 3000;
-        console.log(
-          `Waiting ${INITIAL_DELAY / 1000} seconds before fetching results...`
-        );
-        await new Promise((resolve) => setTimeout(resolve, INITIAL_DELAY));
+        // Different approach for admin vs player
+        if (isAdmin) {
+          try {
+            // For admins, fetch game data and leaderboard info directly
+            const [gameDataResult, leaderboardResults] = await Promise.all([
+              supabase
+                .from('games')
+                .select('*')
+                .eq('id', gameData.id)
+                .single()
+                .then(({ data }) => data),
+              fetchGameLeaderboard(gameData.id),
+            ]);
 
-        const results = await fetchCompleteGameResults(
-          gameData.id,
-          gameData.game_code,
-          publicKey?.toString()
-        );
+            // Update game data with latest information
+            setGameData((prev) => ({
+              ...prev,
+              ...(gameDataResult || {}),
+              status: 'ended',
+            }));
 
-        console.log('Results:', results);
-        // Update game data with latest information
-        setGameData((prev) => ({
-          ...prev,
-          ...results.gameData,
-          status: 'ended',
-        }));
+            // Set game result with leaderboard data only for admins
+            setGameResult({
+              winners: leaderboardResults?.winners || [],
+              leaderboard: leaderboardResults?.allPlayers || [],
+              totalCorrect: 0,
+              totalQuestions: gameData.questions?.length || 0,
+              answeredQuestions: [],
+              completedAt: null,
+            });
 
-        // Update game result with complete data
-        setGameResult((prevResult) => {
-          if (!results.playerResult) return null;
-          return {
-            ...(prevResult || {}),
-            ...results.playerResult,
-            winners: results.winners,
-            leaderboard: results.leaderboard,
-          } as GameResultFromDb;
-        });
+            console.log('Admin game results loaded:', {
+              gameData: gameDataResult,
+              winners: leaderboardResults?.winners?.length || 0,
+              leaderboard: leaderboardResults?.allPlayers?.length || 0,
+            });
+          } catch (adminError) {
+            console.error('Error loading admin results:', adminError);
+            setLoadError('Failed to load game results. Please try refreshing.');
+          }
+        } else {
+          // Regular player flow
+          const results = await fetchCompleteGameResults(
+            gameData.id,
+            gameData.game_code,
+            publicKey?.toString()
+          );
+
+          // Update game data with latest information
+          setGameData((prev) => ({
+            ...prev,
+            ...results.gameData,
+            status: 'ended',
+          }));
+
+          // Update game result with complete data
+          setGameResult((prevResult) => {
+            if (!results.playerResult) return prevResult;
+            return {
+              ...(prevResult || {}),
+              ...results.playerResult,
+              winners: results.winners,
+              leaderboard: results.leaderboard,
+            } as GameResultFromDb;
+          });
+
+          // Set up subscription if we're a player and XP/rank data isn't available yet
+          if (publicKey && results.playerResult) {
+            if (
+              results.playerResult.xpEarned === undefined ||
+              results.playerResult.xpEarned === 0 ||
+              results.playerResult.finalRank === null ||
+              results.playerResult.finalRank === undefined
+            ) {
+              setupPlayerResultSubscription(
+                gameData.id,
+                publicKey.toString(),
+                subscriptionRef,
+                setGameResult
+              );
+            }
+          }
+        }
 
         setIsLoadingResults(false);
         fetchUserXPAndRewards();
@@ -718,7 +788,6 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
         setIsLoadingResults(false);
       }
     };
-
     // Kick off the data loading
     loadCompleteResults();
   }, [
@@ -728,6 +797,13 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
     publicKey,
     fetchUserXPAndRewards,
   ]);
+
+  // Cleanup player result subscription on component unmount
+  useEffect(() => {
+    return () => {
+      cleanupPlayerResultSubscription(subscriptionRef);
+    };
+  }, []);
 
   return (
     <GameContext.Provider
