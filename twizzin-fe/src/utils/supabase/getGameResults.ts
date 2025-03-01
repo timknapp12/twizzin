@@ -8,6 +8,10 @@ import {
 } from '@/types';
 import { supabase } from './supabaseClient';
 
+interface UsernameMap {
+  [key: string]: string | null;
+}
+
 export const fetchRawGameResult = async (
   gameId: string,
   playerWallet: string
@@ -128,6 +132,7 @@ export const fetchGameResult = async (
 export const fetchGameSubmissions = async (
   gameId: string
 ): Promise<PlayerSubmission[]> => {
+  // First, get the player_games data
   const { data, error } = await supabase
     .from('player_games')
     .select('player_wallet, num_correct, finished_time')
@@ -138,7 +143,38 @@ export const fetchGameSubmissions = async (
 
   if (error)
     throw new Error(`Failed to fetch game submissions: ${error.message}`);
-  return data || [];
+
+  if (!data || data.length === 0) return [];
+
+  // Get all unique wallet addresses to query usernames
+  const walletAddresses = data.map((item) => item.player_wallet);
+
+  // Get usernames for all players in one query
+  const { data: playersData, error: playersError } = await supabase
+    .from('players')
+    .select('wallet_address, username')
+    .in('wallet_address', walletAddresses);
+
+  if (playersError)
+    throw new Error(
+      `Failed to fetch player usernames: ${playersError.message}`
+    );
+
+  // Create a map of wallet addresses to usernames for quick lookup
+  const usernameMap: Record<string, string> = {};
+  playersData?.forEach((player) => {
+    usernameMap[player.wallet_address] = player.username;
+  });
+
+  // Transform the data to include username
+  const transformedData = data.map((submission) => ({
+    player_wallet: submission.player_wallet,
+    num_correct: submission.num_correct,
+    finished_time: submission.finished_time,
+    username: usernameMap[submission.player_wallet] || null,
+  })) as PlayerSubmission[];
+
+  return transformedData;
 };
 
 export const determineWinnersAndLeaderboard = (
@@ -161,6 +197,7 @@ export const determineWinnersAndLeaderboard = (
 
   const allPlayers = sortedSubmissions.map((sub, index) => ({
     wallet: sub.player_wallet,
+    username: sub.username,
     numCorrect: sub.num_correct,
     finishTime: sub.finished_time,
     rank: index + 1,
@@ -235,10 +272,10 @@ export const fetchCompleteGameResults = async (
   playerWallet?: string,
   attempt = 1
 ): Promise<{
-  gameData: GameResultFromDb;
-  leaderboard: PlayerResult[];
-  winners: PlayerResult[];
-  playerResult: GameResultFromDb | null;
+  gameData: GameResultFromDb & { adminUsername: string | null };
+  leaderboard: (PlayerResult & { username: string | null })[];
+  winners: (PlayerResult & { username: string | null })[];
+  playerResult: (GameResultFromDb & { username: string | null }) | null;
 }> => {
   try {
     // Step 1: Fetch core game data (always needed)
@@ -250,29 +287,82 @@ export const fetchCompleteGameResults = async (
 
     if (gameError) throw gameError;
 
-    // Step 2: Fetch leaderboard data (for all users)
+    // Step 2: Fetch admin username
+    let adminUsername = null;
+    if (gameData.admin_wallet) {
+      const { data: adminData } = await supabase
+        .from('players')
+        .select('username')
+        .eq('wallet_address', gameData.admin_wallet)
+        .single();
+
+      adminUsername = adminData?.username || null;
+    }
+
+    // Step 3: Fetch leaderboard data (for all users)
     const gameResults = await fetchGameLeaderboard(gameId);
 
-    // Step 3: Fetch player-specific data if a wallet was provided
+    // Step 4: Fetch usernames for all players in the leaderboard
+    const playerWallets =
+      gameResults?.allPlayers.map((player) => player.wallet) || [];
+    let playerUsernames: UsernameMap = {}; // Use the defined type
+
+    if (playerWallets.length > 0) {
+      const { data: playersData } = await supabase
+        .from('players')
+        .select('wallet_address, username')
+        .in('wallet_address', playerWallets);
+
+      // Create a lookup map of wallet to username
+      playerUsernames = (playersData || []).reduce(
+        (acc: UsernameMap, player) => {
+          acc[player.wallet_address] = player.username;
+          return acc;
+        },
+        {}
+      );
+    }
+
+    // Step 5: Add usernames to leaderboard and winners
+    const leaderboardWithUsernames = (gameResults?.allPlayers || []).map(
+      (player) => ({
+        ...player,
+        username: playerUsernames[player.wallet] || null,
+      })
+    );
+
+    const winnersWithUsernames = (gameResults?.winners || []).map((player) => ({
+      ...player,
+      username: playerUsernames[player.wallet] || null,
+    }));
+
+    // Step 6: Fetch player-specific data if a wallet was provided
     let playerResult = null;
     if (playerWallet) {
       playerResult = await fetchGameResult(gameId, playerWallet);
+      // Add player username to player result
+      if (playerResult) {
+        playerResult = {
+          ...playerResult,
+          username: playerUsernames[playerWallet] || null,
+        };
+      }
     }
 
     // Log the fetched data for debugging
     console.log('Complete game results fetched:', {
-      gameData,
-      leaderboard: gameResults?.allPlayers,
-      winners: gameResults?.winners,
+      gameData: { ...gameData, adminUsername },
+      leaderboard: leaderboardWithUsernames,
+      winners: winnersWithUsernames,
       playerResult,
       timestamp: new Date().toISOString(),
     });
 
-    // Step 4: Return combined results
+    // Step 7: Return combined results
     return {
-      gameData,
-      leaderboard: gameResults?.allPlayers || [],
-      winners: gameResults?.winners || [],
+      gameData: { ...gameData, adminUsername },
+      leaderboard: leaderboardWithUsernames,
+      winners: winnersWithUsernames,
       playerResult,
     };
   } catch (error) {
@@ -294,5 +384,90 @@ export const fetchCompleteGameResults = async (
     }
 
     throw error;
+  }
+};
+// Subscribe to changes in player_games table for this player and game
+export const setupPlayerResultSubscription = (
+  gameId: string,
+  playerWallet: string,
+  ref: React.RefObject<any>,
+  setGameResult: React.Dispatch<React.SetStateAction<GameResultFromDb | null>>
+) => {
+  if (ref.current) {
+    supabase.removeChannel(ref.current);
+  }
+
+  const channel = supabase
+    .channel(`player_game_updates_${gameId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'player_games',
+        filter: `game_id=eq.${gameId} AND player_wallet=eq.${playerWallet}`,
+      },
+      (payload) => {
+        console.log('Database update received:', payload);
+
+        // Create a function to apply updates to the game result
+        const applyUpdates = (
+          newData: any,
+          prevResult: GameResultFromDb | null
+        ) => {
+          if (!prevResult) return prevResult;
+
+          const updates: Partial<GameResultFromDb> = {};
+
+          // Only include fields that have changed
+          if (newData.xp_earned !== undefined) {
+            updates.xpEarned = newData.xp_earned;
+            console.log('Updating XP earned to:', newData.xp_earned);
+          }
+
+          if (newData.final_rank !== undefined) {
+            updates.finalRank = newData.final_rank;
+            console.log('Updating final rank to:', newData.final_rank);
+          }
+
+          if (newData.rewards_earned !== undefined) {
+            updates.rewardsEarned = newData.rewards_earned;
+            console.log('Updating rewards earned to:', newData.rewards_earned);
+          }
+
+          // If we have any updates to apply
+          if (Object.keys(updates).length > 0) {
+            console.log('Applying updates to game result:', updates);
+            return { ...prevResult, ...updates };
+          }
+
+          return prevResult;
+        };
+
+        // Only process updates if there's new data
+        if (payload.new) {
+          // Update our game result with the new data
+          setGameResult((prevResult) => applyUpdates(payload.new, prevResult));
+        }
+      }
+    )
+    .subscribe();
+
+  // Use MutableRefObject type to allow assignment
+  (ref as React.MutableRefObject<any>).current = channel;
+
+  console.log(
+    `Subscription setup for player ${playerWallet} in game ${gameId}`
+  );
+
+  // Return the channel for potential external handling
+  return channel;
+};
+
+// Function to clean up subscription
+export const cleanupPlayerResultSubscription = (ref: React.RefObject<any>) => {
+  if (ref.current) {
+    supabase.removeChannel(ref.current);
+    (ref as React.MutableRefObject<any>).current = null;
   }
 };

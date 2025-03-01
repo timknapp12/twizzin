@@ -96,3 +96,23 @@ export const calculateTotalTimeMs = (
   const end = new Date(endTime).getTime();
   return end - start;
 };
+
+export const formatDetailedGameTime = (
+  startTime: string | number,
+  endTime: string | number
+): string => {
+  // Convert both to milliseconds for consistent handling
+  const startMs =
+    typeof startTime === 'string' ? new Date(startTime).getTime() : startTime;
+  const endMs =
+    typeof endTime === 'string' ? new Date(endTime).getTime() : endTime;
+
+  const timeDiff = endMs - startMs;
+  const minutes = Math.floor(timeDiff / (1000 * 60));
+  const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
+  const milliseconds = timeDiff % 1000;
+
+  return `${minutes}:${seconds.toString().padStart(2, '0')}.${milliseconds
+    .toString()
+    .padStart(3, '0')}`;
+};

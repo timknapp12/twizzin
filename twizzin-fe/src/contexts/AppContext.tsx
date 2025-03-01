@@ -153,8 +153,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     if (!publicKey || !connection) return;
     fetchUserXPAndRewards();
   }, [publicKey, connection, fetchUserXPAndRewards]);
-  console.log('userProfile', userProfile?.username);
-  console.log('userRewards', userRewards);
+
   return (
     <AppContext.Provider
       value={{
