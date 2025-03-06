@@ -195,17 +195,17 @@ const JoinGameDetails = ({
           <Row className='gap-2'>
             <Label>{t('Entry Fee')}:</Label>
             <Label style={{ color: primaryColor }}>
-              {entry_fee ? entry_fee / LAMPORTS_PER_SOL : '-'} SOL
+              {entry_fee ? entry_fee / LAMPORTS_PER_SOL : '0'} SOL
             </Label>
           </Row>
           <Row className='gap-2'>
-            <Label>{t('Commission to game host')}:</Label>
+            <Label>{t('Commission to game creator')}:</Label>
             <Label style={{ color: primaryColor }}>
               {commission ? commission / 100 : '0 '}%
             </Label>
           </Row>
           <Row className='gap-2'>
-            <Label>{t('Admin donation to the pool')}:</Label>
+            <Label>{t('Donation to the pool by game creator')}:</Label>
             <Label style={{ color: primaryColor }}>
               {/* TODO - update to real symbol */}
               {donation_amount ? donation_amount / LAMPORTS_PER_SOL : '0'} SOL

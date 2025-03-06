@@ -1,13 +1,10 @@
 Before DEMO:
 
-- work on staging
 - show xp and rewards on home page
-
-- show username of winners
-- show username of game creator
-
-- rewards calculation
-
+- copy game code to clipboard
+- show game admins their games
+- backpack failed to join game with a blockhash error
+- all players got errors on game submission
 - add 1 XP per player for the game creator
 
 refactor after MVP:
@@ -20,13 +17,10 @@ refactor after MVP:
 - handle editing a game
 - create routes for games after creation /create/[gameId]
 - add supabase domain to next.config.mjs for image hosting
-- add username when player joins game or creates game
-- show admin the game code after creation
 
   Join Game
 
 - show details of game that has already ended - or show 'not found' in case we delete the game after or if the game code is not found - which returns a 406 from supabase
-- don't allow admin to join game to play- but only to be admin
 - error handling for invalid params on route game/gameCode
 - show callout hint on join game details for 'split'
 - handle if game start time is in the past

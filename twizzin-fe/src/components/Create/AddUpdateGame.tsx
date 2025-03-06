@@ -37,7 +37,8 @@ const AddUpdateGame = () => {
     handleCreateGame,
     isCreating,
     error: createError,
-    creationResult,
+    // TODO - handle showing creation result
+    // creationResult,
     clearError,
     handleImageChange,
   } = useCreateGameContext();
@@ -232,8 +233,8 @@ const AddUpdateGame = () => {
             name='donation'
             value={gameData.donation}
             onChange={handleInputChange}
-            placeholder={t('Admin donation to the pool')}
-            label={t('Admin donation to the pool')}
+            placeholder={t('Donation to the pool by you')}
+            label={t('Donation to the pool by you')}
             callout={
               <Callout
                 content={t(
