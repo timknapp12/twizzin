@@ -29,28 +29,23 @@ export async function claim(
   const uniqueId = Math.floor(Math.random() * 1000000);
   const getUniqueGameCode = (base: string) => `${base}${uniqueId}`;
 
-  // Helper functions
   const findPDAs = (gameCode: string, admin: PublicKey) => {
     const [gamePda] = PublicKey.findProgramAddressSync(
       [Buffer.from('game'), admin.toBuffer(), Buffer.from(gameCode)],
       program.programId
     );
-
     const [vaultPda] = PublicKey.findProgramAddressSync(
       [Buffer.from('vault'), admin.toBuffer(), Buffer.from(gameCode)],
       program.programId
     );
-
     const [configPda] = PublicKey.findProgramAddressSync(
       [Buffer.from('config')],
       program.programId
     );
-
     const [winnersPda] = PublicKey.findProgramAddressSync(
       [Buffer.from('winners'), gamePda.toBuffer()],
       program.programId
     );
-
     return { gamePda, vaultPda, configPda, winnersPda };
   };
 
@@ -61,7 +56,6 @@ export async function claim(
     )[0];
   };
 
-  // Helper function to get player account data
   async function getPlayerAccount(pda: PublicKey) {
     try {
       const account = await program.account.playerAccount.fetch(pda);
@@ -76,13 +70,13 @@ export async function claim(
     }
   }
 
-  // Helper to declare winners
   async function executeDeclareWinners(
     gameCode: string,
     winnerPubkeys: PublicKey[],
-    playerPDAs: PublicKey[]
+    playerPDAs: PublicKey[],
+    isNative: boolean,
+    vaultTokenAccount?: PublicKey | null
   ) {
-    // Get all player accounts
     const playerAccounts = await Promise.all(
       playerPDAs.map(async (pda, index) => {
         try {
@@ -104,20 +98,17 @@ export async function claim(
       })
     );
 
-    // Sort by score (descending) and finish time (ascending)
     playerAccounts.sort((a, b) => {
-      if (!a || !b) return 0; // Handle null values
+      if (!a || !b) return 0;
       if (a.numCorrect !== b.numCorrect) {
-        return b.numCorrect - a.numCorrect; // Higher scores first
+        return b.numCorrect - a.numCorrect;
       }
-      // For equal scores, ensure deterministic ordering
       if (a.finishedTime.eq(b.finishedTime)) {
         return a.pubkey.toBuffer().compare(b.pubkey.toBuffer());
       }
       return a.finishedTime.sub(b.finishedTime).toNumber();
     });
 
-    // Get sorted arrays, filtering out any null values
     const sortedWinners = playerAccounts
       .filter((acc) => acc && acc.pubkey)
       .map((acc) => acc.pubkey);
@@ -129,7 +120,7 @@ export async function claim(
       throw new Error('No winners to declare');
     }
 
-    const { gamePda, winnersPda } = findPDAs(
+    const { gamePda, vaultPda, winnersPda } = findPDAs(
       gameCode,
       provider.wallet.publicKey
     );
@@ -140,6 +131,8 @@ export async function claim(
         .accounts({
           admin: provider.wallet.publicKey,
           game: gamePda,
+          vault: vaultPda,
+          vaultTokenAccount: isNative ? null : vaultTokenAccount,
           winners: winnersPda,
           systemProgram: SystemProgram.programId,
         })
@@ -151,7 +144,6 @@ export async function claim(
           }))
         )
         .rpc();
-
       await confirm(tx);
       return tx;
     } catch (error) {
@@ -164,15 +156,14 @@ export async function claim(
   console.log('\nTest 1: Error Cases');
   const gameCode1 = getUniqueGameCode('CLAIM1');
   const entryFee = new anchor.BN(0.1 * LAMPORTS_PER_SOL);
-  const commission = 500; // 5%
-  const now = Date.now();
-  const startTime = new anchor.BN(now);
-  const endTime = new anchor.BN(now + 3600 * 1000);
+  const commission = 500;
+  const now1 = Math.floor(Date.now() / 1000); // Seconds
+  const startTime1 = new anchor.BN((now1 - 120) * 1000); // 2 minutes ago
+  const endTime1 = new anchor.BN((now1 + 3600) * 1000); // 1 hour from now
   const maxWinners = 3;
   const answerHash = Array(32).fill(1);
   const donationAmount = new anchor.BN(1 * LAMPORTS_PER_SOL);
 
-  // Initialize game
   const { gamePda, vaultPda, configPda } = findPDAs(
     gameCode1,
     provider.wallet.publicKey
@@ -184,8 +175,8 @@ export async function claim(
       gameCode1,
       entryFee,
       commission,
-      startTime,
-      endTime,
+      startTime1,
+      endTime1,
       maxWinners,
       answerHash,
       donationAmount,
@@ -204,10 +195,8 @@ export async function claim(
       systemProgram: SystemProgram.programId,
     })
     .rpc();
-
   await confirm(initTx);
 
-  // Create and fund players
   const players = Array(4)
     .fill(0)
     .map(() => Keypair.generate());
@@ -220,14 +209,12 @@ export async function claim(
     await confirm(tx);
   }
 
-  // Have players join and submit answers with different scores and times
   const playerPDAs = [];
   for (let i = 0; i < players.length; i++) {
     const player = players[i];
     const playerPda = findPlayerPDA(gamePda, player.publicKey);
     playerPDAs.push(playerPda);
 
-    // Join game
     await program.methods
       .joinGame()
       .accounts({
@@ -244,9 +231,7 @@ export async function claim(
       .signers([player])
       .rpc();
 
-    // Submit answers with different scores and times
     const answers = [];
-    // Add i+1 correct answers for each player
     for (let j = 0; j < i + 1; j++) {
       answers.push({
         displayOrder: j + 1,
@@ -256,11 +241,12 @@ export async function claim(
       });
     }
 
+    await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1s
+    const submitNow = Math.floor(Date.now() / 1000);
+    const clientFinishTime = new anchor.BN((submitNow - 30) * 1000); // 30s ago
+
     await program.methods
-      .submitAnswers(
-        answers,
-        new anchor.BN(now + i * 100) // Different finish times
-      )
+      .submitAnswers(answers, clientFinishTime)
       .accounts({
         player: player.publicKey,
         game: gamePda,
@@ -271,7 +257,6 @@ export async function claim(
       .rpc();
   }
 
-  // End game
   await program.methods
     .endGame()
     .accounts({
@@ -291,27 +276,23 @@ export async function claim(
     })
     .rpc();
 
-  // Declare winners
   const { winnersPda } = findPDAs(gameCode1, provider.wallet.publicKey);
   const winners = players
     .slice(0, maxWinners)
     .map((player) => player.publicKey);
 
-  // Make sure players have finished and have scores before declaring winners
   await executeDeclareWinners(
     gameCode1,
     winners,
-    playerPDAs.slice(0, winners.length)
+    playerPDAs.slice(0, winners.length),
+    true
   );
 
-  // After declaring winners, let's verify the winners account
   console.log('Testing error cases...');
 
-  // Case 1: Non-winner tries to claim
   try {
-    const nonWinner = players[3]; // Fourth player
+    const nonWinner = players[3];
     const nonWinnerPda = playerPDAs[3];
-
     await program.methods
       .claim()
       .accounts({
@@ -327,17 +308,13 @@ export async function claim(
       })
       .signers([nonWinner])
       .rpc();
-
     assert.fail('Should have thrown NotAWinner error');
   } catch (error) {
     expect(error.message).to.include('NotAWinner');
   }
 
-  // Case 2: Double claim attempt
-  const winner = players[0]; // First winner
+  const winner = players[0];
   const winnerPda = playerPDAs[0];
-
-  // First claim should succeed
   await program.methods
     .claim()
     .accounts({
@@ -355,8 +332,6 @@ export async function claim(
     .rpc();
 
   console.log('First claim succeeded, attempting second claim...');
-
-  // Second claim should fail because the player account is closed
   try {
     await program.methods
       .claim()
@@ -378,29 +353,28 @@ export async function claim(
     console.log('Second claim error:', error.message);
     expect(error.message).to.include('AccountNotInitialized');
   }
-
   console.log('Error cases completed successfully');
 
   // Test 2: Successful SOL Claims
   console.log('\nTest 2: Successful SOL Claims');
-
-  // Create new game for SOL claims test
   const gameCode2 = getUniqueGameCode('CLAIM2');
+  const now2 = Math.floor(Date.now() / 1000);
+  const startTime2 = new anchor.BN((now2 - 120) * 1000);
+  const endTime2 = new anchor.BN((now2 + 3600) * 1000);
   const {
     gamePda: gamePda2,
     vaultPda: vaultPda2,
     winnersPda: winnersPda2,
   } = findPDAs(gameCode2, provider.wallet.publicKey);
 
-  // Initialize game
   await program.methods
     .initGame(
       'Test Game 2',
       gameCode2,
       entryFee,
       commission,
-      startTime,
-      endTime,
+      startTime2,
+      endTime2,
       maxWinners,
       answerHash,
       donationAmount,
@@ -420,12 +394,9 @@ export async function claim(
     })
     .rpc();
 
-  // Create and fund players
   const players2 = Array(2)
     .fill(0)
     .map(() => Keypair.generate());
-
-  // Fund players
   for (const player of players2) {
     const tx = await provider.connection.requestAirdrop(
       player.publicKey,
@@ -434,14 +405,12 @@ export async function claim(
     await confirm(tx);
   }
 
-  // Have players join and submit answers
   const playerPDAs2 = [];
   for (let i = 0; i < players2.length; i++) {
     const player = players2[i];
     const playerPda = findPlayerPDA(gamePda2, player.publicKey);
     playerPDAs2.push(playerPda);
 
-    // Join game
     await program.methods
       .joinGame()
       .accounts({
@@ -458,7 +427,10 @@ export async function claim(
       .signers([player])
       .rpc();
 
-    // Submit answers with different finish times
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    const submitNow = Math.floor(Date.now() / 1000);
+    const clientFinishTime = new anchor.BN((submitNow - 30) * 1000);
+
     await program.methods
       .submitAnswers(
         [
@@ -469,7 +441,7 @@ export async function claim(
             proof: [],
           },
         ],
-        new anchor.BN(now + i * 100) // Different finish time for each player
+        clientFinishTime
       )
       .accounts({
         player: player.publicKey,
@@ -481,7 +453,6 @@ export async function claim(
       .rpc();
   }
 
-  // End game
   await program.methods
     .endGame()
     .accounts({
@@ -501,18 +472,16 @@ export async function claim(
     })
     .rpc();
 
-  // Declare winners
   await executeDeclareWinners(
     gameCode2,
     players2.map((p) => p.publicKey),
-    playerPDAs2
+    playerPDAs2,
+    true
   );
 
-  // Test successful claims
   for (let i = 0; i < players2.length; i++) {
     const player = players2[i];
     const playerPda = playerPDAs2[i];
-
     await program.methods
       .claim()
       .accounts({
@@ -534,12 +503,14 @@ export async function claim(
   // Test 3: Successful SPL Token Claims
   console.log('\nTest 3: Successful SPL Token Claims');
   const gameCode3 = getUniqueGameCode('CLAIM3');
+  const now3 = Math.floor(Date.now() / 1000);
+  const startTime3 = new anchor.BN((now3 - 120) * 1000);
+  const endTime3 = new anchor.BN((now3 + 3600) * 1000);
   const { gamePda: gamePda3, vaultPda: vaultPda3 } = findPDAs(
     gameCode3,
     provider.wallet.publicKey
   );
 
-  // Create new SPL token mint
   const mint = await createMint(
     provider.connection,
     provider.wallet.payer,
@@ -548,16 +519,14 @@ export async function claim(
     9
   );
 
-  // Create vault token account
   const vaultTokenAccount = await getOrCreateAssociatedTokenAccount(
     provider.connection,
     provider.wallet.payer,
     mint,
     vaultPda3,
-    true // allowOwnerOffCurve
+    true
   );
 
-  // Create admin token account and mint tokens
   const adminTokenAccount = await getOrCreateAssociatedTokenAccount(
     provider.connection,
     provider.wallet.payer,
@@ -565,20 +534,7 @@ export async function claim(
     provider.wallet.publicKey
   );
 
-  await mintTo(
-    provider.connection,
-    provider.wallet.payer,
-    mint,
-    adminTokenAccount.address,
-    provider.wallet.publicKey,
-    1000 * LAMPORTS_PER_SOL
-  );
-
-  // Test 3: Successful SPL Token Claims
-  // After creating the vault token account and before initializing the game
-  const mintAmount = new anchor.BN(1000 * LAMPORTS_PER_SOL); // Mint enough tokens for prizes
-
-  // Mint tokens to admin
+  const mintAmount = new anchor.BN(1000 * LAMPORTS_PER_SOL);
   await mintTo(
     provider.connection,
     provider.wallet.payer,
@@ -588,15 +544,14 @@ export async function claim(
     mintAmount.toNumber()
   );
 
-  // Initialize game
   await program.methods
     .initGame(
       'Test Game 3',
       gameCode3,
-      new anchor.BN(5 * LAMPORTS_PER_SOL), // 5 token entry fee
+      new anchor.BN(5 * LAMPORTS_PER_SOL),
       commission,
-      startTime,
-      endTime,
+      startTime3,
+      endTime3,
       maxWinners,
       answerHash,
       donationAmount,
@@ -616,38 +571,30 @@ export async function claim(
     })
     .rpc();
 
-  // Transfer tokens to vault for prizes
   await transfer(
     provider.connection,
     provider.wallet.payer,
     adminTokenAccount.address,
     vaultTokenAccount.address,
     provider.wallet.publicKey,
-    mintAmount.toNumber() / 2 // Transfer half of minted tokens to vault
+    mintAmount.toNumber() / 2
   );
 
-  // Create and fund players
   const players3 = Array(2)
     .fill(0)
     .map(() => Keypair.generate());
-
-  // Setup players with SOL for transaction fees
   for (const player of players3) {
     const tx = await provider.connection.requestAirdrop(
       player.publicKey,
       2 * LAMPORTS_PER_SOL
     );
     await confirm(tx);
-
-    // Create and fund player token accounts
     const playerTokenAccount = await getOrCreateAssociatedTokenAccount(
       provider.connection,
       provider.wallet.payer,
       mint,
       player.publicKey
     );
-
-    // Mint tokens to player
     await mintTo(
       provider.connection,
       provider.wallet.payer,
@@ -658,7 +605,6 @@ export async function claim(
     );
   }
 
-  // Players join and submit answers with different finish times
   const playerPDAs3 = [];
   const playerTokenAccounts = [];
   for (let i = 0; i < players3.length; i++) {
@@ -689,6 +635,10 @@ export async function claim(
       .rpc();
     playerPDAs3.push(playerPda);
 
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    const submitNow = Math.floor(Date.now() / 1000);
+    const clientFinishTime = new anchor.BN((submitNow - 30) * 1000);
+
     await program.methods
       .submitAnswers(
         [
@@ -699,7 +649,7 @@ export async function claim(
             proof: [],
           },
         ],
-        new anchor.BN(now + i * 100) // Different finish time for each player
+        clientFinishTime
       )
       .accounts({
         player: player.publicKey,
@@ -711,7 +661,6 @@ export async function claim(
       .rpc();
   }
 
-  // End game
   const config = await program.account.programConfig.fetch(configPda);
   const treasuryTokenAccount = await getOrCreateAssociatedTokenAccount(
     provider.connection,
@@ -737,53 +686,28 @@ export async function claim(
     })
     .rpc();
 
-  // Declare winners
   const { winnersPda: winnersPda3 } = findPDAs(
     gameCode3,
     provider.wallet.publicKey
   );
-  const winners3 = [
-    {
-      player: players3[0].publicKey,
-      score: new anchor.BN(100),
-      finishTime: new anchor.BN(now + 100),
-      prizeAmount: new anchor.BN(1_000_000),
-    },
-    {
-      player: players3[1].publicKey,
-      score: new anchor.BN(90),
-      finishTime: new anchor.BN(now + 200),
-      prizeAmount: new anchor.BN(500_000),
-    },
-  ];
-
-  // Sort winners
-  winners3.sort((a, b) => {
-    if (!a.score.eq(b.score)) {
-      return b.score.sub(a.score).toNumber();
-    }
-    return a.finishTime.sub(b.finishTime).toNumber();
-  });
-
   await executeDeclareWinners(
     gameCode3,
-    winners3.slice(0, maxWinners).map((kp) => kp.player),
-    playerPDAs3.slice(0, maxWinners)
+    players3.map((p) => p.publicKey),
+    playerPDAs3,
+    false,
+    vaultTokenAccount.address
   );
 
-  // Record initial token balances
   const initialTokenBalances = await Promise.all(
     playerTokenAccounts.map((account) =>
       getAccount(provider.connection, account.address)
     )
   );
 
-  // Have all winners claim their prizes
   for (let i = 0; i < players3.length; i++) {
     const player = players3[i];
     const playerPda = playerPDAs3[i];
     const playerTokenAccount = playerTokenAccounts[i];
-
     await program.methods
       .claim()
       .accounts({
@@ -800,7 +724,6 @@ export async function claim(
       .signers([player])
       .rpc();
 
-    // Verify token balance increased
     const newTokenAccount = await getAccount(
       provider.connection,
       playerTokenAccount.address
