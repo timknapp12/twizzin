@@ -2,7 +2,7 @@ use crate::errors::ErrorCode;
 use crate::state::{Game, PlayerAccount, WinnerInfo, Winners, WinnersDeclared, MAX_WINNERS};
 use crate::utils::prize::calculate_prizes;
 use anchor_lang::prelude::*;
-
+use anchor_spl::token::TokenAccount;
 #[derive(Accounts)]
 #[instruction(winner_pubkeys: Vec<Pubkey>)]
 pub struct DeclareWinners<'info> {
@@ -10,21 +10,37 @@ pub struct DeclareWinners<'info> {
     pub admin: Signer<'info>,
 
     #[account(
-       mut,
-       seeds = [b"game", game.admin.as_ref(), game.game_code.as_bytes()],
-       bump = game.bump,
-       constraint = game.admin == admin.key() @ ErrorCode::InvalidAdmin,
-       constraint = Clock::get()?.unix_timestamp * 1000 >= game.end_time @ ErrorCode::GameNotEnded
-   )]
+        mut,
+        seeds = [b"game", game.admin.as_ref(), game.game_code.as_bytes()],
+        bump = game.bump,
+        constraint = game.admin == admin.key() @ ErrorCode::InvalidAdmin,
+        constraint = Clock::get()?.unix_timestamp * 1000 >= game.end_time @ ErrorCode::GameNotEnded
+    )]
     pub game: Account<'info, Game>,
 
+    /// CHECK: The vault PDA that owns the token account
     #[account(
-       init,
-       payer = admin,
-       space = Winners::INIT_SPACE,
-       seeds = [b"winners", game.key().as_ref()],
-       bump
-   )]
+        mut,
+        seeds = [b"vault", game.admin.as_ref(), game.game_code.as_bytes()],
+        bump = game.vault_bump,
+    )]
+    pub vault: UncheckedAccount<'info>,
+
+    // Only needed for SPL token games
+    #[account(
+        mut,
+        associated_token::mint = game.token_mint,
+        associated_token::authority = vault
+    )]
+    pub vault_token_account: Option<Account<'info, TokenAccount>>,
+
+    #[account(
+        init,
+        payer = admin,
+        space = Winners::INIT_SPACE,
+        seeds = [b"winners", game.key().as_ref()],
+        bump
+    )]
     pub winners: Account<'info, Winners>,
 
     pub system_program: Program<'info, System>,
@@ -72,7 +88,6 @@ impl<'info> DeclareWinners<'info> {
         let mut prev_score: u8 = u8::MAX;
         let mut prev_time = i64::MIN;
 
-        // Store game key to prevent temporary value issue
         let game_key = game.key();
 
         // Validate each winner and their ordering
@@ -81,18 +96,15 @@ impl<'info> DeclareWinners<'info> {
             .zip(remaining_accounts.iter())
             .enumerate()
         {
-            // Verify account PDA
             let seeds = &[b"player", game_key.as_ref(), winner_pubkey.as_ref()];
             let (expected_pda, _) = Pubkey::find_program_address(seeds, &crate::ID);
             require!(account.key() == expected_pda, ErrorCode::WinnerNotPlayer);
 
-            // Deserialize and validate player account
             let player = Account::<PlayerAccount>::try_from(account)?;
             require!(player.game == game_key, ErrorCode::WinnerNotPlayer);
             require!(player.player == *winner_pubkey, ErrorCode::WinnerNotPlayer);
             require!(player.finished_time > 0, ErrorCode::PlayerNotFinished);
 
-            // Verify ordering
             if i > 0 {
                 require!(
                     (player.num_correct < prev_score)
@@ -105,11 +117,15 @@ impl<'info> DeclareWinners<'info> {
             prev_time = player.finished_time;
         }
 
-        // Calculate prizes
-        let total_pot = game
-            .entry_fee
-            .checked_mul(game.total_players as u64)
-            .ok_or(ErrorCode::NumericOverflow)?;
+        // Calculate total_pot from actual vault balance
+        let total_pot = if game.is_native {
+            self.vault.lamports()
+        } else {
+            self.vault_token_account
+                .as_ref()
+                .ok_or(ErrorCode::VaultTokenAccountNotProvided)?
+                .amount
+        };
 
         let prizes = calculate_prizes(
             total_pot,
@@ -119,7 +135,6 @@ impl<'info> DeclareWinners<'info> {
             0, // Rent exemption handled in end_game
         )?;
 
-        // Create winner info entries
         let mut winner_infos = Vec::with_capacity(expected_winners as usize);
         let mut total_prize_pool = 0u64;
 
@@ -135,7 +150,6 @@ impl<'info> DeclareWinners<'info> {
                 .ok_or(ErrorCode::NumericOverflow)?;
         }
 
-        // Initialize winners account
         self.winners.set_inner(Winners {
             game: game.key(),
             num_winners: expected_winners,
@@ -143,7 +157,6 @@ impl<'info> DeclareWinners<'info> {
             bump: bumps.winners,
         });
 
-        // Emit event
         emit!(WinnersDeclared {
             game: game_key,
             num_winners: expected_winners,

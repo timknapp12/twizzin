@@ -114,7 +114,9 @@ const DisplayAddedGame: React.FC<DisplayAddedGameProps> = ({
             </Label>
           </Row>
           <Row>
-            <Label className='mr-2'>{t('Admin donation to the pool')}:</Label>
+            <Label className='mr-2'>
+              {t('Donation to the pool by game creator')}:
+            </Label>
             <Label style={{ color: primaryColor }}>
               {gameData.donation} SOL
             </Label>

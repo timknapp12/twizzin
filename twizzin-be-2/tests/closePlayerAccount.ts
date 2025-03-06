@@ -24,11 +24,22 @@ export async function closePlayerAccount(
   async function executeDeclareWinners(
     gameCode: string,
     winnerPubkeys: PublicKey[],
-    playerPDAs: PublicKey[]
+    playerPDAs: PublicKey[],
+    isNative: boolean,
+    vaultTokenAccount?: PublicKey | null
   ) {
     const [gamePda] = PublicKey.findProgramAddressSync(
       [
         Buffer.from('game'),
+        provider.wallet.publicKey.toBuffer(),
+        Buffer.from(gameCode),
+      ],
+      program.programId
+    );
+
+    const [vaultPda] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from('vault'),
         provider.wallet.publicKey.toBuffer(),
         Buffer.from(gameCode),
       ],
@@ -45,27 +56,27 @@ export async function closePlayerAccount(
       .accounts({
         admin: provider.wallet.publicKey,
         game: gamePda,
+        vault: vaultPda,
+        vaultTokenAccount: isNative ? null : vaultTokenAccount,
         winners: winnersPda,
         systemProgram: SystemProgram.programId,
       })
       .remainingAccounts(
         playerPDAs.map((pda) => ({
           pubkey: pda,
-          isWritable: true,
+          isWritable: false,
           isSigner: false,
         }))
       )
       .rpc();
   }
 
-  // Setup game
   const uniqueId = Math.floor(Math.random() * 100);
   const gameCode = `CLOSE${uniqueId}`;
-  const now = Date.now();
-  const startTime = new anchor.BN(now);
-  const endTime = new anchor.BN(now + 3600 * 1000);
+  const now = Math.floor(Date.now() / 1000); // Seconds, like submitAnswers
+  const startTime = new anchor.BN((now - 120) * 1000); // 2 minutes ago
+  const endTime = new anchor.BN((now + 3600) * 1000); // 1 hour from now
 
-  // Find PDAs
   const [gamePda] = PublicKey.findProgramAddressSync(
     [
       Buffer.from('game'),
@@ -89,18 +100,17 @@ export async function closePlayerAccount(
     program.programId
   );
 
-  // Initialize game
   await program.methods
     .initGame(
       'Test Game',
       gameCode,
       new anchor.BN(0.1 * LAMPORTS_PER_SOL),
-      500, // 5% commission
+      500,
       startTime,
       endTime,
-      1, // maxWinners
-      Array(32).fill(1), // answerHash
-      new anchor.BN(1 * LAMPORTS_PER_SOL), // donationAmount
+      1,
+      Array(32).fill(1),
+      new anchor.BN(1 * LAMPORTS_PER_SOL),
       false,
       false
     )
@@ -117,7 +127,6 @@ export async function closePlayerAccount(
     })
     .rpc();
 
-  // Create and fund regular player
   const player = Keypair.generate();
   const airdropTx = await provider.connection.requestAirdrop(
     player.publicKey,
@@ -125,13 +134,11 @@ export async function closePlayerAccount(
   );
   await confirm(airdropTx);
 
-  // Create first player PDA
   const [playerPda] = PublicKey.findProgramAddressSync(
     [Buffer.from('player'), gamePda.toBuffer(), player.publicKey.toBuffer()],
     program.programId
   );
 
-  // Create and fund winning player
   const winningPlayer = Keypair.generate();
   const winnerAirdropTx = await provider.connection.requestAirdrop(
     winningPlayer.publicKey,
@@ -139,7 +146,6 @@ export async function closePlayerAccount(
   );
   await confirm(winnerAirdropTx);
 
-  // Create winning player PDA
   const [winnerPda] = PublicKey.findProgramAddressSync(
     [
       Buffer.from('player'),
@@ -149,7 +155,6 @@ export async function closePlayerAccount(
     program.programId
   );
 
-  // First player joins game
   await program.methods
     .joinGame()
     .accounts({
@@ -166,7 +171,6 @@ export async function closePlayerAccount(
     .signers([player])
     .rpc();
 
-  // Winner joins game
   await program.methods
     .joinGame()
     .accounts({
@@ -183,7 +187,6 @@ export async function closePlayerAccount(
     .signers([winningPlayer])
     .rpc();
 
-  // Test 1: Try to close account before game ends
   console.log('\nTest 1: Closure before game ends');
   try {
     await program.methods
@@ -203,8 +206,12 @@ export async function closePlayerAccount(
     expect(error.message).to.include('GameNotEnded');
   }
 
-  // Submit answers
+  // Submit answers with past time
   console.log('\nSubmitting answers...');
+  await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1s like submitAnswers
+  const submitNow = Math.floor(Date.now() / 1000);
+  const clientFinishTime = new anchor.BN((submitNow - 30) * 1000); // 30 seconds ago
+
   await program.methods
     .submitAnswers(
       [
@@ -215,7 +222,7 @@ export async function closePlayerAccount(
           proof: [],
         },
       ],
-      new anchor.BN(now + 100)
+      clientFinishTime
     )
     .accounts({
       player: player.publicKey,
@@ -226,7 +233,6 @@ export async function closePlayerAccount(
     .signers([player])
     .rpc();
 
-  // Submit winning answers
   await program.methods
     .submitAnswers(
       [
@@ -237,7 +243,7 @@ export async function closePlayerAccount(
           proof: [],
         },
       ],
-      new anchor.BN(now + 50)
+      clientFinishTime
     )
     .accounts({
       player: winningPlayer.publicKey,
@@ -248,7 +254,6 @@ export async function closePlayerAccount(
     .signers([winningPlayer])
     .rpc();
 
-  // End game
   console.log('\nEnding game...');
   await program.methods
     .endGame()
@@ -269,7 +274,6 @@ export async function closePlayerAccount(
     })
     .rpc();
 
-  // Test 2: Try to close with wrong signer
   console.log('\nTest 2: Closure with wrong signer');
   const wrongPlayer = Keypair.generate();
   try {
@@ -290,7 +294,6 @@ export async function closePlayerAccount(
     expect(error.message).to.include('unknown signer');
   }
 
-  // Test 3: Successful closure of non-winner account
   console.log('\nTest 3: Successful closure');
   await program.methods
     .closePlayerAccount()
@@ -304,7 +307,6 @@ export async function closePlayerAccount(
     .signers([player])
     .rpc();
 
-  // Verify account is closed
   try {
     await program.account.playerAccount.fetch(playerPda);
     assert.fail('Player account should be closed');
@@ -313,21 +315,21 @@ export async function closePlayerAccount(
     expect(error.message).to.include('Account does not exist');
   }
 
-  // Test 4: Winner Account Before Claiming
-  console.log('Test 4: Winner Account Before Claiming');
-
+  console.log('\nTest 4: Winner Account Before Claiming');
   console.log('Declaring winners...');
 
-  // Define winnersPda before using it
   const [winnersPda] = PublicKey.findProgramAddressSync(
     [Buffer.from('winners'), gamePda.toBuffer()],
     program.programId
   );
 
-  // Declare winners
-  await executeDeclareWinners(gameCode, [winningPlayer.publicKey], [winnerPda]);
+  await executeDeclareWinners(
+    gameCode,
+    [winningPlayer.publicKey],
+    [winnerPda],
+    true
+  );
 
-  // Try to close winner account before claiming
   console.log('Attempting to close winner account before claiming...');
   try {
     await program.methods
@@ -347,7 +349,6 @@ export async function closePlayerAccount(
     expect(error.message).to.include('CannotCloseWinnerAccount');
   }
 
-  // Test 5: Double Closure Prevention
   console.log('\nTest 5: Double Closure Prevention');
   try {
     await program.methods

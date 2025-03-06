@@ -1,6 +1,6 @@
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { Program, BN } from '@coral-xyz/anchor';
-import { TwizzinIdl } from '../../types/idl';
+import { TwizzinIdl } from '@/types/idl';
 import {
   GameSession,
   JoinFullGame,

@@ -1,7 +1,12 @@
 import { Idl } from '@coral-xyz/anchor';
-
+/**
+ * Program IDL in camelCase format in order to be used in JS/TS.
+ *
+ * Note that this is only a type helper and is not the actual IDL. The original
+ * IDL can be found at `target/idl/twizzin_be_2.json`.
+ */
 export type TwizzinIdl = Idl & {
-  address: 'CKG9y4fnWgbd83uKR2qzeGVkr2Qo3Fofq21acog3Ae1';
+  address: '2DH2XB8vip28nv9VmFH6hLJEGk1165xDpDbWkwfWjARB';
   metadata: {
     name: 'twizzinBe2';
     version: '0.1.0';
@@ -482,6 +487,120 @@ export type TwizzinIdl = Idl & {
                 account: 'game';
               }
             ];
+          };
+        },
+        {
+          name: 'vault';
+          writable: true;
+          pda: {
+            seeds: [
+              {
+                kind: 'const';
+                value: [118, 97, 117, 108, 116];
+              },
+              {
+                kind: 'account';
+                path: 'game.admin';
+                account: 'game';
+              },
+              {
+                kind: 'account';
+                path: 'game.game_code';
+                account: 'game';
+              }
+            ];
+          };
+        },
+        {
+          name: 'vaultTokenAccount';
+          writable: true;
+          optional: true;
+          pda: {
+            seeds: [
+              {
+                kind: 'account';
+                path: 'vault';
+              },
+              {
+                kind: 'const';
+                value: [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ];
+              },
+              {
+                kind: 'account';
+                path: 'game.token_mint';
+                account: 'game';
+              }
+            ];
+            program: {
+              kind: 'const';
+              value: [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ];
+            };
           };
         },
         {

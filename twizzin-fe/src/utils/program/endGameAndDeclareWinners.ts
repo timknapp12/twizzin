@@ -25,8 +25,11 @@ export async function endGameAndDeclareWinners(
   connection: Connection,
   admin: PublicKey,
   sendTransaction: (
+    // eslint-disable-next-line no-unused-vars
     transaction: Transaction,
+    // eslint-disable-next-line no-unused-vars
     connection: Connection,
+    // eslint-disable-next-line no-unused-vars
     options?: { skipPreflight: boolean }
   ) => Promise<string>,
   params: {
@@ -70,7 +73,7 @@ export async function endGameAndDeclareWinners(
     // Create and build transaction
     const transaction = new Transaction();
 
-    const accounts = {
+    const endGameAccounts = {
       admin,
       game: gamePda,
       vault: vaultPda,
@@ -90,7 +93,7 @@ export async function endGameAndDeclareWinners(
     const endGameIx = await program.methods
       .endGame()
       // @ts-ignore
-      .accounts(accounts)
+      .accounts(endGameAccounts)
       .instruction();
     transaction.add(endGameIx);
 
@@ -111,14 +114,19 @@ export async function endGameAndDeclareWinners(
         })
       );
 
+      const declareWinnersAccounts = {
+        admin,
+        game: gamePda,
+        vault: vaultPda, // Added vault account
+        vaultTokenAccount: params.isNative ? null : params.vaultTokenAccount, // Added conditional vaultTokenAccount
+        winners: winnersPda,
+        systemProgram: SystemProgram.programId,
+      };
+
       const declareWinnersIx = await program.methods
         .declareWinners(gameResults.winners.map((w) => new PublicKey(w.wallet)))
-        .accounts({
-          admin,
-          game: gamePda,
-          winners: winnersPda,
-          systemProgram: SystemProgram.programId,
-        })
+        // @ts-ignore
+        .accounts(declareWinnersAccounts)
         .remainingAccounts(
           winnerPDAs.map((pda) => ({
             pubkey: pda,

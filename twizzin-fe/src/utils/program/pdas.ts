@@ -1,6 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
 import { Program } from '@coral-xyz/anchor';
-import { TwizzinIdl } from '../../types/idl';
+import { TwizzinIdl } from '@/types/idl';
 
 export const deriveGamePDAs = (
   program: Program<TwizzinIdl>,
