@@ -13,7 +13,7 @@ import {
   createAssociatedTokenAccountInstruction,
 } from '@solana/spl-token';
 import { BN, Program } from '@coral-xyz/anchor';
-import { TwizzinIdl } from '../../types/idl';
+import { TwizzinIdl } from '@/types/idl';
 import { deriveGamePDAs } from './pdas';
 
 interface InitGameParams {

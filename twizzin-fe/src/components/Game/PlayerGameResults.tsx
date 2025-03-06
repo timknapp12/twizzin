@@ -29,7 +29,6 @@ const PlayerGameResults = () => {
   const { publicKey } = useWallet();
 
   if (!gameData) return null;
-  console.log('gameResult', gameResult);
 
   // Show loading state
   if (isLoadingResults) {

@@ -666,7 +666,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
         }
       }
     };
-  }, [program, gameData, connection]);
+  }, [program, gameData, connection, isAdmin, publicKey]);
 
   useEffect(() => {
     // Early return if we don't have game code or ID
@@ -796,6 +796,8 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
     gameData?.id,
     publicKey,
     fetchUserXPAndRewards,
+    gameData?.questions,
+    isAdmin,
   ]);
 
   // Cleanup player result subscription on component unmount

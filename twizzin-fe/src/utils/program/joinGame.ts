@@ -10,7 +10,7 @@ import {
   NATIVE_MINT,
 } from '@solana/spl-token';
 import { Program } from '@coral-xyz/anchor';
-import { TwizzinIdl } from '../../types/idl';
+import { TwizzinIdl } from '@/types/idl';
 import { deriveGamePDAs, derivePlayerPDA } from './pdas';
 import { JoinGameParams } from '@/types';
 

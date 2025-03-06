@@ -2,7 +2,7 @@ import { Program } from '@coral-xyz/anchor';
 import { WalletContextState } from '@solana/wallet-adapter-react';
 import { PublicKey, SystemProgram } from '@solana/web3.js';
 import { validateAuthority } from '../../config/constants';
-import { TwizzinIdl } from '../../types/idl';
+import { TwizzinIdl } from '@/types/idl';
 
 interface InitConfigResponse {
   success: boolean;

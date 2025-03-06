@@ -5,7 +5,7 @@ import {
   Connection,
 } from '@solana/web3.js';
 import { Program } from '@coral-xyz/anchor';
-import { TwizzinIdl } from '../../types/idl';
+import { TwizzinIdl } from '@/types/idl';
 import { deriveGamePDAs, derivePlayerPDA } from './pdas';
 import { SubmitAnswersParams } from '@/types';
 
