@@ -1,19 +1,18 @@
 import React, { useState, FormEvent } from 'react';
 import Image from 'next/image';
-import { Alert, Button, Column, Input, Row, Callout } from '@/components';
+import { Button, Column, Input, Row, Callout } from '@/components';
 import { FaGamepad } from 'react-icons/fa';
 import { useAppContext, useGameContext } from '@/contexts';
 import art1 from '../../assets/illustration1.png';
+import { toast } from 'react-toastify';
 
 const JoinForm = () => {
   const { t } = useAppContext();
   const { gameCode, setGameCode, getGameByCode } = useGameContext();
 
   const [isLoading, setIsLoading] = useState(false);
-  const [findGameError, setFindGameError] = useState('');
 
   const onHandleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFindGameError('');
     setGameCode(e.target.value);
   };
 
@@ -32,9 +31,9 @@ const JoinForm = () => {
     } catch (err: any) {
       console.log('err', err?.message);
       if (err?.message?.includes('multiple (or no) rows returned')) {
-        setFindGameError(t('Game code not found'));
+        toast.error(t('Game code not found'));
       } else {
-        setFindGameError(err?.message || 'An error occurred');
+        toast.error(err?.message || 'An error occurred');
       }
       setIsLoading(false);
     }
@@ -70,14 +69,6 @@ const JoinForm = () => {
               }
             />
           </Column>
-          {findGameError && (
-            <Alert
-              variant='error'
-              title={t('Error')}
-              description={findGameError}
-              onClose={() => setFindGameError('')}
-            />
-          )}
           <Button type='submit' isLoading={isLoading}>
             {t('Find game')}
           </Button>

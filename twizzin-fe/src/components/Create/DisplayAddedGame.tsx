@@ -5,7 +5,6 @@ import {
   Grid,
   Label,
   PrimaryText,
-  Alert,
   H5,
   // IconButton,
 } from '@/components';
@@ -14,7 +13,7 @@ import {
   // FaPencil,
   FaCircleCheck,
 } from 'react-icons/fa6';
-import { useAppContext, useCreateGameContext } from '@/contexts';
+import { useAppContext } from '@/contexts';
 import { CreateGameData, QuestionForDb } from '@/types';
 import { displayOrderMap } from '@/types';
 
@@ -29,12 +28,10 @@ interface DisplayAddedGameProps {
 const DisplayAddedGame: React.FC<DisplayAddedGameProps> = ({
   gameData,
   questions,
-  showGameCode,
   // setShowGameCode,
   // setIsEdit,
 }) => {
   const { t } = useAppContext();
-  const { creationResult } = useCreateGameContext();
 
   const totalTime = questions.reduce(
     (acc, question) => acc + question.timeLimit,
@@ -61,15 +58,6 @@ const DisplayAddedGame: React.FC<DisplayAddedGameProps> = ({
     <Column className='w-full h-full flex-grow gap-8' justify='between'>
       <Column className='w-full gap-2'>
         <Column className='w-full gap-0'>
-          {showGameCode && (
-            <Alert
-              className='max-w-[500px]'
-              variant='success'
-              title={t('Your game is saved!')}
-              description={`${t('Game Code')}: ${gameData.gameCode} `}
-              // onClose={() => setShowGameCode(false)}
-            />
-          )}
           {/* <Row className='w-full' justify='end'>
             <IconButton
               Icon={FaPencil}

@@ -5,6 +5,7 @@ import { Row } from './containers';
 import { Label } from './texts';
 import { processImageFile } from '@/utils';
 import { useState } from 'react';
+import { toast } from 'react-toastify';
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   className?: string;
@@ -77,7 +78,6 @@ interface FileInputProps
   label?: string;
   callout?: React.ReactNode;
   onFileSelect?: (file: File) => void;
-  onError?: (error: string) => void;
   onUploadComplete?: (processedFile: File) => void;
   fileSizeError?: string;
   fileTypeError?: string;
@@ -90,7 +90,6 @@ export const FileInput: React.FC<FileInputProps> = ({
   id,
   callout,
   onFileSelect,
-  onError,
   onUploadComplete,
   fileSizeError,
   fileTypeError,
@@ -119,32 +118,24 @@ export const FileInput: React.FC<FileInputProps> = ({
 
     const error = validateFile(file);
     if (error) {
-      onError?.(error);
+      toast.error(error);
       e.target.value = '';
       setSelectedFileName('');
       return;
     }
 
     try {
-      // Call onFileSelect with the original file first
       onFileSelect?.(file);
-
-      // Process the file
       const processedFile = await processImageFile(file);
-
-      // Update UI
       setSelectedFileName(file.name);
 
-      // Call onUploadComplete with the processed file
       if (processedFile) {
         onUploadComplete?.(processedFile);
-        console.log('Processed file:', processedFile); // Debug log
       }
     } catch (error) {
-      console.error('Error processing file:', error); // Debug log
-      onError?.(
-        error instanceof Error ? error.message : 'Error processing file'
-      );
+      const errorMessage =
+        error instanceof Error ? error.message : 'Error processing file';
+      toast.error(errorMessage);
       e.target.value = '';
       setSelectedFileName('');
     }

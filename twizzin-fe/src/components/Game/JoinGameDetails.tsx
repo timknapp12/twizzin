@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button, Column, Row, Label, Alert, Input } from '@/components';
+import { Button, Column, Row, Label, Input } from '@/components';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { TbListDetails } from 'react-icons/tb';
 import { GiSittingDog } from 'react-icons/gi';
@@ -54,7 +54,6 @@ const JoinGameDetails = ({
   const totalTime =
     end_time && start_time ? formatGameTime(start_time, end_time) : 0;
 
-  const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isStartingGame, setIsStartingGame] = useState(false);
   const [countdown, setCountdown] = useState<string>(
@@ -94,9 +93,9 @@ const JoinGameDetails = ({
     } catch (error: unknown) {
       console.error('Error joining game:', error);
       if (error instanceof Error) {
-        setError(`${t('Error joining game')}: ${error.message}`);
+        toast.error(`${t('Error joining game')}: ${error.message}`);
       } else {
-        setError(t('Error joining game'));
+        toast.error(t('Error joining game'));
       }
       throw error;
     } finally {
@@ -115,9 +114,9 @@ const JoinGameDetails = ({
     } catch (error: unknown) {
       console.error('Error starting game:', error);
       if (error instanceof Error) {
-        setError(`${t('Error starting game')}: ${error.message}`);
+        toast.error(`${t('Error starting game')}: ${error.message}`);
       } else {
-        setError(t('Error starting game'));
+        toast.error(t('Error starting game'));
       }
       throw error;
     } finally {
@@ -239,14 +238,6 @@ const JoinGameDetails = ({
           </Row>
         </Column>
       </Column>
-      {error && (
-        <Alert
-          variant='error'
-          title={t('Error')}
-          description={error}
-          onClose={() => setError(null)}
-        />
-      )}
       <Column className='gap-4 w-full'>
         {!isAdmin && !hasGameData && (
           <Input

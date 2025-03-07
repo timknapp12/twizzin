@@ -8,7 +8,6 @@ import {
   Row,
   IconButton,
   Button,
-  Alert,
   Callout,
   FileInput,
   Checkbox,
@@ -36,7 +35,6 @@ const AddUpdateGame = () => {
     totalTime,
     handleCreateGame,
     isCreating,
-    error: createError,
     // TODO - handle showing creation result
     // creationResult,
     clearError,
@@ -50,14 +48,13 @@ const AddUpdateGame = () => {
   const adjustedMin = screenSize === 'small' ? '100%' : '200px';
 
   const [isEdit, setIsEdit] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showGameCode, setShowGameCode] = useState(false);
 
   const doesGameCodeExist = gameData.gameCode && gameData.gameCode.length > 0;
   // console.log('doesGameCodeExist', doesGameCodeExist);
   const handleDateChange = (date: Date | null) => {
-    setError(null);
+    clearError();
     handleGameData({
       target: {
         name: 'startTime',
@@ -69,7 +66,6 @@ const AddUpdateGame = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     clearError();
-    setError(null);
     const { name, value, type } = e.target;
 
     if (type === 'number') {
@@ -83,23 +79,15 @@ const AddUpdateGame = () => {
     }
   };
 
-  const [imageError, setImageError] = useState<string | null>(null);
   const fileSizeError = t('File size must be less than 5MB');
   const fileTypeError = t('File must be a JPEG, PNG, or WebP image');
 
   const handleFileSelect = (file: File) => {
-    setImageError(null);
     handleImageChange(file);
   };
 
   const handleFileUploadComplete = (processedFile: File) => {
-    setImageError(null);
     handleImageChange(processedFile);
-  };
-
-  const handleFileError = (error: string) => {
-    setImageError(error);
-    handleImageChange(null);
   };
 
   // TODO - add more validations
@@ -117,7 +105,6 @@ const AddUpdateGame = () => {
 
       const result = await handleCreateGame();
 
-      // Check creationResult from context
       if (result) {
         const gameCode = result.database.game.game_code;
         const signature = result.onChain.signature;
@@ -141,13 +128,11 @@ const AddUpdateGame = () => {
           }
         );
         setIsEdit(false);
-        // setShowGameCode(true);
       }
     } catch (error: any) {
       console.error('Failed to create game AddUpdateGame:', error);
-      setError(error.message);
+      toast.error(error.message);
     } finally {
-      // Always set loading to false, regardless of success or failure
       setIsLoading(false);
     }
   };
@@ -290,7 +275,6 @@ const AddUpdateGame = () => {
             label={t('Upload image')}
             accept='image/jpeg,image/png,image/webp'
             onFileSelect={handleFileSelect}
-            onError={handleFileError}
             onUploadComplete={handleFileUploadComplete}
             fileSizeError={fileSizeError}
             fileTypeError={fileTypeError}
@@ -301,14 +285,6 @@ const AddUpdateGame = () => {
               />
             }
           />
-          {imageError && (
-            <Alert
-              variant='error'
-              title={t('Error')}
-              description={imageError}
-              onClose={() => setImageError(null)}
-            />
-          )}
         </Grid>
 
         <Row className='px-4'>
@@ -356,7 +332,6 @@ const AddUpdateGame = () => {
               <AddUpdateQuestion
                 key={question.displayOrder}
                 questionFromParent={question}
-                setError={setError}
               />
             ))}
         </Column>
@@ -373,23 +348,6 @@ const AddUpdateGame = () => {
         </div>
       </Row>
       <Column className='w-full gap-4'>
-        {error && (
-          <Alert
-            variant='error'
-            title={t('Error')}
-            description={error}
-            onClose={() => setError(null)}
-          />
-        )}
-        {createError && (
-          <Alert
-            variant='error'
-            title={t('Error')}
-            description={createError}
-            onClose={clearError}
-          />
-        )}
-
         {!doesGameCodeExist && (
           <Button onClick={handleSubmit} isLoading={isLoading || isCreating}>
             {t('Create Game')}

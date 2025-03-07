@@ -15,8 +15,6 @@ import { useAppContext, useCreateGameContext } from '@/contexts';
 
 interface AddUpdateQuestionProps {
   questionFromParent: QuestionForDb;
-  // eslint-disable-next-line no-unused-vars
-  setError: (error: string | null) => void;
 }
 
 const getAnswerLetter = (displayOrder: number): string => {
@@ -25,14 +23,12 @@ const getAnswerLetter = (displayOrder: number): string => {
 
 const AddUpdateQuestion: React.FC<AddUpdateQuestionProps> = ({
   questionFromParent,
-  setError,
 }) => {
   const { t } = useAppContext();
   const { handleUpdateQuestionData, handleDeleteQuestion, questions } =
     useCreateGameContext();
 
   const handleQuestionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setError(null);
     handleUpdateQuestionData({
       ...questionFromParent,
       questionText: e.target.value,
@@ -40,7 +36,6 @@ const AddUpdateQuestion: React.FC<AddUpdateQuestionProps> = ({
   };
 
   const handleAnswerChange = (displayOrder: number, value: string) => {
-    setError(null);
     handleUpdateQuestionData({
       ...questionFromParent,
       answers: questionFromParent.answers.map((a) =>
@@ -50,7 +45,6 @@ const AddUpdateQuestion: React.FC<AddUpdateQuestionProps> = ({
   };
 
   const handleCorrectAnswerChange = (selectedDisplayOrder: number) => {
-    setError(null);
     handleUpdateQuestionData({
       ...questionFromParent,
       answers: questionFromParent.answers.map((a) => ({
@@ -88,7 +82,6 @@ const AddUpdateQuestion: React.FC<AddUpdateQuestionProps> = ({
   };
 
   const handleTimeLimitChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setError(null);
     const value = e.target.value;
     const parsedValue = parseInt(value);
     handleUpdateQuestionData({
