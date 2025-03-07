@@ -232,7 +232,9 @@ const PlayGame = () => {
 
       {/* Question Text */}
       <div className='p-6 rounded-lg shadow-xl'>
-        <H3 className='mb-4'>{currentQuestion.question_text}</H3>
+        <H3 className='mb-4' style={{ userSelect: 'none' }}>
+          {currentQuestion.question_text}
+        </H3>
 
         {/* Answer Options */}
         <div className='space-y-3'>
@@ -251,7 +253,7 @@ const PlayGame = () => {
               <span className='font-semibold mr-2'>
                 {answer.display_letter}.
               </span>
-              {answer.answer_text}
+              <span style={{ userSelect: 'none' }}>{answer.answer_text}</span>
             </button>
           ))}
         </div>
