@@ -165,5 +165,10 @@
   "Waiting for game to end": "Waiting for game to end",
   "The admin will end the game shortly. Leaderboard and rewards will be available once the game has ended.": "The admin will end the game shortly. Leaderboard and rewards will be available once the game has ended.",
   "Total time taken": "Total time taken",
-  "Finish time": "Finish time"
+  "Finish time": "Finish time",
+  "Next level": "Next level",
+  "Total XP": "Total XP",
+  "No game history": "No game history",
+  "Rank": "Rank",
+  "Date": "Date"
 }
