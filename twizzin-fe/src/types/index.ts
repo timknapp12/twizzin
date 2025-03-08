@@ -18,6 +18,10 @@ export interface AppContextType {
   userRewards: GameReward[];
   fetchUserXPAndRewards: () => Promise<void>;
   userProfile: UserProfile | null;
+  level?: number;
+  nextLevelXP?: number;
+  progress?: number;
+  gameHistory?: GameHistory[];
 }
 
 export interface UserProfile {
@@ -522,4 +526,22 @@ export interface OnChainWinner {
   rank: number;
   prizeAmount: bigint;
   claimed: boolean;
+}
+
+export interface GameHistory {
+  gameId: string;
+  gameName: string;
+  gameDate: string;
+  questionsCorrect: number;
+  totalQuestions: number;
+  xpEarned: number;
+  finalRank: number | null;
+}
+
+export interface XPLevelData {
+  currentXP: number;
+  level: number;
+  nextLevelXP: number;
+  progress: number;
+  gameHistory: GameHistory[];
 }
