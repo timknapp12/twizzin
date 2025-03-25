@@ -5,6 +5,7 @@ import { supabase } from './supabaseClient';
  * @param walletAddress The player's wallet address
  * @returns Player profile and games with rewards information
  */
+
 export const getPlayerDataWithRewards = async (walletAddress: string) => {
   try {
     // First, get the basic player data
@@ -57,7 +58,7 @@ export const getPlayerDataWithRewards = async (walletAddress: string) => {
         // Get game details
         const { data: gameData, error: gameError } = await supabase
           .from('games')
-          .select('id, name, game_code, token_mint, is_native')
+          .select('id, name, game_code, token_mint, is_native, admin_wallet')
           .eq('id', playerGame.game_id)
           .single();
 
@@ -105,20 +106,3 @@ export const getPlayerDataWithRewards = async (walletAddress: string) => {
     throw error;
   }
 };
-
-// Example usage:
-// const playerRewards = await getPlayerDataWithRewards('9PFiMki6eJKF238GDyEBt7yfeNL6JGD2Y');
-// if (playerRewards) {
-//   console.log(`Player: ${playerRewards.player.username || 'Anonymous'}`);
-//   console.log(`Total XP: ${playerRewards.player.total_xp}`);
-//   console.log(`Games with rewards: ${playerRewards.games.length}`);
-//
-//   // Display unclaimed rewards first
-//   playerRewards.games.forEach(game => {
-//     if (!game.game) return;
-//
-//     const tokenSymbol = game.token_info?.ticker || 'Unknown';
-//     const claimedStatus = game.rewards_claimed ? 'Claimed' : 'Unclaimed';
-//     console.log(`Game: ${game.game.name}, Reward: ${game.rewards_earned} ${tokenSymbol} (${claimedStatus})`);
-//   });
-// }

@@ -170,5 +170,8 @@
   "Total XP": "Total XP",
   "No game history": "No game history",
   "Rank": "Rank",
-  "Date": "Date"
+  "Date": "Date",
+  "Claiming...": "Claiming...",
+  "Reward claimed successfully!": "Reward claimed successfully!",
+  "Claim failed": "Claim failed"
 }

@@ -486,19 +486,15 @@ export interface GameReward {
   tokenSymbol: string;
   claimed: boolean;
   decimals: number;
+  gameCode: string;
+  isNative: boolean;
+  adminWallet: string;
 }
 
 interface GameInfo {
   name: string;
   img_url: string | null;
   token_mint: string;
-}
-
-export interface PlayerGameReward {
-  game_id: string;
-  rewards_earned: number;
-  rewards_claimed: boolean;
-  game: GameInfo[];
 }
 
 // user XP

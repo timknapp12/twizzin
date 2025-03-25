@@ -16,6 +16,7 @@ export interface DbGameInfo {
   game_code: string;
   token_mint: string | null;
   is_native: boolean;
+  admin_wallet?: string;
 }
 
 // Database player game record
@@ -63,6 +64,9 @@ export function convertToGameReward(
     tokenSymbol: playerGame.token_info?.ticker || 'Unknown',
     claimed: playerGame.rewards_claimed,
     decimals: playerGame.token_info?.decimals || 0,
+    gameCode: playerGame.game.game_code,
+    isNative: playerGame.game.is_native,
+    adminWallet: playerGame.game.admin_wallet || '',
   };
 }
 
