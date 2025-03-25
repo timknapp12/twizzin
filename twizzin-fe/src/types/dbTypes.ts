@@ -57,11 +57,12 @@ export function convertToGameReward(
   return {
     gameId: playerGame.game_id,
     gameName: playerGame.game.name,
-    imageUrl: null, // You may need to add this field to your query
+    imageUrl: playerGame.token_info?.logo_url || null,
     rewardAmount: playerGame.rewards_earned,
     tokenMint: playerGame.game.token_mint || '',
     tokenSymbol: playerGame.token_info?.ticker || 'Unknown',
     claimed: playerGame.rewards_claimed,
+    decimals: playerGame.token_info?.decimals || 0,
   };
 }
 

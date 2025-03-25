@@ -22,6 +22,7 @@ export interface AppContextType {
   nextLevelXP?: number;
   progress?: number;
   gameHistory?: GameHistory[];
+  unclaimedRewards?: number;
 }
 
 export interface UserProfile {
@@ -484,6 +485,7 @@ export interface GameReward {
   tokenMint: string;
   tokenSymbol: string;
   claimed: boolean;
+  decimals: number;
 }
 
 interface GameInfo {
