@@ -105,7 +105,8 @@
 --     final_rank INTEGER,
 --     created_at TIMESTAMPTZ DEFAULT NOW(),
 --     UNIQUE(player_wallet, game_id),
---     solana_signature TEXT
+--     solana_signature TEXT,
+--     claimed_signature TEXT
 -- );
 
 -- -- Player Answers table
