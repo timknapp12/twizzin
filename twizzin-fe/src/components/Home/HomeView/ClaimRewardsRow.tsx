@@ -8,8 +8,7 @@ const ClaimRewardsRow = ({
   // eslint-disable-next-line no-unused-vars
   onSetView: (view: string) => void;
 }) => {
-  const { userXP, userRewards, level, progress } = useAppContext();
-  const rewards = userRewards.length || 0;
+  const { userXP, level, progress, unclaimedRewards } = useAppContext();
 
   const progressPercentage = progress ? Number(progress * 100) : 0;
   return (
@@ -20,7 +19,10 @@ const ClaimRewardsRow = ({
         onClick={() => onSetView('xp')}
         level={level}
       />
-      <RewardsCard rewards={rewards} onClick={() => onSetView('rewards')} />
+      <RewardsCard
+        rewards={unclaimedRewards || 0}
+        onClick={() => onSetView('rewards')}
+      />
     </Row>
   );
 };

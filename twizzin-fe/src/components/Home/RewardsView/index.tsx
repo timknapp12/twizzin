@@ -11,7 +11,7 @@ interface RewardsViewProps {
 }
 
 const RewardsView = ({ onSetView }: RewardsViewProps) => {
-  const { t } = useAppContext();
+  const { t, userRewards, unclaimedRewards } = useAppContext();
   return (
     <Column className='gap-4 w-full' align='start'>
       <Row onClick={() => onSetView('home')} className='cursor-pointer'>
@@ -24,9 +24,10 @@ const RewardsView = ({ onSetView }: RewardsViewProps) => {
         <PrimaryText style={{ fontSize: 16 }}>{t('Back')}</PrimaryText>
       </Row>
       <Column className='w-full gap-4'>
-        <RewardsBanner rewards={2} />
-        <ClaimRewardCard />
-        <ClaimRewardCard disabled />
+        <RewardsBanner rewards={unclaimedRewards || 0} />
+        {userRewards.map((reward) => (
+          <ClaimRewardCard key={reward.gameId} reward={reward} />
+        ))}
       </Column>
     </Column>
   );

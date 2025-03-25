@@ -20,7 +20,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import i18n from '@/i18n';
 import { useTranslation } from 'react-i18next';
 import { localeMap, getPlayerDataWithRewards, getUserXPLevel } from '@/utils';
-import { processPlayerRewardsResponse } from '@/types/dbTypes'; // Import the helper function
+import { processPlayerRewardsResponse } from '@/types/dbTypes';
 import { CreateGameProvider } from './CreateGameContext';
 import { GameContextProvider } from './GameContext';
 
@@ -41,6 +41,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [admin, setAdmin] = useState(null);
   const [userXP, setUserXP] = useState<number>(0);
   const [userRewards, setUserRewards] = useState<GameReward[]>([]);
+  const [unclaimedRewards, setUnclaimedRewards] = useState(0);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [level, setLevel] = useState<number>(0);
   const [nextLevelXP, setNextLevelXP] = useState<number>(300);
@@ -168,11 +169,12 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     fetchUserXPAndRewards();
   }, [publicKey, connection, fetchUserXPAndRewards]);
 
-  console.log('userXP', userXP);
-  console.log('level', level);
-  console.log('nextLevelXP', nextLevelXP);
-  console.log('progress', progress);
-  console.log('gameHistory', gameHistory);
+  useEffect(() => {
+    const unclaimedRewards = userRewards.filter(
+      (reward) => !reward.claimed
+    ).length;
+    setUnclaimedRewards(unclaimedRewards);
+  }, [userRewards]);
 
   return (
     <AppContext.Provider
@@ -198,6 +200,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         nextLevelXP,
         progress,
         gameHistory,
+        unclaimedRewards,
       }}
     >
       <CreateGameProvider>
