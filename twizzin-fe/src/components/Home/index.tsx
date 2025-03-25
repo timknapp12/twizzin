@@ -9,7 +9,7 @@ import {
 } from '@/components';
 import HomeView from './HomeView';
 import RewardsView from './RewardsView';
-
+import XpView from './XpView';
 export const HomeComponent = () => {
   const [view, setView] = useState<'home' | 'rewards' | 'xp'>('home');
 
@@ -26,6 +26,7 @@ export const HomeComponent = () => {
         >
           {view === 'home' && <HomeView onSetView={onSetView} />}
           {view === 'rewards' && <RewardsView onSetView={onSetView} />}
+          {view === 'xp' && <XpView onSetView={onSetView} />}
         </div>
       </InnerScreenContainer>
       <Footer />

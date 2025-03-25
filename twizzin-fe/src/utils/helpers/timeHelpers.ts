@@ -24,6 +24,18 @@ export const formatSupabaseDate = (
   });
 };
 
+export const formatSupabaseDateShort = (
+  timestamptz: string,
+  locale: string = 'en-US'
+): string => {
+  const date = new Date(timestamptz);
+  return date.toLocaleString(locale, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+};
+
 export const getGameTimeInSeconds = (
   startTime: string | number, // Can accept either ISO string from Supabase or timestamp
   endTime: string | number

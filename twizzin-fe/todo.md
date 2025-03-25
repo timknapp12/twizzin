@@ -33,3 +33,5 @@ refactor after MVP:
 - write tests for helper functions - like getGameTimeInSeconds
 
 // https://app.timsol.org/
+
+// cloudflared tunnel run solana-local

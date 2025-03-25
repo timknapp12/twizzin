@@ -175,3 +175,14 @@
 -- ON storage.objects FOR ALL
 -- USING ( bucket_id = 'game-images' )
 -- WITH CHECK ( bucket_id = 'game-images' );
+
+-- -- First, check if the bucket exists and create it if it doesn't
+-- INSERT INTO storage.buckets (id, name, public)
+-- VALUES ('token-images', 'token-images', true)
+-- ON CONFLICT (id) DO NOTHING;
+
+-- -- Allow public access for both upload and download
+-- CREATE POLICY "Allow public access to token-images"
+-- ON storage.objects FOR ALL
+-- USING ( bucket_id = 'token-images' )
+-- WITH CHECK ( bucket_id = 'token-images' );

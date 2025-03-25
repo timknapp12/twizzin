@@ -125,54 +125,124 @@ export async function distributeGameXP(
   }
 }
 
-// Helper function to get a user's current XP level based on total XP
 export async function getUserXPLevel(wallet: string): Promise<{
   currentXP: number;
   level: number;
   nextLevelXP: number;
   progress: number;
+  gameHistory: Array<{
+    gameId: string;
+    gameName: string;
+    gameDate: string;
+    questionsCorrect: number;
+    totalQuestions: number;
+    xpEarned: number;
+    finalRank: number | null;
+  }>;
 }> {
   try {
-    const { data, error } = await supabase
-      .from('players') // Changed from 'users' to 'players'
+    // First, get total XP and game history
+    const { data: playerData, error: playerError } = await supabase
+      .from('players')
       .select('total_xp')
-      .eq('wallet_address', wallet) // Changed from 'wallet' to 'wallet_address'
+      .eq('wallet_address', wallet)
       .single();
 
-    // If player not found or any error, return default values with 0 XP
-    if (error || !data) {
+    if (playerError || !playerData) {
       return {
         currentXP: 0,
         level: 0,
-        nextLevelXP: 100, // First level requires 100 XP
+        nextLevelXP: 300,
         progress: 0,
+        gameHistory: [],
       };
     }
 
-    const totalXP = data.total_xp || 0;
+    const totalXP = playerData.total_xp || 0;
 
-    // Calculate level based on XP (example progression)
-    // Level N requires N^2 * 100 XP
-    const level = Math.floor(Math.sqrt(totalXP / 100));
-    const currentLevelXP = level * level * 100;
-    const nextLevelXP = (level + 1) * (level + 1) * 100;
-    const progress =
-      (totalXP - currentLevelXP) / (nextLevelXP - currentLevelXP);
+    // Dynamic level calculation with quadratic growth
+    // Level 0: 0 XP
+    // Level 1: 1-299 XP (requires 300 XP for next level)
+    // Subsequent levels: 300 * (level ^ 2)
+    let level = 0;
+    let currentLevelXP = 0;
+    let nextLevelXP = 300; // Base requirement for level 1
+    let progress = 0;
+
+    if (totalXP > 0) {
+      // Calculate level using inverse of quadratic formula
+      // totalXP = 300 * (level ^ 2) => level = sqrt(totalXP / 300)
+      level = Math.floor(Math.sqrt(totalXP / 300)) + 1;
+      currentLevelXP =
+        level === 1 ? 0 : Math.round(300 * Math.pow(level - 1, 2));
+      nextLevelXP = Math.round(300 * Math.pow(level, 2));
+      progress = (totalXP - currentLevelXP) / (nextLevelXP - currentLevelXP);
+    }
+
+    // Get game history with details using start_time, including finalRank
+    const { data: gameData, error: gameError } = await supabase
+      .from('player_games')
+      .select(
+        `
+        num_correct,
+        xp_earned,
+        final_rank,
+        game:games (
+          id,
+          name,
+          start_time
+        )
+      `
+      )
+      .eq('player_wallet', wallet)
+      .order('game(start_time)', { ascending: false });
+
+    if (gameError) {
+      console.error('Error fetching game history:', gameError);
+      return {
+        currentXP: totalXP,
+        level,
+        nextLevelXP,
+        progress,
+        gameHistory: [],
+      };
+    }
+
+    // For each game, get total questions
+    const gameHistory = await Promise.all(
+      (gameData || []).map(async (game: any) => {
+        const { count } = await supabase
+          .from('questions')
+          .select('*', { count: 'exact', head: true })
+          .eq('game_id', game.game.id);
+
+        return {
+          gameId: game.game.id,
+          gameName: game.game.name,
+          gameDate: game.game.start_time || 'Not Started',
+          questionsCorrect: game.num_correct || 0,
+          totalQuestions: count || 0,
+          xpEarned: game.xp_earned || 0,
+          finalRank: game.final_rank || null,
+        };
+      })
+    );
 
     return {
       currentXP: totalXP,
       level,
       nextLevelXP,
       progress,
+      gameHistory,
     };
   } catch (error) {
     console.error('Error getting user XP level:', error);
-    // Return default values instead of throwing
     return {
       currentXP: 0,
       level: 0,
-      nextLevelXP: 100,
+      nextLevelXP: 300,
       progress: 0,
+      gameHistory: [],
     };
   }
 }

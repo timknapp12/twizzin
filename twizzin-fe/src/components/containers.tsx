@@ -136,3 +136,19 @@ export const InnerScreenContainer = ({
     {children}
   </Column>
 );
+
+interface CardProps {
+  children: ReactNode;
+  onClick?: () => void;
+}
+
+export const Card = ({ children, onClick }: CardProps) => {
+  return (
+    <div
+      onClick={onClick}
+      className='flex h-[70px] w-full p-[14px] justify-between items-center flex-1 rounded-[14px] cursor-pointer border border-disabled shadow-md'
+    >
+      {children}
+    </div>
+  );
+};

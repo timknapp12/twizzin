@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Column } from '@/components/containers';
-import { H6, PrimaryText } from '@/components/texts';
+import { PrimaryText } from '@/components/texts';
 import { PiShootingStarFill } from 'react-icons/pi';
 import RewardsCardsContainer from './RewardsCardsContainer';
 import { useAppContext } from '@/contexts';
@@ -14,7 +14,6 @@ interface XPCardProps {
 
 export const XPCard = ({
   progressPercentage = 70,
-  xp = 0,
   onClick,
   level = 0,
 }: XPCardProps) => {
