@@ -10,9 +10,69 @@ export async function distributeGameXP(
   gameId: string,
   players: PlayerResult[],
   isEvenSplit: boolean,
+  adminWallet: string,
+  playerLength: number,
   config: XPDistributionConfig = DEFAULT_XP_CONFIG
 ): Promise<void> {
+  const adminXp = playerLength * 10;
   try {
+    // Create admin record in player_games
+    const { error: adminInsertError } = await supabase
+      .from('player_games')
+      .insert({
+        game_id: gameId,
+        player_wallet: adminWallet,
+        xp_earned: adminXp,
+        is_admin: true,
+      });
+
+    if (adminInsertError) {
+      console.error(
+        `Failed to create admin record in player_games for ${adminWallet}:`,
+        adminInsertError
+      );
+    }
+
+    // Update admin's total XP in players table
+    const { data: adminData, error: adminFetchError } = await supabase
+      .from('players')
+      .select('total_xp')
+      .eq('wallet_address', adminWallet)
+      .single();
+
+    if (adminFetchError && adminFetchError.code !== 'PGRST116') {
+      console.error(`Error fetching admin ${adminWallet}:`, adminFetchError);
+    } else if (adminData) {
+      // Admin exists, update their total XP
+      const newAdminTotal = (adminData.total_xp || 0) + adminXp;
+      const { error: adminUpdateError } = await supabase
+        .from('players')
+        .update({ total_xp: newAdminTotal })
+        .eq('wallet_address', adminWallet);
+
+      if (adminUpdateError) {
+        console.error(
+          `Failed to update admin total_xp for ${adminWallet}:`,
+          adminUpdateError
+        );
+      }
+    } else {
+      // Admin doesn't exist, create them
+      const { error: adminInsertError } = await supabase
+        .from('players')
+        .insert({
+          wallet_address: adminWallet,
+          total_xp: adminXp,
+        });
+
+      if (adminInsertError) {
+        console.error(
+          `Failed to create admin player ${adminWallet}:`,
+          adminInsertError
+        );
+      }
+    }
+
     const xpAwards: XPAward[] = [];
 
     for (const player of players) {
