@@ -1,3 +1,4 @@
+import { GameState } from '@/utils';
 import { PublicKey } from '@solana/web3.js';
 import { TFunction } from 'i18next';
 
@@ -244,6 +245,9 @@ export interface GameContextType {
   canEndGame: boolean;
   isLoadingResults: boolean;
   loadError: string | null;
+  gameState: GameState;
+  setGameStateWithMetadata: (state: GameState, metadata?: any) => void;
+  canTransitionTo: (targetState: GameState) => boolean;
 }
 
 export interface JoinGameParams {

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Column, Label, Row, Button, H2, H3, H3Secondary } from '@/components';
 import { useGameContext, useAppContext } from '@/contexts';
-import { countDownGameTime, getCurrentConfig } from '@/utils';
+import { countDownGameTime, getCurrentConfig, GameState } from '@/utils';
 import { RiSurveyLine } from 'react-icons/ri';
 import { FaArrowLeft, FaArrowRight } from 'react-icons/fa';
 import EndGameButton from './EndGameButton';
@@ -17,13 +17,14 @@ const PlayGame = () => {
     getCurrentAnswer,
     handleSubmitAnswers,
     isAdmin,
+    gameState,
   } = useGameContext();
 
   const [remainingTime, setRemainingTime] = useState('');
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isTimeExpired, setIsTimeExpired] = useState(false);
-  const { name, questions, end_time, status } = gameData || {};
+  const { name, questions, end_time } = gameData || {};
   const currentQuestion = questions?.[currentQuestionIndex];
 
   // Get current answer from game session
@@ -95,7 +96,7 @@ const PlayGame = () => {
   ]);
 
   useEffect(() => {
-    if (status !== 'active' || !end_time) return;
+    if (gameState !== GameState.ACTIVE || !end_time) return;
 
     const endTimeDate = new Date(end_time);
     const now = new Date();
@@ -121,7 +122,7 @@ const PlayGame = () => {
     const timer = setInterval(updateTimer, 1000);
 
     return () => clearInterval(timer);
-  }, [end_time, status, handleTimeExpired]);
+  }, [end_time, gameState, handleTimeExpired]);
 
   const handlePreviousQuestion = () => {
     if (currentQuestionIndex > 0) {
@@ -196,7 +197,7 @@ const PlayGame = () => {
   if (!currentQuestion) return null;
 
   // Waiting for game to start state
-  if (gameData.status === 'not_started') {
+  if (gameState !== GameState.ACTIVE) {
     return (
       <Column className='gap-4 w-full' justify='start'>
         <H2>{name}</H2>

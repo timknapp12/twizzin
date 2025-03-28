@@ -14,6 +14,7 @@ import {
   getRemainingTime,
   formatSupabaseDate,
   getCurrentConfig,
+  GameState,
 } from '@/utils';
 import { toast } from 'react-toastify';
 
@@ -29,9 +30,9 @@ const JoinGameDetails = ({
     username,
     setUsername,
     handleJoinGame,
-    gameData,
     isAdmin,
     handleStartGame,
+    gameState,
   } = useGameContext();
 
   const {
@@ -59,6 +60,9 @@ const JoinGameDetails = ({
   const [countdown, setCountdown] = useState<string>(
     getRemainingTime(start_time)
   );
+
+  // Check if user has joined the game
+  const hasJoinedGame = gameState === GameState.JOINED;
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -131,8 +135,6 @@ const JoinGameDetails = ({
       ? t('Waiting for admin to start game...')
       : countdown;
 
-  const hasGameData = gameData && gameData?.game_code?.length > 0;
-
   const primaryColor = 'var(--color-primaryText)';
   const errorColor = 'var(--color-error)';
 
@@ -142,7 +144,7 @@ const JoinGameDetails = ({
   return (
     <Column className='gap-4 w-full h-full flex-1 mt-2' justify='between'>
       <Column className='gap-4 w-full'>
-        {hasGameData ? (
+        {hasJoinedGame ? (
           <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg  bg-[#af9aec] gap-4 w-full max-w-small mx-auto  text-[16px] active:opacity-80'>
             <Row className='gap-2'>
               <GiSittingDog size={28} color='var(--color-primary)' />
@@ -239,7 +241,7 @@ const JoinGameDetails = ({
         </Column>
       </Column>
       <Column className='gap-4 w-full'>
-        {!isAdmin && !hasGameData && (
+        {!isAdmin && !hasJoinedGame && (
           <Input
             label={t('Username')}
             value={username}
@@ -249,7 +251,7 @@ const JoinGameDetails = ({
             placeholder={t('Enter your username')}
           />
         )}
-        {hasGameData ? (
+        {hasJoinedGame ? (
           <Button secondary onClick={onLeaveGame}>
             {t('Leave game')}
           </Button>
@@ -258,7 +260,7 @@ const JoinGameDetails = ({
             {t('Join game')}
           </Button>
         )}
-        {hasGameData && isAdmin && (
+        {hasJoinedGame && isAdmin && (
           <Button onClick={onStartGame} isLoading={isStartingGame}>
             {t('Start game')}
           </Button>

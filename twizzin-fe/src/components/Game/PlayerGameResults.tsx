@@ -20,12 +20,18 @@ import {
 } from 'react-icons/ri';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { formatDetailedGameTime } from '@/utils';
+import { formatDetailedGameTime, GameState } from '@/utils';
 
 const PlayerGameResults = () => {
   const { t } = useAppContext();
-  const { gameResult, gameData, isLoadingResults, loadError, isAdmin } =
-    useGameContext();
+  const {
+    gameResult,
+    gameData,
+    isLoadingResults,
+    loadError,
+    isAdmin,
+    gameState,
+  } = useGameContext();
   const { publicKey } = useWallet();
 
   if (!gameData) return null;
@@ -67,8 +73,8 @@ const PlayerGameResults = () => {
   // Check if player has submitted answers (has personal results)
   const hasSubmittedAnswers = !!gameResult?.answeredQuestions;
 
-  // Check if game has ended and we have leaderboard data
-  const gameEnded = gameData.status === 'ended' && gameResult?.leaderboard;
+  // Check if game has ended
+  const gameEnded = gameState === GameState.ENDED && gameResult?.leaderboard;
 
   const { winners = [], leaderboard = [] } = gameResult || {};
 
