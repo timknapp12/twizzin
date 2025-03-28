@@ -1,2 +1,2 @@
 export * from './timeHelpers';
-export * from './localStorageHelpers';
+export * from './gameState';
