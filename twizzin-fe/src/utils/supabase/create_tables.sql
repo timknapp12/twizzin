@@ -106,7 +106,8 @@
 --     created_at TIMESTAMPTZ DEFAULT NOW(),
 --     UNIQUE(player_wallet, game_id),
 --     solana_signature TEXT,
---     claimed_signature TEXT
+--     claimed_signature TEXT,
+--     is_admin BOOLEAN DEFAULT false
 -- );
 
 -- -- Player Answers table
