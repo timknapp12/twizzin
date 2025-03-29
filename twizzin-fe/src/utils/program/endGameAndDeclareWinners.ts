@@ -175,7 +175,9 @@ export async function endGameAndDeclareWinners(
       await distributeGameXP(
         params.gameId,
         gameResults.allPlayers,
-        gameData.even_split
+        gameData.even_split,
+        admin.toBase58(),
+        gameResults.allPlayers.length
       );
     }
 

@@ -1,12 +1,124 @@
+/* eslint-disable no-unused-vars */
 'use client';
 
-import { GameAnswer, StoredGameSession, GameStartStatus } from '@/types';
+import { GameAnswer, StoredGameSession } from '@/types';
 
+// Define the Game State Enum
+export enum GameState {
+  BROWSING = 'BROWSING', // Initial state, no game selected
+  JOINING = 'JOINING', // Viewing game details, about to join
+  JOINED = 'JOINED', // User has joined but game hasn't started
+  ACTIVE = 'ACTIVE', // Game is in progress
+  SUBMITTED = 'SUBMITTED', // User has submitted answers but game isn't over
+  ENDED = 'ENDED', // Game has officially ended, showing results
+}
+
+// Game state with metadata
+export interface GameStateData {
+  state: GameState;
+  timestamp: number;
+  metadata?: {
+    startTime?: number;
+    endTime?: number;
+    submittedTime?: number;
+    [key: string]: any;
+  };
+}
+
+// Keys for localStorage
+const GAME_STATE_PREFIX = 'game_state_';
 const GAME_SESSION_KEY = 'game_session';
-const GAME_START_STATUS_KEY = 'game_start_status';
-const GAME_STATUS_PREFIX = 'game_status_';
 
-// Save a game answer to local storage
+// Get the complete game state
+export const getGameState = (gameCode: string): GameStateData | null => {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    const data = localStorage.getItem(`${GAME_STATE_PREFIX}${gameCode}`);
+    if (!data) return null;
+
+    return JSON.parse(data);
+  } catch (error) {
+    console.error('Error getting game state:', error);
+    return null;
+  }
+};
+
+// Set game state with appropriate metadata
+export const setGameState = (
+  gameCode: string,
+  state: GameState,
+  metadata?: any
+): void => {
+  if (typeof window === 'undefined') return;
+
+  try {
+    const gameStateData: GameStateData = {
+      state,
+      timestamp: Date.now(),
+      metadata: metadata || {},
+    };
+
+    localStorage.setItem(
+      `${GAME_STATE_PREFIX}${gameCode}`,
+      JSON.stringify(gameStateData)
+    );
+  } catch (error) {
+    console.error('Error setting game state:', error);
+  }
+};
+
+// Check if a game is in a specific state
+export const isGameInState = (gameCode: string, state: GameState): boolean => {
+  const gameState = getGameState(gameCode);
+  return gameState?.state === state;
+};
+
+// Clear game state
+export const clearGameState = (gameCode: string): void => {
+  if (typeof window === 'undefined') return;
+
+  try {
+    localStorage.removeItem(`${GAME_STATE_PREFIX}${gameCode}`);
+  } catch (error) {
+    console.error('Error clearing game state:', error);
+  }
+};
+
+// Additional helper methods for common state transitions
+export const markGameAsJoined = (gameCode: string, metadata?: any): void => {
+  setGameState(gameCode, GameState.JOINED, metadata);
+};
+
+export const markGameAsActive = (
+  gameCode: string,
+  startTime: number,
+  endTime: number
+): void => {
+  setGameState(gameCode, GameState.ACTIVE, { startTime, endTime });
+};
+
+export const markGameAsSubmitted = (
+  gameCode: string,
+  submittedTime: number
+): void => {
+  setGameState(gameCode, GameState.SUBMITTED, { submittedTime });
+};
+
+export const markGameAsEnded = (gameCode: string): void => {
+  setGameState(gameCode, GameState.ENDED);
+};
+
+// Backward compatibility helpers for existing code
+export const getGameStartStatus = (gameCode: string): boolean => {
+  return isGameInState(gameCode, GameState.ACTIVE);
+};
+
+export const getGameEndedStatus = (gameCode: string): boolean => {
+  return isGameInState(gameCode, GameState.ENDED);
+};
+
+// Save a game answer to local storage (keeping compatibility with existing StoredGameSession)
 export const saveGameAnswer = (
   gameCode: string,
   answer: GameAnswer
@@ -21,7 +133,7 @@ export const saveGameAnswer = (
     // Convert GameAnswer to stored answer format
     const storedAnswer = {
       displayOrder: answer.displayOrder,
-      answer: answer.answer, // Using answerText as the stored answer
+      answer: answer.answer,
       questionId: answer.questionId,
     };
 
@@ -29,13 +141,13 @@ export const saveGameAnswer = (
     if (!session) {
       const newSession: StoredGameSession = {
         gameCode,
-        gamePubkey: '', // Will be set when joining game
+        gamePubkey: '',
         startTime: Date.now(),
         answers: {
           [answer.questionId]: storedAnswer,
         },
         submitted: false,
-        submittedTime: undefined, // Changed from null to undefined
+        submittedTime: undefined,
       };
       localStorage.setItem(GAME_SESSION_KEY, JSON.stringify(newSession));
       return newSession;
@@ -105,7 +217,7 @@ export const initializeGameSession = (
 // Mark game session as submitted
 export const markSessionSubmitted = (
   gameCode: string,
-  finishTime?: number // Optional parameter to allow setting initial finish time
+  finishTime?: number
 ): StoredGameSession | null => {
   if (typeof window === 'undefined') {
     return null;
@@ -120,7 +232,12 @@ export const markSessionSubmitted = (
       session.submittedTime = finishTime || Date.now();
     }
 
+    session.submitted = true;
     localStorage.setItem(GAME_SESSION_KEY, JSON.stringify(session));
+
+    // Also update game state
+    markGameAsSubmitted(gameCode, session.submittedTime);
+
     return session;
   } catch (error) {
     console.error('Error marking session as submitted:', error);
@@ -156,11 +273,11 @@ export const getSortedGameAnswers = (gameCode: string): GameAnswer[] => {
   return Object.values(session.answers)
     .map((storedAnswer) => ({
       questionId: storedAnswer.questionId,
-      answerId: storedAnswer.questionId, // Using questionId as answerId
+      answerId: storedAnswer.questionId,
       answer: storedAnswer.answer,
       displayOrder: storedAnswer.displayOrder,
-      timestamp: session.startTime, // Using session start time as timestamp
-      displayLetter: storedAnswer.answer, // Using stored answer as display letter
+      timestamp: session.startTime,
+      displayLetter: storedAnswer.answer,
     }))
     .sort((a, b) => a.displayOrder - b.displayOrder);
 };
@@ -213,78 +330,4 @@ export const getGameCompletionStatus = (
     answeredCount,
     remainingCount: totalQuestions - answeredCount,
   };
-};
-
-// GAME SESSION STATUS
-export const getGameStartStatus = (gameCode: string): boolean => {
-  if (typeof window === 'undefined') {
-    return false;
-  }
-
-  try {
-    const data = localStorage.getItem(GAME_START_STATUS_KEY);
-    if (!data) return false;
-
-    const statuses: GameStartStatus = JSON.parse(data);
-    return statuses[gameCode]?.isManuallyStarted || false;
-  } catch (error) {
-    console.error('Error getting game start status:', error);
-    return false;
-  }
-};
-
-export const setGameStartStatus = (
-  gameCode: string,
-  actualStartTime: number,
-  actualEndTime: number
-) => {
-  if (typeof window === 'undefined') {
-    return;
-  }
-
-  try {
-    const data = localStorage.getItem(GAME_START_STATUS_KEY);
-    const statuses: GameStartStatus = data ? JSON.parse(data) : {};
-
-    statuses[gameCode] = {
-      isManuallyStarted: true,
-      actualStartTime,
-      actualEndTime,
-    };
-
-    localStorage.setItem(GAME_START_STATUS_KEY, JSON.stringify(statuses));
-  } catch (error) {
-    console.error('Error setting game start status:', error);
-  }
-};
-
-export const clearGameStartStatus = (gameCode: string): void => {
-  if (typeof window === 'undefined') {
-    return;
-  }
-
-  try {
-    const data = localStorage.getItem(GAME_START_STATUS_KEY);
-    if (!data) return;
-
-    const statuses: GameStartStatus = JSON.parse(data);
-    if (statuses[gameCode]) {
-      delete statuses[gameCode];
-      localStorage.setItem(GAME_START_STATUS_KEY, JSON.stringify(statuses));
-    }
-  } catch (error) {
-    console.error('Error clearing game start status:', error);
-  }
-};
-
-const getGameStatusKey = (gameCode: string) => {
-  return `${GAME_STATUS_PREFIX}${gameCode}`;
-};
-
-export const setGameEndedStatus = (gameCode: string) => {
-  localStorage.setItem(getGameStatusKey(gameCode), 'ended');
-};
-
-export const getGameEndedStatus = (gameCode: string) => {
-  return localStorage.getItem(getGameStatusKey(gameCode)) === 'ended';
 };

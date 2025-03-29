@@ -9,22 +9,21 @@ import JoinGameDetails from './JoinGameDetails';
 import GameDetailsSkeleton from './GameDetailsSkeleton';
 import PlayGame from './PlayGame';
 import PlayerGameResults from './PlayerGameResults';
-import { getGameStartStatus } from '@/utils';
+import { GameState } from '@/utils';
 
 const Game = () => {
   const params = useParams();
   const gameCode = params.gameCode;
-  const { getGameByCode, partialGameData, gameData, gameResult } =
+  const { getGameByCode, partialGameData, gameResult, gameState, gameData } =
     useGameContext();
-  const [isManuallyStarted, setIsManuallyStarted] = useState<boolean | null>(
-    null
-  );
+
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
+  // fetch the game data when the url contains a game code
   useEffect(() => {
     if (!gameCode) return;
     if (typeof gameCode === 'string' && !partialGameData) {
@@ -32,37 +31,37 @@ const Game = () => {
     }
   }, [gameCode, getGameByCode, partialGameData]);
 
-  // Check if game was manually started by admin - only runs on client
-  // TODO - check to see if this is needed now that we have the gameData.status
-  useEffect(() => {
-    if (typeof gameCode === 'string') {
-      const startStatus = getGameStartStatus(gameCode);
-      setIsManuallyStarted(startStatus);
-    }
-  }, [gameCode]);
-
-  // Don't render anything until we're mounted and have checked local storage
   if (!isMounted) {
     return <GameDetailsSkeleton />;
   }
 
-  // Game is only considered started when admin manually starts it
-  const hasGameStarted = gameData.status === 'active' || isManuallyStarted;
+  // Render the appropriate component based on game state
+  const renderGameContent = () => {
+    // If player has submitted answers and we have results, show results screen
+    if (gameResult) {
+      return <PlayerGameResults />;
+    }
+
+    // If game is active, show the game play screen
+    if (gameState === GameState.ACTIVE || gameData?.status === 'active') {
+      return <PlayGame />;
+    }
+
+    // If game is in JOINING or JOINED state, show join details
+    if (gameState === GameState.JOINING || gameState === GameState.JOINED) {
+      if (partialGameData) {
+        return <JoinGameDetails partialGameData={partialGameData} />;
+      }
+    }
+
+    // Default to loading skeleton
+    return <GameDetailsSkeleton />;
+  };
 
   return (
     <ScreenContainer>
       <Header />
-      <InnerScreenContainer>
-        {gameResult ? (
-          <PlayerGameResults />
-        ) : hasGameStarted && gameData ? (
-          <PlayGame />
-        ) : partialGameData ? (
-          <JoinGameDetails partialGameData={partialGameData} />
-        ) : (
-          <GameDetailsSkeleton />
-        )}
-      </InnerScreenContainer>
+      <InnerScreenContainer>{renderGameContent()}</InnerScreenContainer>
     </ScreenContainer>
   );
 };

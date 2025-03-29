@@ -6,6 +6,7 @@ import React, {
   useState,
   ReactNode,
   useEffect,
+  useCallback,
 } from 'react';
 import { useRouter } from 'next/navigation';
 import {
@@ -31,18 +32,17 @@ import {
   markSessionSubmitted,
   calculateTotalTimeMs,
   startGameCombined,
-  setGameStartStatus,
   submitAnswersCombined,
   clearGameSession,
-  clearGameStartStatus,
   endGameAndDeclareWinners,
-  getGameEndedStatus,
   fetchCompleteGameResults,
-  setGameEndedStatus,
   setupPlayerResultSubscription,
   cleanupPlayerResultSubscription,
   supabase,
   fetchGameLeaderboard,
+  GameState,
+  getGameState,
+  setGameState,
 } from '@/utils';
 import { useAppContext, useProgram } from '.';
 import { PublicKey } from '@solana/web3.js';
@@ -63,7 +63,7 @@ export const useGameContext = () => {
 export const GameContextProvider = ({ children }: { children: ReactNode }) => {
   const { t, language, fetchUserXPAndRewards, userProfile } = useAppContext();
   const [username, setUsername] = useState('');
-  const [gameCode, setGameCode] = useState('');
+  const [gameCode, setGameCode] = useState('VXYNSZ');
   const [partialGameData, setPartialGameData] = useState<PartialGame | null>(
     null
   );
@@ -76,6 +76,10 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
   const [canEndGame, setCanEndGame] = useState(false);
   const [isLoadingResults, setIsLoadingResults] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  // New state for game state management
+  const [gameState, setGameStateInternal] = useState<GameState>(
+    GameState.BROWSING
+  );
 
   const router = useRouter();
   const { program } = useProgram();
@@ -94,14 +98,76 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
     if (gameCode) {
       const session = getGameSession(gameCode);
       setGameSession(session);
+
+      // Restore game state from localStorage if available
+      const savedState = getGameState(gameCode);
+      if (savedState) {
+        setGameStateInternal(savedState.state);
+      } else {
+        // If no saved state but there's a game code, we're at least in JOINING state
+        setGameStateInternal(GameState.JOINING);
+      }
+    } else {
+      setGameStateInternal(GameState.BROWSING);
     }
   }, [gameCode]);
+
+  // State transition validation
+  const canTransitionTo = useCallback(
+    (targetState: GameState): boolean => {
+      // Define valid state transitions
+      const validTransitions: Record<GameState, GameState[]> = {
+        [GameState.BROWSING]: [GameState.JOINING],
+        [GameState.JOINING]: [GameState.JOINED, GameState.BROWSING],
+        [GameState.JOINED]: [GameState.ACTIVE, GameState.BROWSING],
+        [GameState.ACTIVE]: [GameState.SUBMITTED, GameState.ENDED],
+        [GameState.SUBMITTED]: [GameState.ENDED],
+        [GameState.ENDED]: [GameState.BROWSING],
+      };
+
+      return validTransitions[gameState].includes(targetState);
+    },
+    [gameState]
+  );
+
+  // Set game state with validation and persistence
+  const setGameStateWithMetadata = useCallback(
+    (state: GameState, metadata?: any) => {
+      if (!gameCode) return;
+
+      if (!canTransitionTo(state)) {
+        console.warn(`Invalid state transition from ${gameState} to ${state}`);
+        return;
+      }
+
+      // Update local state
+      setGameStateInternal(state);
+
+      // Persist to localStorage
+      setGameState(gameCode, state, metadata);
+    },
+    [gameCode, gameState, canTransitionTo]
+  );
 
   const getGameByCode = async (code: string) => {
     try {
       const game = await getPartialGameFromDb(code);
       setPartialGameData(game);
       setGameCode(game.game_code);
+      // Check if we've already joined this game before setting state
+      // Look at local storage to see if there's a saved state
+      const savedState = getGameState(game.game_code);
+      if (savedState && savedState.state === GameState.JOINED) {
+        // If we've already joined, maintain that state
+        setGameStateWithMetadata(GameState.JOINED, {
+          gameId: game.id,
+          ...savedState.metadata,
+        });
+      } else {
+        // Otherwise, set to JOINING
+        setGameStateWithMetadata(GameState.JOINING, { gameId: game.id });
+      }
+
       router.push(`/${language}/game/${game.game_code}`);
     } catch (error) {
       console.error('Error fetching game:', error);
@@ -116,6 +182,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
       if (partialGameData && isAdmin) {
         const game = await getGameFromDb(partialGameData.game_code);
         setGameData(game);
+        setGameStateInternal(GameState.JOINED);
       }
     };
     checkAdmin();
@@ -135,42 +202,52 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
           new PublicKey(partialGameData.admin_wallet),
           partialGameData.game_code
         );
-
-        // Listen for GameStarted event
+        // gameStarted event listener
         const listener = program.addEventListener(
           'gameStarted',
           async (event) => {
             // Verify this event is for our game
             // @ts-ignore
             if (event.game.toString() === gamePda.toString()) {
-              console.log('Game started event received:', event);
               // @ts-ignore
               const actualStartTime = event.startTime.toNumber();
               // @ts-ignore
               const actualEndTime = event.endTime.toNumber();
-              // Update game data with new start/end times
-              setGameData((prev) => ({
-                ...prev,
-                start_time: new Date(actualStartTime).toISOString(),
-                end_time: new Date(actualEndTime).toISOString(),
-                status: 'active',
-              }));
 
-              // Save to local storage
-              setGameStartStatus(
-                partialGameData.game_code,
-                actualStartTime,
-                actualEndTime
-              );
-
-              // Initialize game session if it doesn't exist
-              if (!gameSession) {
-                const newSession = initializeGameSession(
-                  partialGameData.game_code,
-                  gamePda.toString()
+              try {
+                const fullGameData = await getGameFromDb(
+                  partialGameData.game_code
                 );
-                setGameSession(newSession);
+                // Update game data with full data and the correct start/end times
+                setGameData({
+                  ...fullGameData,
+                  start_time: new Date(actualStartTime).toISOString(),
+                  end_time: new Date(actualEndTime).toISOString(),
+                  status: 'active',
+                });
+
+                // BYPASS STATE TRANSITION VALIDATION
+                // Directly update the internal state
+                setGameStateInternal(GameState.ACTIVE);
+                // Update game state to ACTIVE
+                setGameStateWithMetadata(GameState.ACTIVE, {
+                  startTime: actualStartTime,
+                  endTime: actualEndTime,
+                });
+
+                // Initialize game session if it doesn't exist
+                if (!gameSession) {
+                  const newSession = initializeGameSession(
+                    partialGameData.game_code,
+                    gamePda.toString()
+                  );
+                  setGameSession(newSession);
+                }
+              } catch (error) {
+                console.error('Error fetching full game data:', error);
               }
+            } else {
+              console.log('Event was for a different game.');
             }
           }
         );
@@ -191,9 +268,9 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
         eventListenerRef.current = null;
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [program, partialGameData, connection, gameSession]);
 
-  // Existing handleJoinGame implementation...
   const handleJoinGame = async (): Promise<string | null> => {
     if (!program) throw new Error(t('Please connect your wallet'));
     if (!partialGameData) throw new Error('Game data not found');
@@ -228,8 +305,12 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
       }
 
       if (hasJoined || isAdmin) {
-        const game = await getGameFromDb(partialGameData.game_code);
-        setGameData(game);
+        // Update state to JOINED if we've already joined
+        setGameStateWithMetadata(GameState.JOINED, {
+          joinedAt: Date.now(),
+          gamePda: gamePda.toString(),
+        });
+
         return null;
       }
 
@@ -250,8 +331,13 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
       );
 
       if (result) {
-        console.log('result', result);
-        setGameData(result.game);
+        // Update state to JOINED after successfully joining
+        setGameStateWithMetadata(GameState.JOINED, {
+          joinedAt: Date.now(),
+          gamePda: gamePda.toString(),
+          signature: result.signature,
+        });
+
         return result.signature || null;
       }
 
@@ -262,6 +348,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // For handleStartGame function (for admin)
   const handleStartGame = async () => {
     if (!program) throw new Error(t('Program not initialized'));
     if (!partialGameData) throw new Error('Game data not found');
@@ -299,6 +386,13 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
             return { ...prevGameData, status: 'active' };
           }
           return prevGameData;
+        });
+        // Update game state to ACTIVE
+        setGameStateWithMetadata(GameState.ACTIVE, {
+          startTime: new Date(gameData.start_time).getTime(),
+          endTime: new Date(gameData.end_time).getTime(),
+          startedByAdmin: true,
+          startedAt: Date.now(),
         });
       } else {
         console.error('Failed to start game:', result.error);
@@ -429,6 +523,12 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
         throw new Error('No signature returned from submission');
       }
 
+      // Update game state to SUBMITTED
+      setGameStateWithMetadata(GameState.SUBMITTED, {
+        submittedAt: finishTime,
+        signature: result.signature,
+      });
+
       if (result.gameResult) {
         // Get the game result returned from submission
         const gameResult = result.gameResult;
@@ -488,7 +588,6 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
       }
 
       clearGameSession(gameCode);
-      clearGameStartStatus(gameCode);
       return result.signature;
     } catch (error: any) {
       console.error('Error submitting game:', error);
@@ -554,9 +653,14 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
         console.error('Failed to end game:', result.error);
         throw new Error(t('Failed to end game'));
       }
+      // Update game state to ENDED
+      setGameStateWithMetadata(GameState.ENDED, {
+        endedAt: Date.now(),
+        signature: result.signature,
+      });
+
       console.log('Game end transaction successful');
       fetchUserXPAndRewards();
-      // Return the transaction signature
       return result.signature;
     } catch (error) {
       console.error('Error ending game:', error);
@@ -576,7 +680,6 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
       !gameData.admin_wallet ||
       !gameData.game_code
     ) {
-      console.log('Missing required dependencies for game end listener');
       return;
     }
 
@@ -620,12 +723,16 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
               if (eventGameAddress === expectedGameAddress) {
                 console.log('Game ended event received:', event);
 
-                // Update game status and persist to localStorage
                 setGameData((prev) => ({
                   ...prev,
                   status: 'ended',
                 }));
-                setGameEndedStatus(gameData.game_code);
+
+                // Update game state to ENDED
+                setGameStateWithMetadata(GameState.ENDED, {
+                  endedAt: Date.now(),
+                  endedByEvent: true,
+                });
 
                 // Start listening for database updates if we're a player
                 if (!isAdmin && publicKey) {
@@ -666,16 +773,23 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
         }
       }
     };
-  }, [program, gameData, connection, isAdmin, publicKey]);
+  }, [
+    program,
+    gameData,
+    connection,
+    isAdmin,
+    publicKey,
+    setGameStateWithMetadata,
+  ]);
 
   useEffect(() => {
     // Early return if we don't have game code or ID
     if (!gameData?.game_code || !gameData?.id) return;
 
-    // Check localStorage on mount or if status is undefined
+    // Check for stored state on mount or if status is undefined
     if (!gameData.status || gameData.status === '') {
-      const isEndedInStorage = getGameEndedStatus(gameData.game_code);
-      if (isEndedInStorage) {
+      const savedState = getGameState(gameData.game_code);
+      if (savedState && savedState.state === GameState.ENDED) {
         setGameData((prev) => ({
           ...prev,
           status: 'ended',
@@ -686,7 +800,8 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
 
     // Only run when the game has ended status
     const isEnded =
-      gameData.status === 'ended' || getGameEndedStatus(gameData.game_code);
+      gameData.status === 'ended' || gameState === GameState.ENDED;
+
     if (!isEnded) return;
 
     const loadCompleteResults = async () => {
@@ -798,6 +913,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
     fetchUserXPAndRewards,
     gameData?.questions,
     isAdmin,
+    gameState,
   ]);
 
   // Cleanup player result subscription on component unmount
@@ -829,6 +945,9 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
         canEndGame,
         isLoadingResults,
         loadError,
+        gameState,
+        setGameStateWithMetadata,
+        canTransitionTo,
       }}
     >
       {children}
