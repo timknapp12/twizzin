@@ -6,6 +6,8 @@ import {
   XPAward,
 } from '@/types';
 
+export const XP_PER_PLAYER = 10;
+
 export async function distributeGameXP(
   gameId: string,
   players: PlayerResult[],
@@ -14,7 +16,7 @@ export async function distributeGameXP(
   playerLength: number,
   config: XPDistributionConfig = DEFAULT_XP_CONFIG
 ): Promise<void> {
-  const adminXp = playerLength * 10;
+  const adminXp = playerLength * XP_PER_PLAYER;
   try {
     // Create admin record in player_games
     const { error: adminInsertError } = await supabase
@@ -198,6 +200,7 @@ export async function getUserXPLevel(wallet: string): Promise<{
     totalQuestions: number;
     xpEarned: number;
     finalRank: number | null;
+    isAdmin: boolean;
   }>;
 }> {
   try {
@@ -247,6 +250,7 @@ export async function getUserXPLevel(wallet: string): Promise<{
         num_correct,
         xp_earned,
         final_rank,
+        is_admin,
         game:games (
           id,
           name,
@@ -284,6 +288,7 @@ export async function getUserXPLevel(wallet: string): Promise<{
           totalQuestions: count || 0,
           xpEarned: game.xp_earned || 0,
           finalRank: game.final_rank || null,
+          isAdmin: game.is_admin || false,
         };
       })
     );

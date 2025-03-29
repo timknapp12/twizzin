@@ -538,6 +538,7 @@ export interface GameHistory {
   totalQuestions: number;
   xpEarned: number;
   finalRank: number | null;
+  isAdmin?: boolean;
 }
 
 export interface XPLevelData {
