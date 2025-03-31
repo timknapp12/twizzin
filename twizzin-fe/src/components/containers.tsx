@@ -137,7 +137,7 @@ export const InnerScreenContainer = ({
   </Column>
 );
 
-interface CardProps {
+interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
   onClick?: () => void;
 }
