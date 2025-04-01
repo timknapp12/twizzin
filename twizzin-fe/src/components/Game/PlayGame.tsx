@@ -9,7 +9,11 @@ import { toast } from 'react-toastify';
 
 const { network } = getCurrentConfig();
 
-const PlayGame = () => {
+interface PlayGameProps {
+  goToResults?: () => void;
+}
+
+const PlayGame = ({ goToResults = () => {} }: PlayGameProps) => {
   const { t } = useAppContext();
   const {
     gameData,
@@ -296,7 +300,7 @@ const PlayGame = () => {
           </Button>
         </div>
       </Row>
-      {isAdmin && <EndGameButton />}
+      {isAdmin && <EndGameButton goToResults={goToResults} />}
     </form>
   );
 };
