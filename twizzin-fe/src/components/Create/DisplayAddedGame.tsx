@@ -35,15 +35,15 @@ const DisplayAddedGame: React.FC<DisplayAddedGameProps> = ({
   const secondaryColor = 'var(--color-secondaryText)';
 
   return (
-    <Column className='w-full h-full flex-grow gap-8' justify='between'>
-      <Column className='w-full gap-2'>
-        <Column className='w-full gap-0'>
-          <Column className='w-full gap-4'>
+    <Column className='w-full h-full flex-grow' justify='between'>
+      <Column className='w-full gap-4'>
+        <Column className='w-full'>
+          <Column className='w-full'>
             <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg  bg-[#FBF9E9] gap-4 w-full max-w-small mx-auto  text-[10px] md:text-[14px] active:opacity-80'>
               <Row className='gap-2'>
                 <TbListDetails size={20} color='var(--color-tertiary)' />
-                <Label>{t('Game Code')}:</Label>
-                <Label style={{ color: primaryColor }}>
+                <Label className='-mb-1'>{t('Game Code')}:</Label>
+                <Label className='-mb-1' style={{ color: primaryColor }}>
                   {gameData.gameCode}
                 </Label>
               </Row>

@@ -106,6 +106,8 @@ export interface CreateGameContextType {
   imageFile: File | null;
   handleImageChange: (file: File | null) => void;
   resetForm: () => void;
+  handleBulkQuestionUpdate: (newQuestions: QuestionForDb[]) => void;
+  formatAndUpdateGameData: (dbGameData: any) => void;
 }
 
 export interface GameInputForDb {

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
   Tabs,
@@ -31,7 +31,6 @@ import PlayerGameResults from '@/components/Game/PlayerGameResults';
 export const CreatorGameComponent = () => {
   const params = useParams();
   const gameCode = params.gameCode;
-  const hasUpdatedContextRef = useRef(false);
   const {
     getGameByCode,
     gameData: contextGameData,
@@ -43,8 +42,7 @@ export const CreatorGameComponent = () => {
   const { t } = useAppContext();
 
   // Get access to the CreateGameContext for edit mode
-  const { handleBulkQuestionUpdate, handleGameData, resetForm } =
-    useCreateGameContext();
+  const { handleBulkQuestionUpdate, handleGameData } = useCreateGameContext();
 
   const TABS = {
     DETAILS: t('Game Details'),
@@ -77,9 +75,7 @@ export const CreatorGameComponent = () => {
 
   useEffect(() => {
     setIsMounted(true);
-    // Reset form state when component mounts
-    resetForm();
-  }, [resetForm]);
+  }, []);
 
   // Format DB questions for component state
   const formatQuestionsForState = useCallback(
@@ -213,12 +209,8 @@ export const CreatorGameComponent = () => {
           );
           setQuestions(formattedQuestions);
 
-          // Also update the CreateGameContext for edit mode - CAREFUL HERE!
-          // This might be causing the loop
-          if (!hasUpdatedContextRef.current) {
-            updateCreateGameContext(contextGameData);
-            hasUpdatedContextRef.current = true;
-          }
+          // Also update the CreateGameContext for edit mode
+          updateCreateGameContext(contextGameData);
         } else {
           // Otherwise fetch from database
           await fetchFreshGameData();
@@ -234,8 +226,8 @@ export const CreatorGameComponent = () => {
     };
 
     fetchGameData();
-    // Only include stable dependencies here:
-  }, [gameCode, isMounted, contextGameData?.game_code]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameCode, isMounted]);
 
   const getVisibleTabs = () => {
     const tabs = [TABS.DETAILS];

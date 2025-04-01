@@ -6,6 +6,8 @@ import React, {
   useState,
   ReactNode,
   useEffect,
+  useRef,
+  useCallback,
 } from 'react';
 import { NATIVE_MINT } from '@solana/spl-token';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
@@ -106,11 +108,22 @@ export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
   const [questions, setQuestions] = useState<QuestionForDb[]>([blankQuestion]);
 
   const handleUpdateQuestionData = (updatedQuestion: QuestionForDb) => {
-    setQuestions((prevQuestions) =>
-      prevQuestions.map((q) =>
-        q.displayOrder === updatedQuestion.displayOrder ? updatedQuestion : q
-      )
-    );
+    setQuestions((prevQuestions) => {
+      // Check if the question already exists
+      const existingIndex = prevQuestions.findIndex(
+        (q) => q.displayOrder === updatedQuestion.displayOrder
+      );
+
+      if (existingIndex === -1) {
+        // Question doesn't exist, add it to the array
+        return [...prevQuestions, updatedQuestion];
+      } else {
+        // Question exists, update it
+        return prevQuestions.map((q) =>
+          q.displayOrder === updatedQuestion.displayOrder ? updatedQuestion : q
+        );
+      }
+    });
   };
 
   const handleAddBlankQuestion = () => {
@@ -267,6 +280,68 @@ export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
     setError(null);
   };
 
+  const handleBulkQuestionUpdate = (newQuestions: QuestionForDb[]) => {
+    // Ensure all questions have their displayOrder correctly set
+    const updatedQuestions = newQuestions.map((q, index) => ({
+      ...q,
+      displayOrder: typeof q.displayOrder === 'number' ? q.displayOrder : index,
+    }));
+    setQuestions(updatedQuestions);
+  };
+
+  const isUpdatingGameDataRef = useRef(false);
+  // Function to format and update game data from DB format
+  const formatAndUpdateGameData = useCallback((dbGameData: any) => {
+    if (!dbGameData || isUpdatingGameDataRef.current) return;
+
+    isUpdatingGameDataRef.current = true;
+
+    try {
+      // Convert database format to form state format
+      const formattedGameData = {
+        gameName: dbGameData.name || '',
+        entryFee: (dbGameData.entry_fee || 0) / LAMPORTS_PER_SOL,
+        startTime: new Date(dbGameData.start_time || Date.now()),
+        commission: (dbGameData.commission_bps || 0) / 100,
+        donation: (dbGameData.donation_amount || 0) / LAMPORTS_PER_SOL,
+        maxWinners: dbGameData.max_winners || 1,
+        evenSplit: !!dbGameData.even_split,
+        allAreWinners: !!dbGameData.all_are_winners,
+        username: dbGameData.username || '',
+        gameCode: dbGameData.game_code || '',
+      };
+
+      // Update game data in one operation to reduce re-renders
+      setGameData((prev) => ({
+        ...prev,
+        ...formattedGameData,
+      }));
+
+      // If there are questions, update them in a single operation
+      if (dbGameData.questions && Array.isArray(dbGameData.questions)) {
+        const formattedQuestions = dbGameData.questions.map((q: any) => ({
+          id: q.id,
+          displayOrder: q.display_order,
+          questionText: q.question_text || '',
+          timeLimit: q.time_limit || 10,
+          correctAnswer: q.correct_answer || '',
+          answers: (q.answers || []).map((a: any) => ({
+            displayOrder: a.display_order,
+            answerText: a.answer_text || '',
+            isCorrect: !!a.is_correct,
+            displayLetter: a.display_letter || '',
+          })),
+        }));
+
+        // Use a single bulk update rather than individual updates
+        setQuestions(formattedQuestions);
+      }
+    } finally {
+      // Always reset the flag
+      isUpdatingGameDataRef.current = false;
+    }
+  }, []);
+
   return (
     <CreateGameContext.Provider
       value={{
@@ -286,6 +361,8 @@ export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
         imageFile,
         handleImageChange,
         resetForm,
+        formatAndUpdateGameData,
+        handleBulkQuestionUpdate,
       }}
     >
       {children}
