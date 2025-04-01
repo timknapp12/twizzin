@@ -155,24 +155,27 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
       setPartialGameData(game);
       setGameCode(game.game_code);
 
-      // Check if current user is admin for this game
       const isGameAdmin = Boolean(
         publicKey && publicKey.toBase58() === game.admin_wallet
       );
       setIsAdmin(isGameAdmin);
 
-      // If admin, get the full game data right away
+      const currentPath = window.location.pathname;
+      const isOnAdminRoute = currentPath.includes('/creator/game/');
+
       if (isGameAdmin) {
         const fullGame = await getGameFromDb(game.game_code);
         setGameData(fullGame);
         setGameStateInternal(GameState.JOINED);
 
-        // Redirect to creator view
-        router.push(`/${language}/creator/game/${game.game_code}`);
+        // Only redirect if not already on an admin route AND we're not coming from a refresh
+        if (!isOnAdminRoute) {
+          router.push(`/${language}/creator/game/${game.game_code}`);
+        }
         return;
       }
 
-      // For regular players, continue with normal flow
+      // For regular players
       const savedState = getGameState(game.game_code);
       if (savedState && savedState.state === GameState.JOINED) {
         setGameStateWithMetadata(GameState.JOINED, {
@@ -183,8 +186,11 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
         setGameStateWithMetadata(GameState.JOINING, { gameId: game.id });
       }
 
-      // Only redirect to player route if not admin
-      router.push(`/${language}/game/${game.game_code}`);
+      // Only redirect to player route if not admin and not already on player route
+      const isOnPlayerRoute = currentPath.includes('/game/');
+      if (!isGameAdmin && !isOnPlayerRoute) {
+        router.push(`/${language}/game/${game.game_code}`);
+      }
     } catch (error) {
       console.error('Error fetching game:', error);
       throw error;
