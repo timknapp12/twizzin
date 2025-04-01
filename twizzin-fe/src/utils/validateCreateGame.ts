@@ -57,9 +57,9 @@ const validateGameData = (gameData: CreateGameData): string | null => {
     return i18next.t('Game title is required');
   }
 
-  // if (!gameData.startTime || new Date(gameData.startTime) <= new Date()) {
-  //   return i18next.t('Start time must be in the future');
-  // }
+  if (!gameData.startTime || new Date(gameData.startTime) <= new Date()) {
+    return i18next.t('Start time must be in the future');
+  }
 
   if (!gameData.maxWinners || gameData.maxWinners < 1) {
     return i18next.t('Number of max winners must be at least 1');
