@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useWallet } from '@solana/wallet-adapter-react';
 import {
   Tabs,
   Tab,
@@ -27,10 +28,13 @@ import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { toast } from 'react-toastify';
 import PlayGame from '@/components/Game/PlayGame';
 import PlayerGameResults from '@/components/Game/PlayerGameResults';
+import Link from 'next/link';
+import { MainSkeleton } from '@/components/MainSkeleton';
 
 export const CreatorGameComponent = () => {
   const params = useParams();
-  const gameCode = params.gameCode;
+  const gameCode = params.gameCode as string;
+  const { publicKey } = useWallet();
   const {
     getGameByCode,
     gameData: contextGameData,
@@ -38,10 +42,9 @@ export const CreatorGameComponent = () => {
     gameResult,
     isAdmin,
     handleStartGame,
+    partialGameData,
   } = useGameContext();
   const { t } = useAppContext();
-
-  // Get access to the CreateGameContext for edit mode
   const { handleBulkQuestionUpdate, handleGameData } = useCreateGameContext();
 
   const TABS = {
@@ -60,16 +63,75 @@ export const CreatorGameComponent = () => {
   const [gameData, setGameData] = useState<JoinFullGame | null>(null);
   const [questions, setQuestions] = useState<QuestionForDb[]>([]);
   const [isStartingGame, setIsStartingGame] = useState(false);
-
   const [countdown, setCountdown] = useState<string>(
     getRemainingTime(gameData?.start_time || '')
   );
 
+  // Initial data fetch with admin check
   useEffect(() => {
+    if (!gameCode || !isMounted || !publicKey || !partialGameData) {
+      setIsLoading(false);
+      return;
+    }
+
+    const isGameAdmin = Boolean(
+      publicKey.toBase58() === partialGameData.admin_wallet
+    );
+
+    if (!isGameAdmin) {
+      setIsLoading(false); // Stop loading if not admin
+      return;
+    }
+
+    const fetchGameData = async () => {
+      setIsLoading(true);
+      setError('');
+      try {
+        await getGameByCode(gameCode);
+        if (contextGameData && contextGameData.game_code === gameCode) {
+          setGameData(contextGameData);
+          const formattedQuestions = formatQuestionsForState(
+            contextGameData.questions
+          );
+          setQuestions(formattedQuestions);
+          updateCreateGameContext(contextGameData);
+        }
+      } catch (err) {
+        console.error('Error fetching game data:', err);
+        setError(
+          err instanceof Error ? err.message : t('Failed to load game data')
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchGameData();
+  }, [gameCode, isMounted, publicKey]);
+
+  // Fetch partial data to determine admin status if not already present
+  useEffect(() => {
+    if (!gameCode || !isMounted || partialGameData) return;
+
+    const fetchInitialData = async () => {
+      try {
+        await getGameByCode(gameCode);
+      } catch (err) {
+        console.error('Error fetching initial game data:', err);
+        setError(
+          err instanceof Error ? err.message : t('Failed to load game data')
+        );
+      }
+    };
+
+    fetchInitialData();
+  }, [gameCode, isMounted, getGameByCode, partialGameData]);
+
+  useEffect(() => {
+    if (!gameData?.start_time) return;
     const timer = setInterval(() => {
       setCountdown(getRemainingTime(gameData?.start_time || ''));
     }, 1000);
-
     return () => clearInterval(timer);
   }, [gameData?.start_time]);
 
@@ -77,7 +139,6 @@ export const CreatorGameComponent = () => {
     setIsMounted(true);
   }, []);
 
-  // Format DB questions for component state
   const formatQuestionsForState = useCallback(
     (dbQuestions: QuestionFromDb[]): QuestionForDb[] => {
       return (dbQuestions || []).map((q: QuestionFromDb) => ({
@@ -97,7 +158,6 @@ export const CreatorGameComponent = () => {
     []
   );
 
-  // Format DB game data for component state
   const formatGameDataForForm = useCallback((dbGameData: JoinFullGame) => {
     return {
       gameName: dbGameData.name,
@@ -113,13 +173,9 @@ export const CreatorGameComponent = () => {
     };
   }, []);
 
-  // Update CreateGameContext with DB data
   const updateCreateGameContext = useCallback(
     (dbGameData: JoinFullGame) => {
-      // Format game data for context
       const formattedGameData = formatGameDataForForm(dbGameData);
-
-      // Update each field in context
       Object.entries(formattedGameData).forEach(([key, value]) => {
         handleGameData({
           target: {
@@ -129,8 +185,6 @@ export const CreatorGameComponent = () => {
           },
         } as any);
       });
-
-      // Update questions in context
       const formattedQuestions = formatQuestionsForState(dbGameData.questions);
       handleBulkQuestionUpdate(formattedQuestions);
     },
@@ -142,104 +196,73 @@ export const CreatorGameComponent = () => {
     ]
   );
 
-  // Fetch fresh game data from DB
   const fetchFreshGameData = useCallback(async () => {
-    if (!gameCode) return;
-
+    if (!gameCode || !isAdmin) return;
     setIsRefreshing(true);
     try {
-      // Always fetch fresh from database
-      const freshGameData = await getGameFromDb(gameCode as string);
-
+      const freshGameData = await getGameFromDb(gameCode);
       if (!freshGameData) {
         toast.error(t('Game not found'));
         return null;
       }
-
-      // Update local state
       setGameData(freshGameData);
       setQuestions(formatQuestionsForState(freshGameData.questions));
-
-      // Update context for edit mode
       updateCreateGameContext(freshGameData);
-
-      // Also update game context
-      getGameByCode(gameCode.toString());
-
       return freshGameData;
-    } catch (err: unknown) {
+    } catch (err) {
       console.error('Error refreshing game data:', err);
-      if (err instanceof Error) {
-        toast.error(`${t('Error refreshing game data')}: ${err.message}`);
-      }
+      toast.error(
+        err instanceof Error
+          ? `${t('Error refreshing game data')}: ${err.message}`
+          : t('Error refreshing game data')
+      );
       return null;
     } finally {
       setIsRefreshing(false);
     }
-  }, [
-    gameCode,
-    t,
-    getGameByCode,
-    formatQuestionsForState,
-    updateCreateGameContext,
-  ]);
+  }, [gameCode, t, formatQuestionsForState, updateCreateGameContext, isAdmin]);
 
-  // Function to handle switch from edit to details
   const handleSwitchToDetails = useCallback(async () => {
-    // First refresh data from DB to get latest state
     await fetchFreshGameData();
-    // Then switch to details tab
     setActiveTab(TABS.DETAILS);
   }, [fetchFreshGameData, TABS.DETAILS]);
 
-  // Fetch game data when component mounts
   useEffect(() => {
-    if (!gameCode || !isMounted) return;
-
+    if (!gameCode || !isMounted || !isAdmin) return;
     const fetchGameData = async () => {
-      setIsLoading(true);
-      setError('');
-
+      // setIsLoading(true);
+      // setError('');
       try {
-        // First try to get from context if available
         if (contextGameData && contextGameData.game_code === gameCode) {
           setGameData(contextGameData);
           const formattedQuestions = formatQuestionsForState(
             contextGameData.questions
           );
           setQuestions(formattedQuestions);
-
-          // Also update the CreateGameContext for edit mode
           updateCreateGameContext(contextGameData);
         } else {
-          // Otherwise fetch from database
           await fetchFreshGameData();
         }
-      } catch (err: unknown) {
+      } catch (err) {
         console.error('Error fetching game data:', err);
         setError(
-          err instanceof Error ? err.message : 'Failed to load game data'
+          err instanceof Error ? err.message : t('Failed to load game data')
         );
       } finally {
         setIsLoading(false);
       }
     };
-
     fetchGameData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gameCode, isMounted]);
+  }, [gameCode, isMounted, isAdmin]);
 
   const getVisibleTabs = () => {
     const tabs = [TABS.DETAILS];
-    // Edit tab available to admin only when game is not ended
     if (gameState !== GameState.ENDED && gameData?.status !== 'ended') {
       tabs.push(TABS.EDIT);
     }
-    // Show Play tab when game is active
     if (gameData?.status === 'active' || gameState === GameState.ACTIVE) {
       tabs.push(TABS.PLAY);
     }
-    // Show Results tab when game has ended or results exist
     if (
       gameData?.status === 'ended' ||
       gameState === GameState.ENDED ||
@@ -247,9 +270,7 @@ export const CreatorGameComponent = () => {
     ) {
       tabs.push(TABS.RESULTS);
     }
-    // Players tab always available
     tabs.push(TABS.PLAYERS);
-
     return tabs;
   };
 
@@ -266,13 +287,13 @@ export const CreatorGameComponent = () => {
       await handleStartGame();
       toast.success(t('Game started successfully'));
       setActiveTab(TABS.PLAY);
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Error starting game:', error);
-      if (error instanceof Error) {
-        toast.error(`${t('Error starting game')}: ${error.message}`);
-      } else {
-        toast.error(t('Error starting game'));
-      }
+      toast.error(
+        error instanceof Error
+          ? `${t('Error starting game')}: ${error.message}`
+          : t('Error starting game')
+      );
     } finally {
       setIsStartingGame(false);
     }
@@ -280,21 +301,18 @@ export const CreatorGameComponent = () => {
 
   const errorColor = 'var(--color-error)';
 
-  if (!isMounted) {
-    return <LoadingPlaceholder />;
+  // Show "Connect Wallet" screen if publicKey is null
+  if (publicKey === null) {
+    return <ConnectWallet />;
   }
 
-  if (isLoading) {
-    return <LoadingPlaceholder />;
+  // Show "Creator Only" screen if publicKey exists but user is not admin
+  if (partialGameData && publicKey && !isAdmin) {
+    return <CreatorOnly gameCode={gameCode} />;
   }
 
-  if (error) {
-    return <ErrorDisplay message={error} />;
-  }
-
-  if (!gameData) {
-    return <ErrorDisplay message={t('Game not found')} />;
-  }
+  if (!isMounted || isLoading || !gameData) return <MainSkeleton />;
+  if (error) return <ErrorDisplay message={error} />;
 
   return (
     <ScreenContainer>
@@ -310,22 +328,21 @@ export const CreatorGameComponent = () => {
               <span className='ml-2'>{t('Refreshing game data...')}</span>
             </Row>
           )}
-
           <Tabs activeTab={activeTab} onChange={setActiveTab}>
             {getVisibleTabs().map((tab) => (
               <Tab key={tab} id={tab} label={tab}>
                 {tab === TABS.DETAILS && (
                   <>
-                    {/* Add countdown timer */}
                     <Row className='gap-2 mb-4'>
-                      {countdown === 'Game has started!' ? null : (
+                      {countdown === 'Game has started!' || countdown === '' ? (
+                        <div style={{ height: '24px' }} />
+                      ) : (
                         <Label>{t('Time till game starts')}:</Label>
                       )}
                       <Label style={{ color: errorColor }}>
                         {countDownText}
                       </Label>
                     </Row>
-
                     <DisplayAddedGame
                       gameData={{
                         gameName: gameData.name,
@@ -342,18 +359,18 @@ export const CreatorGameComponent = () => {
                       questions={questions}
                       setIsEdit={() => setActiveTab(TABS.EDIT)}
                     />
-
-                    {/* Add start game button if admin and game not started */}
-                    {isAdmin && gameState !== GameState.ACTIVE && (
-                      <Row justify='center' className='mt-6'>
-                        <Button
-                          onClick={onStartGame}
-                          isLoading={isStartingGame}
-                        >
-                          {t('Start Game')}
-                        </Button>
-                      </Row>
-                    )}
+                    {isAdmin &&
+                      (gameState === GameState.JOINED ||
+                        gameState === GameState.JOINING) && (
+                        <Row justify='center' className='mt-6'>
+                          <Button
+                            onClick={onStartGame}
+                            isLoading={isStartingGame}
+                          >
+                            {t('Start Game')}
+                          </Button>
+                        </Row>
+                      )}
                   </>
                 )}
                 {tab === TABS.EDIT && (
@@ -379,21 +396,38 @@ export const CreatorGameComponent = () => {
 };
 
 // Helper components
-const LoadingPlaceholder = () => {
+const ConnectWallet = () => {
   const { t } = useAppContext();
   return (
     <ScreenContainer>
       <Header />
       <InnerScreenContainer>
-        <div
-          className='flex-grow flex flex-col items-center w-full'
-          style={{ marginTop: '3vh' }}
-        >
-          <Column className='w-full h-64 items-center justify-center'>
-            <FaSpinner className='animate-spin' size={28} />
-            <div className='mt-4'>{t('Loading game data...')}</div>
-          </Column>
-        </div>
+        <Column className='w-full h-64 items-center justify-center'>
+          <div className='text-xl mb-4'>{t('Please Connect Your Wallet')}</div>
+          <div>{t('You need to connect your wallet to manage this game.')}</div>
+        </Column>
+      </InnerScreenContainer>
+    </ScreenContainer>
+  );
+};
+
+const CreatorOnly = ({ gameCode }: { gameCode: string }) => {
+  const { t, language } = useAppContext();
+  return (
+    <ScreenContainer>
+      <Header />
+      <InnerScreenContainer>
+        <Column className='w-full h-64 items-center justify-center'>
+          <div className='text-xl mb-4'>{t('Creator Access Only')}</div>
+          <div className='text-center mb-4'>
+            {t(
+              'Only the game creator can view this page. If you are the game creator, please connect with the correct wallet. Otherwise, go to the player page to participate in this game.'
+            )}
+          </div>
+          <Link className='w-full' href={`/${language}/game/${gameCode}`}>
+            <Button>{t('Go to Player Page')}</Button>
+          </Link>
+        </Column>
       </InnerScreenContainer>
     </ScreenContainer>
   );
