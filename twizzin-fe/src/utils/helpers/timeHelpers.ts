@@ -65,6 +65,7 @@ export const formatGameTime = (
 };
 
 export const getRemainingTime = (startTime: string | number) => {
+  if (!startTime) return '';
   const now = Date.now();
   const startMs =
     typeof startTime === 'string' ? new Date(startTime).getTime() : startTime;

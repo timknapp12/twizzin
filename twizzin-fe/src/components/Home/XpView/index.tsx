@@ -27,7 +27,7 @@ const XpView = ({ onSetView }: XpViewProps) => {
     <Column className='gap-4 w-full h-full' align='start'>
       <Row onClick={() => onSetView('home')} className='cursor-pointer'>
         <IconButton
-          title='Back'
+          title={t('Back')}
           Icon={FaArrowLeft}
           onClick={() => onSetView('home')}
           className='text-gray active:text-black/10'

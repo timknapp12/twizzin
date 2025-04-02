@@ -3,7 +3,7 @@ import { processImageFile } from './imageProcessing';
 import { QuestionForDb, GameInputForDb } from '@/types';
 
 // Function to handle image upload
-const uploadGameImage = async (imageFile: File) => {
+export const uploadGameImage = async (imageFile: File) => {
   try {
     const processedFile = await processImageFile(imageFile);
 
@@ -36,7 +36,7 @@ const uploadGameImage = async (imageFile: File) => {
 };
 
 // Function to delete an image if transaction fails
-const deleteGameImage = async (fileName: string) => {
+export const deleteGameImage = async (fileName: string) => {
   try {
     const { error } = await supabase.storage
       .from('game-images')

@@ -3,7 +3,7 @@ import { Button, Label } from '@/components';
 import { useGameContext, useAppContext } from '@/contexts';
 import { toast } from 'react-toastify';
 
-const EndGameButton = () => {
+const EndGameButton = ({ goToResults }: { goToResults: () => void }) => {
   const { t } = useAppContext();
   const { handleEndGame, canEndGame, isAdmin, gameData } = useGameContext();
   const [isEndingGame, setIsEndingGame] = useState(false);
@@ -39,6 +39,7 @@ const EndGameButton = () => {
     try {
       await handleEndGame();
       toast.success(t('Game ended successfully'));
+      goToResults();
     } catch (error: any) {
       toast.error(error.message || t('Failed to end game'));
     } finally {

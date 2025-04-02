@@ -3,7 +3,7 @@
 import { redirect } from 'next/navigation';
 import { useParams } from 'next/navigation';
 
-export default function GameRedirectPage() {
+export default function CreatorGameRedirectPage() {
   const { gameCode } = useParams();
-  redirect(`/en/game/${gameCode}`);
+  redirect(`/en/creator/game/${gameCode}`);
 }

@@ -105,6 +105,9 @@ export interface CreateGameContextType {
   clearError: () => void;
   imageFile: File | null;
   handleImageChange: (file: File | null) => void;
+  resetForm: () => void;
+  handleBulkQuestionUpdate: (newQuestions: QuestionForDb[]) => void;
+  formatAndUpdateGameData: (dbGameData: any) => void;
 }
 
 export interface GameInputForDb {
@@ -289,6 +292,7 @@ export interface QuestionFromDb {
   display_order: number;
   correct_answer: string;
   answers: AnswerFromDb[];
+  time_limit: number;
 }
 
 export interface AnswerFromDb {
@@ -547,4 +551,10 @@ export interface XPLevelData {
   nextLevelXP: number;
   progress: number;
   gameHistory: GameHistory[];
+}
+
+export interface UpdateGameCombinedParams extends CreateGameCombinedParams {
+  gameCode: string;
+  answerHash?: number[];
+  vaultTokenAccount?: PublicKey;
 }

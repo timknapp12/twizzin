@@ -1,18 +1,7 @@
 import React from 'react';
-import {
-  Column,
-  Row,
-  Grid,
-  Label,
-  PrimaryText,
-  H5,
-  // IconButton,
-} from '@/components';
+import { Column, Row, Grid, Label, PrimaryText, H5 } from '@/components';
 import { TbListDetails } from 'react-icons/tb';
-import {
-  // FaPencil,
-  FaCircleCheck,
-} from 'react-icons/fa6';
+import { FaCircleCheck } from 'react-icons/fa6';
 import { useAppContext } from '@/contexts';
 import { CreateGameData, QuestionForDb } from '@/types';
 import { displayOrderMap } from '@/types';
@@ -20,16 +9,12 @@ import { displayOrderMap } from '@/types';
 interface DisplayAddedGameProps {
   gameData: CreateGameData;
   questions: QuestionForDb[];
-  showGameCode: boolean;
-  setShowGameCode: React.Dispatch<React.SetStateAction<boolean>>;
   setIsEdit: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const DisplayAddedGame: React.FC<DisplayAddedGameProps> = ({
   gameData,
   questions,
-  // setShowGameCode,
-  // setIsEdit,
 }) => {
   const { t } = useAppContext();
 
@@ -46,38 +31,25 @@ const DisplayAddedGame: React.FC<DisplayAddedGameProps> = ({
     return displayOrderMap[displayOrder as keyof typeof displayOrderMap] || '';
   };
 
-  // const onEdit = () => {
-  //   setShowGameCode(false);
-  //   setIsEdit(true);
-  // };
-
   const primaryColor = 'var(--color-primaryText)';
   const secondaryColor = 'var(--color-secondaryText)';
 
   return (
-    <Column className='w-full h-full flex-grow gap-8' justify='between'>
-      <Column className='w-full gap-2'>
-        <Column className='w-full gap-0'>
-          {/* <Row className='w-full' justify='end'>
-            <IconButton
-              Icon={FaPencil}
-              onClick={onEdit}
-              title={t('Edit')}
-              className='cursor-pointer'
-              size={20}
-            />
-          </Row> */}
-          <Column className='w-full gap-4'>
+    <Column className='w-full h-full flex-grow' justify='between'>
+      <Column className='w-full gap-4'>
+        <Column className='w-full'>
+          <Column className='w-full'>
             <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg  bg-[#FBF9E9] gap-4 w-full max-w-small mx-auto  text-[10px] md:text-[14px] active:opacity-80'>
               <Row className='gap-2'>
                 <TbListDetails size={20} color='var(--color-tertiary)' />
-                {t('Game Details')}
+                <Label style={{ marginBottom: '-2px' }}>
+                  {t('Game Code')}:
+                </Label>
+                <Label style={{ color: primaryColor, marginBottom: '-2px' }}>
+                  {gameData.gameCode}
+                </Label>
               </Row>
             </div>
-            <Row className='gap-2'>
-              <Label>{t('Game Code')}:</Label>
-              <Label style={{ color: primaryColor }}>{gameData.gameCode}</Label>
-            </Row>
           </Column>
         </Column>
         <Grid

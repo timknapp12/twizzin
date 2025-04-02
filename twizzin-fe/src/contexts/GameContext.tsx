@@ -63,7 +63,7 @@ export const useGameContext = () => {
 export const GameContextProvider = ({ children }: { children: ReactNode }) => {
   const { t, language, fetchUserXPAndRewards, userProfile } = useAppContext();
   const [username, setUsername] = useState('');
-  const [gameCode, setGameCode] = useState('VXYNSZ');
+  const [gameCode, setGameCode] = useState('');
   const [partialGameData, setPartialGameData] = useState<PartialGame | null>(
     null
   );
@@ -149,44 +149,53 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
     [gameCode, gameState, canTransitionTo]
   );
 
+  // useEffect handles isAdmin state based on wallet changes
+  useEffect(() => {
+    if (publicKey && partialGameData) {
+      const isGameAdmin = Boolean(
+        publicKey.toBase58() === partialGameData.admin_wallet
+      );
+      setIsAdmin(isGameAdmin);
+    } else {
+      setIsAdmin(false);
+    }
+  }, [publicKey, partialGameData]);
+
   const getGameByCode = async (code: string) => {
     try {
       const game = await getPartialGameFromDb(code);
       setPartialGameData(game);
       setGameCode(game.game_code);
-      // Check if we've already joined this game before setting state
-      // Look at local storage to see if there's a saved state
+
+      // Check if current user is admin for this game
+      const isGameAdmin = Boolean(
+        publicKey && publicKey.toBase58() === game.admin_wallet
+      );
+      setIsAdmin(isGameAdmin);
+
+      // If admin, get the full game data right away
+      if (isGameAdmin) {
+        const fullGame = await getGameFromDb(game.game_code);
+        setGameData(fullGame);
+        setGameStateInternal(GameState.JOINED);
+        return;
+      }
+
+      // For regular players, set partial data and state only
       const savedState = getGameState(game.game_code);
       if (savedState && savedState.state === GameState.JOINED) {
-        // If we've already joined, maintain that state
         setGameStateWithMetadata(GameState.JOINED, {
           gameId: game.id,
           ...savedState.metadata,
         });
       } else {
-        // Otherwise, set to JOINING
         setGameStateWithMetadata(GameState.JOINING, { gameId: game.id });
       }
-
-      router.push(`/${language}/game/${game.game_code}`);
     } catch (error) {
       console.error('Error fetching game:', error);
       throw error;
     }
   };
-
-  useEffect(() => {
-    const checkAdmin = async () => {
-      const isAdmin = publicKey?.toBase58() === partialGameData?.admin_wallet;
-      setIsAdmin(isAdmin);
-      if (partialGameData && isAdmin) {
-        const game = await getGameFromDb(partialGameData.game_code);
-        setGameData(game);
-        setGameStateInternal(GameState.JOINED);
-      }
-    };
-    checkAdmin();
-  }, [publicKey, partialGameData]);
 
   // Add event listener cleanup ref
   const eventListenerRef = React.useRef<number | null>(null);

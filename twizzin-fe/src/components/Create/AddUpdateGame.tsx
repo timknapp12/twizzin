@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAppContext, useCreateGameContext } from '@/contexts';
 import {
   Column,
@@ -12,21 +12,32 @@ import {
   FileInput,
   Checkbox,
 } from '@/components';
+import { FaSpinner } from 'react-icons/fa6';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import AddUpdateQuestion from './AddUpdateQuestion';
-import DisplayAddedGame from './DisplayAddedGame';
 import { FaPlus } from 'react-icons/fa6';
 import { GiBrain } from 'react-icons/gi';
-import { getCurrentConfig, validateGame } from '@/utils';
+import { getCurrentConfig, validateGame, getGameFromDb } from '@/utils';
 import { useScreenSize } from '@/hooks/useScreenSize';
 import { GameDataChangeEvent } from '@/types';
 import { toast } from 'react-toastify';
+import { useRouter } from 'next/navigation';
 
 const { network } = getCurrentConfig();
-const AddUpdateGame = () => {
-  const { t } = useAppContext();
+
+interface AddUpdateGameProps {
+  gameCode?: string;
+  setIsDisplayGame?: () => void;
+}
+
+const AddUpdateGame: React.FC<AddUpdateGameProps> = ({
+  gameCode,
+  setIsDisplayGame,
+}) => {
+  const { t, language } = useAppContext();
+  const router = useRouter();
   const {
     gameData,
     handleGameData,
@@ -35,10 +46,9 @@ const AddUpdateGame = () => {
     totalTime,
     handleCreateGame,
     isCreating,
-    // TODO - handle showing creation result
-    // creationResult,
     clearError,
     handleImageChange,
+    formatAndUpdateGameData,
   } = useCreateGameContext();
 
   const { connection } = useConnection();
@@ -47,12 +57,46 @@ const AddUpdateGame = () => {
   const screenSize = useScreenSize();
   const adjustedMin = screenSize === 'small' ? '100%' : '200px';
 
-  const [isEdit, setIsEdit] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
-  const [showGameCode, setShowGameCode] = useState(false);
+  const [isFetchingGame, setIsFetchingGame] = useState(false);
+
+  // Determine if we're in edit mode based on gameCode prop
+  const isEditMode = !!gameCode;
+
+  const hasLoadedRef = useRef(false);
+
+  const fetchGameData = useCallback(async () => {
+    if (!isEditMode || !gameCode) return;
+
+    setIsFetchingGame(true);
+    try {
+      hasLoadedRef.current = true;
+      const fullGameData = await getGameFromDb(gameCode);
+
+      if (!fullGameData) {
+        toast.error(t('Game not found'));
+        return;
+      }
+
+      // Use the context function to update game data
+      formatAndUpdateGameData(fullGameData);
+    } catch (error: any) {
+      console.error('Error fetching game for editing:', error);
+      hasLoadedRef.current = false;
+      toast.error(t('Failed to load game data for editing'));
+    } finally {
+      setIsFetchingGame(false);
+    }
+  }, [gameCode, isEditMode, t, formatAndUpdateGameData]);
+
+  // Effect to fetch game data when in edit mode
+  useEffect(() => {
+    if (!isEditMode || !gameCode || hasLoadedRef.current) return;
+    fetchGameData();
+  }, [gameCode, isEditMode, fetchGameData]);
 
   const doesGameCodeExist = gameData.gameCode && gameData.gameCode.length > 0;
-  // console.log('doesGameCodeExist', doesGameCodeExist);
+
   const handleDateChange = (date: Date | null) => {
     clearError();
     handleGameData({
@@ -90,7 +134,7 @@ const AddUpdateGame = () => {
     handleImageChange(processedFile);
   };
 
-  // TODO - add more validations
+  // Handle both create and update
   const handleSubmit = async () => {
     setIsLoading(true);
     try {
@@ -108,12 +152,17 @@ const AddUpdateGame = () => {
       if (result) {
         const gameCode = result.database.game.game_code;
         const signature = result.onChain.signature;
+
         toast.success(
           <div>
-            {`${t('Game created successfully!')} ${t(
-              'Save this code to share with players:'
-            )} `}
-            <span className='text-red font-bold'>{gameCode}</span>
+            {`${
+              isEditMode
+                ? t('Game updated successfully!')
+                : `${t('Game created successfully!')} ${t(
+                    'Save this code to share with players:'
+                  )}`
+            }`}
+            <span className='text-red font-bold ml-[6px]'>{gameCode}</span>
             <a
               href={`https://explorer.solana.com/tx/${signature}?cluster=${network}`}
               target='_blank'
@@ -124,41 +173,53 @@ const AddUpdateGame = () => {
             </a>
           </div>,
           {
-            autoClose: false,
+            autoClose: isEditMode ? 3000 : false,
           }
         );
-        setIsEdit(false);
+
+        // Only proceed with navigation/display changes after state is updated
+        if (isEditMode) {
+          setIsDisplayGame?.();
+        } else {
+          router.push(`/${language}/creator/game/${gameCode}`);
+        }
       }
     } catch (error: any) {
-      console.error('Failed to create game AddUpdateGame:', error);
+      console.error(
+        `Failed to ${isEditMode ? 'update' : 'create'} game:`,
+        error
+      );
       toast.error(error.message);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const onCancelUpdate = () => setIsEdit(false);
+  const onCancelUpdate = () => {
+    if (isEditMode) {
+      setIsDisplayGame?.();
+    } else {
+      router.push('/');
+    }
+  };
 
-  if (!isEdit) {
+  if (isFetchingGame) {
     return (
-      <DisplayAddedGame
-        gameData={gameData}
-        questions={questions}
-        showGameCode={showGameCode}
-        setShowGameCode={setShowGameCode}
-        setIsEdit={setIsEdit}
-      />
+      <Column className='w-full h-64 items-center justify-center'>
+        <FaSpinner className='animate-spin' size={28} />
+        <div className='mt-4'>{t('Loading game data...')}</div>
+      </Column>
     );
   }
 
   return (
     <Column className='w-full h-full flex-grow gap-12' justify='between'>
       <Column className='w-full'>
-        <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg bg-[#E8F7EA] gap-4 w-full max-w-small mx-auto  text-[16px] text-green active:opacity-80'>
+        <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg bg-[#E8F7EA] gap-4 w-full max-w-small mx-auto text-[16px] text-green active:opacity-80'>
           <Row className='gap-2'>
             <GiBrain size={20} />
-            {doesGameCodeExist
-              ? `${t('Update game')}: ${gameData.gameCode}`
+            {doesGameCodeExist || isEditMode
+              ? `${t('Update game')}: ${gameData.gameCode || gameCode}`
               : t('Create a Twizzin game')}
           </Row>
         </div>
@@ -348,13 +409,13 @@ const AddUpdateGame = () => {
         </div>
       </Row>
       <Column className='w-full gap-4'>
-        {!doesGameCodeExist && (
+        {!doesGameCodeExist && !isEditMode && (
           <Button onClick={handleSubmit} isLoading={isLoading || isCreating}>
             {t('Create Game')}
           </Button>
         )}
       </Column>
-      {doesGameCodeExist && isEdit && (
+      {(doesGameCodeExist || isEditMode) && (
         <Column className='w-[80%]'>
           <Row justify='between' className='w-full gap-4'>
             <Button onClick={onCancelUpdate} className='flex-1' secondary>
