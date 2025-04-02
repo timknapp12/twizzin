@@ -149,33 +149,39 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
     [gameCode, gameState, canTransitionTo]
   );
 
+  // useEffect handles isAdmin state based on wallet changes
+  useEffect(() => {
+    if (publicKey && partialGameData) {
+      const isGameAdmin = Boolean(
+        publicKey.toBase58() === partialGameData.admin_wallet
+      );
+      setIsAdmin(isGameAdmin);
+    } else {
+      setIsAdmin(false);
+    }
+  }, [publicKey, partialGameData]);
+
   const getGameByCode = async (code: string) => {
     try {
       const game = await getPartialGameFromDb(code);
       setPartialGameData(game);
       setGameCode(game.game_code);
 
+      // Check if current user is admin for this game
       const isGameAdmin = Boolean(
         publicKey && publicKey.toBase58() === game.admin_wallet
       );
       setIsAdmin(isGameAdmin);
 
-      const currentPath = window.location.pathname;
-      const isOnAdminRoute = currentPath.includes('/creator/game/');
-
+      // If admin, get the full game data right away
       if (isGameAdmin) {
         const fullGame = await getGameFromDb(game.game_code);
         setGameData(fullGame);
         setGameStateInternal(GameState.JOINED);
-
-        // Only redirect if not already on an admin route AND we're not coming from a refresh
-        if (!isOnAdminRoute) {
-          router.push(`/${language}/creator/game/${game.game_code}`);
-        }
         return;
       }
 
-      // For regular players
+      // For regular players, set partial data and state only
       const savedState = getGameState(game.game_code);
       if (savedState && savedState.state === GameState.JOINED) {
         setGameStateWithMetadata(GameState.JOINED, {
@@ -184,12 +190,6 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
         });
       } else {
         setGameStateWithMetadata(GameState.JOINING, { gameId: game.id });
-      }
-
-      // Only redirect to player route if not admin and not already on player route
-      const isOnPlayerRoute = currentPath.includes('/game/');
-      if (!isGameAdmin && !isOnPlayerRoute) {
-        router.push(`/${language}/game/${game.game_code}`);
       }
     } catch (error) {
       console.error('Error fetching game:', error);
