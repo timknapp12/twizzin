@@ -199,5 +199,6 @@
   "You need to connect your wallet to manage this game.": "You need to connect your wallet to manage this game.",
   "Creator Access Only": "Creator Access Only",
   "Only the game creator can view this page. If you are the game creator, please connect with the correct wallet. Otherwise, go to the player page to participate in this game.": "Only the game creator can view this page. If you are the game creator, please connect with the correct wallet. Otherwise, go to the player page to participate in this game.",
-  "Go to Player Page": "Go to Player Page"
+  "Go to Player Page": "Go to Player Page",
+  "Error refreshing game data": "Error refreshing game data"
 }
