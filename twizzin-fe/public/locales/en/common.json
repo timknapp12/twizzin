@@ -192,5 +192,11 @@
   "Please connect your wallet to view your games": "Please connect your wallet to view your games",
   "You haven't created any games yet.": "You haven't created any games yet.",
   "Create Your First Game": "Create Your First Game",
-  "Failed to create/update game": "Failed to create/update game"
+  "Failed to create/update game": "Failed to create/update game",
+  "Please Connect Your Wallet": "Please Connect Your Wallet",
+  "You need to connect your wallet to view this game.": "You need to connect your wallet to view this game.",
+  "You need to connect your wallet to manage this game.": "You need to connect your wallet to manage this game.",
+  "Creator Access Only": "Creator Access Only",
+  "Only the game creator can view this page. If you are the game creator, please connect with the correct wallet. Otherwise, go to the player page to participate in this game.": "Only the game creator can view this page. If you are the game creator, please connect with the correct wallet. Otherwise, go to the player page to participate in this game.",
+  "Go to Player Page": "Go to Player Page"
 }

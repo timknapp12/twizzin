@@ -42,8 +42,10 @@ const DisplayAddedGame: React.FC<DisplayAddedGameProps> = ({
             <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg  bg-[#FBF9E9] gap-4 w-full max-w-small mx-auto  text-[10px] md:text-[14px] active:opacity-80'>
               <Row className='gap-2'>
                 <TbListDetails size={20} color='var(--color-tertiary)' />
-                <Label className='-mb-1'>{t('Game Code')}:</Label>
-                <Label className='-mb-1' style={{ color: primaryColor }}>
+                <Label style={{ marginBottom: '-2px' }}>
+                  {t('Game Code')}:
+                </Label>
+                <Label style={{ color: primaryColor, marginBottom: '-2px' }}>
                   {gameData.gameCode}
                 </Label>
               </Row>
