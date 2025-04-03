@@ -5,6 +5,7 @@ import { FaCircleCheck, FaRegCopy } from 'react-icons/fa6';
 import { useAppContext } from '@/contexts';
 import { CreateGameData, QuestionForDb } from '@/types';
 import { displayOrderMap } from '@/types';
+import { toast } from 'react-toastify';
 
 interface DisplayAddedGameProps {
   gameData: CreateGameData;
@@ -48,6 +49,19 @@ const DisplayAddedGame: React.FC<DisplayAddedGameProps> = ({
                 <Label style={{ color: primaryColor, marginBottom: '-2px' }}>
                   {gameData.gameCode}
                 </Label>
+                <FaRegCopy
+                  size={14}
+                  className='cursor-pointer hover:opacity-80 text-secondaryText'
+                  // color='var(--color-tertiary)'
+                  onClick={() => {
+                    navigator.clipboard
+                      .writeText(gameData.gameCode!)
+                      .then(() =>
+                        toast.success(t('Game code copied to clipboard'))
+                      )
+                      .catch(() => toast.error(t('Failed to copy game code')));
+                  }}
+                />
               </Row>
             </div>
           </Column>

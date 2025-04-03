@@ -1,7 +1,6 @@
 Before DEMO:
 
-- copy game code to clipboard
-- show game admins their games
+- total time of game was wrong
 - backpack failed to join game with a blockhash error
 - all players got errors on game submission
 - add 1 XP per player for the game creator

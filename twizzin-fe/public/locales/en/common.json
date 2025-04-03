@@ -206,5 +206,8 @@
   "Creator Access Only": "Creator Access Only",
   "Only the game creator can view this page. If you are the game creator, please connect with the correct wallet. Otherwise, go to the player page to participate in this game.": "Only the game creator can view this page. If you are the game creator, please connect with the correct wallet. Otherwise, go to the player page to participate in this game.",
   "Go to Player Page": "Go to Player Page",
-  "Error refreshing game data": "Error refreshing game data"
+  "Error refreshing game data": "Error refreshing game data",
+  "Game code not found": "Game code not found",
+  "Game code copied to clipboard": "Game code copied to clipboard",
+  "Failed to copy game code": "Failed to copy game code"
 }
