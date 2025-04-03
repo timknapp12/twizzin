@@ -8,33 +8,35 @@ import { CarouselItem } from '@/types';
 import ConnectWalletForRewardsButton from './ConnectWalletForRewardsButton';
 import ClaimRewardsRow from './ClaimRewardsRow';
 import Carousel from './Carousel';
-import art1 from '../../../assets/illustration1.png';
-import art2 from '../../../assets/illustration2.png';
+import art1 from '../../../assets/svgs/Online-Exams-Tests-1--Streamline-Manila.svg';
+import art2 from '../../../assets/svgs/Esports-Tournament-Players-2--Streamline-Manila.svg';
+import art3 from '../../../assets/svgs/Online-Learning-2--Streamline-Manila.svg';
+import art4 from '../../../assets/svgs/Boasting--Streamline-Manila.svg';
 import Dot from './Dot';
 
 const items: CarouselItem[] = [
   {
-    title: 'Discover Twizzin',
+    title: 'Welcome to Twizzin',
     description: `Twizzin is an interactive Web3 game that embraces the 'Learn to Earn' model, making learning in Web3 fun and rewarding.`,
     image: art1.src,
     order: 0,
   },
   {
-    title: 'Item 2',
-    description: 'Description 2',
+    title: 'Game Play',
+    description: `Players compete to answer the same set of questions at the same time, with the winners taking the prize pool.`,
     image: art2.src,
     order: 1,
   },
   {
-    title: 'Item 3',
-    description: 'Description 3',
-    image: art1.src,
+    title: `Expand your users' knowledge`,
+    description: `Incentivize your users to better understand your product. Sponsor a game based on a new feature, whitepaper, or DAO vote.`,
+    image: art3.src,
     order: 2,
   },
   {
-    title: 'Item 4',
-    description: 'Description 4',
-    image: art2.src,
+    title: 'For the degens',
+    description: `Create your own game. Challenge your friends to put some skin in the game and compete for the prize pool.`,
+    image: art4.src,
     order: 3,
   },
 ];
