@@ -107,6 +107,7 @@ export const CreatorGameComponent = () => {
     };
 
     fetchGameData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameCode, isMounted, publicKey]);
 
   // Fetch partial data to determine admin status if not already present
@@ -125,7 +126,8 @@ export const CreatorGameComponent = () => {
     };
 
     fetchInitialData();
-  }, [gameCode, isMounted, getGameByCode, partialGameData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameCode, isMounted, partialGameData]);
 
   useEffect(() => {
     if (!gameData?.start_time) return;
@@ -253,6 +255,7 @@ export const CreatorGameComponent = () => {
       }
     };
     fetchGameData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameCode, isMounted, isAdmin]);
 
   const getVisibleTabs = () => {

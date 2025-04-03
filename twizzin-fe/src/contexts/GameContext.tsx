@@ -159,7 +159,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [publicKey, partialGameData]);
 
-  const getGameByCode = async (code: string) => {
+  const getGameByCode = async (code: string): Promise<Boolean> => {
     try {
       const game = await getPartialGameFromDb(code);
       setPartialGameData(game);
@@ -176,7 +176,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
         const fullGame = await getGameFromDb(game.game_code);
         setGameData(fullGame);
         setGameStateInternal(GameState.JOINED);
-        return;
+        return true;
       }
 
       // For regular players, set partial data and state only
@@ -189,6 +189,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
       } else {
         setGameStateWithMetadata(GameState.JOINING, { gameId: game.id });
       }
+      return false;
     } catch (error) {
       console.error('Error fetching game:', error);
       throw error;

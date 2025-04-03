@@ -236,7 +236,7 @@ const PlayGame = ({ goToResults = () => {} }: PlayGameProps) => {
       </H3Secondary>
 
       {/* Question Text */}
-      <div className='p-6 rounded-lg shadow-xl'>
+      <div className='p-6 rounded-lg bg-surface'>
         <H3 className='mb-4' style={{ userSelect: 'none' }}>
           {currentQuestion.question_text}
         </H3>
