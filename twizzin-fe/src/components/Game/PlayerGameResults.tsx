@@ -41,7 +41,7 @@ const PlayerGameResults = () => {
     return (
       <Column className='gap-4 w-full max-w-4xl mx-auto'>
         <H2>{gameData.name}</H2>
-        <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg bg-[#FBF9E9] gap-4 w-full max-w-small mx-auto text-[16px] active:opacity-80'>
+        <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg bg-[#FBF9E9] gap-4 w-full max-w-small mx-auto text-[14px] active:opacity-80'>
           <Row className='gap-2'>
             <RiSurveyLine size={28} color='var(--color-tertiary)' />
             <Label style={{ marginBottom: -4 }}>
@@ -58,7 +58,7 @@ const PlayerGameResults = () => {
     return (
       <Column className='gap-4 w-full max-w-4xl mx-auto'>
         <H2>{gameData.name}</H2>
-        <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg bg-[#FFEAEA] gap-4 w-full max-w-small mx-auto text-[16px] active:opacity-80'>
+        <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg bg-[#FFEAEA] gap-4 w-full max-w-small mx-auto text-[14px] active:opacity-80'>
           <Row className='gap-2'>
             <RiCloseFill size={28} color='var(--color-error)' />
             <Label style={{ color: 'var(--color-error)', marginBottom: -4 }}>
@@ -74,7 +74,8 @@ const PlayerGameResults = () => {
   const hasSubmittedAnswers = !!gameResult?.answeredQuestions;
 
   // Check if game has ended
-  const gameEnded = gameState === GameState.ENDED && gameResult?.leaderboard;
+  const gameEnded =
+    gameState === GameState.ENDED || gameData.status === 'ended';
 
   const { winners = [], leaderboard = [] } = gameResult || {};
 
@@ -121,7 +122,7 @@ const PlayerGameResults = () => {
 
       {/* Status banner - changes based on game state */}
       <div
-        className={`flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg gap-4 w-full max-w-small mx-auto text-[16px] active:opacity-80 ${
+        className={`flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg gap-4 w-full max-w-small mx-auto text-[14px] active:opacity-80 ${
           gameEnded ? 'bg-[#E8F7EA]' : 'bg-[#FFF8E0]'
         }`}
       >
@@ -384,7 +385,7 @@ const PlayerGameResults = () => {
       {!gameEnded && hasSubmittedAnswers && (
         <div className='w-full p-4 rounded-lg shadow-lg flex flex-col items-center justify-center'>
           <RiTimeLine size={48} className='text-secondaryText' />
-          <H3 className='text-center'>{t('Waiting for game to end')}</H3>
+          <H3 className='text-center'>{t('Waiting for game to end...')}</H3>
           <SecondaryText className='text-center'>
             {t(
               'The admin will end the game shortly. Leaderboard and rewards will be available once the game has ended.'

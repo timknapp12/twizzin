@@ -145,7 +145,7 @@ const JoinGameDetails = ({
     <Column className='gap-4 w-full h-full flex-1 mt-2' justify='between'>
       <Column className='gap-4 w-full'>
         {hasJoinedGame ? (
-          <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg  bg-[#af9aec] gap-4 w-full max-w-small mx-auto  text-[16px] active:opacity-80'>
+          <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg  bg-[#af9aec] gap-4 w-full max-w-small mx-auto  text-[14px] active:opacity-80'>
             <Row className='gap-2'>
               <GiSittingDog size={28} color='var(--color-primary)' />
               <Label style={{ color: 'white', marginBottom: -4 }}>
@@ -154,7 +154,7 @@ const JoinGameDetails = ({
             </Row>
           </div>
         ) : (
-          <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg  bg-[#FBF9E9] gap-4 w-full max-w-small mx-auto  text-[16px] active:opacity-80'>
+          <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg  bg-[#FBF9E9] gap-4 w-full max-w-small mx-auto  text-[14px] active:opacity-80'>
             <Row className='gap-2'>
               <TbListDetails size={28} color='var(--color-tertiary)' />
               <Label style={{ marginBottom: -4 }}>{t('Game Code')}:</Label>

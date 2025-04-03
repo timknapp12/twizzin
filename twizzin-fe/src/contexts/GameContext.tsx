@@ -8,7 +8,6 @@ import React, {
   useEffect,
   useCallback,
 } from 'react';
-import { useRouter } from 'next/navigation';
 import {
   GameContextType,
   PartialGame,
@@ -61,7 +60,7 @@ export const useGameContext = () => {
 };
 
 export const GameContextProvider = ({ children }: { children: ReactNode }) => {
-  const { t, language, fetchUserXPAndRewards, userProfile } = useAppContext();
+  const { t, fetchUserXPAndRewards, userProfile } = useAppContext();
   const [username, setUsername] = useState('');
   const [gameCode, setGameCode] = useState('');
   const [partialGameData, setPartialGameData] = useState<PartialGame | null>(
@@ -81,7 +80,6 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
     GameState.BROWSING
   );
 
-  const router = useRouter();
   const { program } = useProgram();
   const { connection } = useConnection();
   const wallet = useWallet();
