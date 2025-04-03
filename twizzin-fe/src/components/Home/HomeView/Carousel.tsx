@@ -43,13 +43,17 @@ const Carousel = ({
             src={image}
             alt={title}
             width={200}
-            height={100}
-            style={{ width: 'auto' }}
+            height={200}
+            style={{
+              width: '100%',
+              height: 'auto',
+              maxWidth: '200px',
+            }}
             priority
           />
         </div>
         <PrimaryText className='text-center'>{t(title)}</PrimaryText>
-        <div className='min-h-[50px] text-center'>
+        <div className='min-h-[80px] text-center'>
           <SecondaryText>{t(description)}</SecondaryText>
         </div>
       </Column>
