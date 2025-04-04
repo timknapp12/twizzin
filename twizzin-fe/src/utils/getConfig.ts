@@ -8,11 +8,15 @@ interface NetworkConfig {
 
 export const NETWORK_CONFIGS = {
   devnet: {
-    endpoint: clusterApiUrl('devnet'),
+    endpoint: process.env.NEXT_PUBLIC_HELIUS_API_KEY
+      ? `https://devnet.helius-rpc.com/?api-key=${process.env.NEXT_PUBLIC_HELIUS_API_KEY}`
+      : clusterApiUrl('devnet'),
     network: WalletAdapterNetwork.Devnet,
   },
   mainnet: {
-    endpoint: clusterApiUrl('mainnet-beta'),
+    endpoint: process.env.NEXT_PUBLIC_HELIUS_API_KEY
+      ? `https://mainnet.helius-rpc.com/?api-key=${process.env.NEXT_PUBLIC_HELIUS_API_KEY}`
+      : clusterApiUrl('mainnet-beta'),
     network: WalletAdapterNetwork.Mainnet,
   },
 } as const;

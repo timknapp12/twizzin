@@ -46,6 +46,7 @@ import {
 import { useAppContext, useProgram } from '.';
 import { PublicKey } from '@solana/web3.js';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
+import { BN } from '@coral-xyz/anchor';
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
@@ -199,9 +200,9 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
   // Add event listener cleanup ref
   const eventListenerRef = React.useRef<number | null>(null);
 
-  // Setup game start event listener
+  // Setup game start event listener for all users
   useEffect(() => {
-    if (!program || !partialGameData || !connection) return;
+    if (!program || !connection || !partialGameData) return;
 
     const setupEventListener = async () => {
       try {
@@ -210,23 +211,23 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
           new PublicKey(partialGameData.admin_wallet),
           partialGameData.game_code
         );
-        // gameStarted event listener
+
+        // Remove existing listener if it exists
+        if (eventListenerRef.current !== null) {
+          await program.removeEventListener(eventListenerRef.current);
+        }
+
         const listener = program.addEventListener(
           'gameStarted',
-          async (event) => {
-            // Verify this event is for our game
-            // @ts-ignore
+          async (event: { game: PublicKey; startTime: BN; endTime: BN }) => {
             if (event.game.toString() === gamePda.toString()) {
-              // @ts-ignore
               const actualStartTime = event.startTime.toNumber();
-              // @ts-ignore
               const actualEndTime = event.endTime.toNumber();
 
               try {
                 const fullGameData = await getGameFromDb(
                   partialGameData.game_code
                 );
-                // Update game data with full data and the correct start/end times
                 setGameData({
                   ...fullGameData,
                   start_time: new Date(actualStartTime).toISOString(),
@@ -234,16 +235,12 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
                   status: 'active',
                 });
 
-                // BYPASS STATE TRANSITION VALIDATION
-                // Directly update the internal state
                 setGameStateInternal(GameState.ACTIVE);
-                // Update game state to ACTIVE
                 setGameStateWithMetadata(GameState.ACTIVE, {
                   startTime: actualStartTime,
                   endTime: actualEndTime,
                 });
 
-                // Initialize game session if it doesn't exist
                 if (!gameSession) {
                   const newSession = initializeGameSession(
                     partialGameData.game_code,
@@ -254,13 +251,10 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
               } catch (error) {
                 console.error('Error fetching full game data:', error);
               }
-            } else {
-              console.log('Event was for a different game.');
             }
           }
         );
 
-        // Store listener ID for cleanup
         eventListenerRef.current = listener;
       } catch (error) {
         console.error('Error setting up game start listener:', error);
@@ -269,7 +263,6 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
 
     setupEventListener();
 
-    // Cleanup function
     return () => {
       if (eventListenerRef.current !== null && program) {
         program.removeEventListener(eventListenerRef.current);
@@ -277,15 +270,20 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [program, partialGameData, connection, gameSession]);
+  }, [program, connection, partialGameData]);
 
   const handleJoinGame = async (): Promise<string | null> => {
     if (!program) throw new Error(t('Please connect your wallet'));
-    if (!partialGameData) throw new Error('Game data not found');
     if (!publicKey) throw new Error(t('Please connect your wallet'));
     if (!sendTransaction)
       throw new Error(t('Wallet adapter not properly initialized'));
     if (!username) throw new Error(t('Username is required'));
+    // Fetch partialGameData if not already set
+    if (!partialGameData && gameCode) {
+      await getGameByCode(gameCode);
+    }
+
+    if (!partialGameData) throw new Error('Game data not found');
     try {
       const { gamePda } = deriveGamePDAs(
         program,
@@ -366,10 +364,10 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
 
     // Calculate total time in milliseconds
     const totalTimeMs = calculateTotalTimeMs(
-      gameData.start_time,
-      gameData.end_time
+      partialGameData.start_time,
+      partialGameData.end_time
     );
-
+    console.log('totalTimeMs', totalTimeMs);
     // Validate the time calculation
     if (typeof totalTimeMs !== 'number' || isNaN(totalTimeMs)) {
       throw new Error('Invalid time calculation');
@@ -382,8 +380,8 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
         publicKey,
         sendTransaction,
         {
-          gameId: gameData.id,
-          gameCode: gameData.game_code,
+          gameId: partialGameData.id,
+          gameCode: partialGameData.game_code,
           totalTimeMs,
         }
       );

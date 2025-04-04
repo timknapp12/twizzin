@@ -32,12 +32,17 @@ export const WalletContextProvider: FC<PropsWithChildren> = ({ children }) => {
   const environment = process.env.NEXT_PUBLIC_ENVIRONMENT;
   const isDevnet = environment === 'devnet';
 
-  const endpoint = useMemo(
-    () =>
+  const endpoint = useMemo(() => {
+    if (process.env.NEXT_PUBLIC_HELIUS_API_KEY) {
+      return `https://${
+        isDevnet ? 'devnet' : 'mainnet'
+      }.helius-rpc.com/?api-key=${process.env.NEXT_PUBLIC_HELIUS_API_KEY}`;
+    }
+    return (
       process.env.NEXT_PUBLIC_RPC_URL ||
-      clusterApiUrl(isDevnet ? 'devnet' : 'mainnet-beta'),
-    [isDevnet]
-  );
+      clusterApiUrl(isDevnet ? 'devnet' : 'mainnet-beta')
+    );
+  }, [isDevnet]);
 
   const wallets = useMemo(
     () => [
