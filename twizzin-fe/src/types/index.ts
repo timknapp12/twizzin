@@ -230,7 +230,7 @@ export interface GameContextType {
   gameCode: string;
   setGameCode: (value: string) => void;
   partialGameData: PartialGame | null;
-  getGameByCode: (gameCode: string) => Promise<void>;
+  getGameByCode: (gameCode: string) => Promise<Boolean>;
   gameData: JoinFullGame;
   handleJoinGame: () => Promise<string | null>;
   isAdmin: boolean;

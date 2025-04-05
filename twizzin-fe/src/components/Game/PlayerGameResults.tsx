@@ -21,6 +21,11 @@ import {
 import { useWallet } from '@solana/wallet-adapter-react';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { formatDetailedGameTime, GameState } from '@/utils';
+import Image from 'next/image';
+import waiting from '@/assets/svgs/Loading--Streamline-Manila.svg';
+import results from '@/assets/svgs/Competitor-Analysis--Streamline-Manila.svg';
+import trophy from '@/assets/svgs/Trophy-1--Streamline-Manila.svg';
+import treasure from '@/assets/svgs/Treasure-Chest--Streamline-Manila.svg';
 
 const PlayerGameResults = () => {
   const { t } = useAppContext();
@@ -41,7 +46,7 @@ const PlayerGameResults = () => {
     return (
       <Column className='gap-4 w-full max-w-4xl mx-auto'>
         <H2>{gameData.name}</H2>
-        <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg bg-[#FBF9E9] gap-4 w-full max-w-small mx-auto text-[16px] active:opacity-80'>
+        <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg bg-[#FBF9E9] gap-4 w-full max-w-small mx-auto text-[14px] active:opacity-80'>
           <Row className='gap-2'>
             <RiSurveyLine size={28} color='var(--color-tertiary)' />
             <Label style={{ marginBottom: -4 }}>
@@ -58,7 +63,7 @@ const PlayerGameResults = () => {
     return (
       <Column className='gap-4 w-full max-w-4xl mx-auto'>
         <H2>{gameData.name}</H2>
-        <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg bg-[#FFEAEA] gap-4 w-full max-w-small mx-auto text-[16px] active:opacity-80'>
+        <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg bg-[#FFEAEA] gap-4 w-full max-w-small mx-auto text-[14px] active:opacity-80'>
           <Row className='gap-2'>
             <RiCloseFill size={28} color='var(--color-error)' />
             <Label style={{ color: 'var(--color-error)', marginBottom: -4 }}>
@@ -74,7 +79,8 @@ const PlayerGameResults = () => {
   const hasSubmittedAnswers = !!gameResult?.answeredQuestions;
 
   // Check if game has ended
-  const gameEnded = gameState === GameState.ENDED && gameResult?.leaderboard;
+  const gameEnded =
+    gameState === GameState.ENDED || gameData.status === 'ended';
 
   const { winners = [], leaderboard = [] } = gameResult || {};
 
@@ -109,6 +115,30 @@ const PlayerGameResults = () => {
     gameData.admin_wallet?.slice(0, 4) +
     '...' +
     gameData.admin_wallet?.slice(-4);
+
+  // Calculate image source and alt text
+  const isWinner = winners.some(
+    (winner) => winner.wallet === publicKey?.toString()
+  );
+  const playerRank = leaderboard.find(
+    (player) => player.wallet === publicKey?.toString()
+  )?.rank;
+  const isFirstPlace = hasSubmittedAnswers && !isAdmin && playerRank === 1;
+  const resultImage = gameEnded
+    ? isFirstPlace
+      ? trophy
+      : isWinner
+      ? treasure
+      : results
+    : waiting;
+  const resultImageAlt = gameEnded
+    ? isFirstPlace
+      ? 'Trophy for first place'
+      : isWinner
+      ? 'Treasure for winners'
+      : 'Game results'
+    : 'Waiting for game to end';
+
   return (
     <Column className='gap-4 w-full'>
       <H2>{gameData.name}</H2>
@@ -121,7 +151,7 @@ const PlayerGameResults = () => {
 
       {/* Status banner - changes based on game state */}
       <div
-        className={`flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg gap-4 w-full max-w-small mx-auto text-[16px] active:opacity-80 ${
+        className={`flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg gap-4 w-full max-w-small mx-auto text-[14px] active:opacity-80 ${
           gameEnded ? 'bg-[#E8F7EA]' : 'bg-[#FFF8E0]'
         }`}
       >
@@ -147,11 +177,23 @@ const PlayerGameResults = () => {
           )}
         </Row>
       </div>
+      <Image
+        src={resultImage}
+        alt={resultImageAlt}
+        width={150}
+        height={150}
+        style={{
+          width: '100%',
+          height: 'auto',
+          maxWidth: '200px',
+        }}
+        priority
+      />
 
       {/* Show player's personal results if they submitted answers */}
       {hasSubmittedAnswers && !isAdmin && (
         <Column className='gap-4 w-full'>
-          <div className='p-4 rounded-lg shadow-xl text-center w-full bg-surface gap-4'>
+          <div className='p-4 rounded-lg  text-center w-full bg-surface gap-4'>
             <H5>{t('Your Results')}</H5>
             <div className='flex flex-col md:flex-row justify-center gap-4 items-center md:items-start'>
               <div className='flex flex-col items-center'>
@@ -217,7 +259,7 @@ const PlayerGameResults = () => {
 
       {/* Questions Review - always shown if player has submitted answers */}
       {hasSubmittedAnswers && !isAdmin && (
-        <div className='space-y-4 w-full rounded-lg shadow-xl'>
+        <div className='space-y-4 w-full rounded-lg'>
           <H3>{t('Your Answers')}</H3>
           {gameResult.answeredQuestions.map((question, index) => (
             <div key={question.questionId} className='p-4'>
@@ -280,7 +322,7 @@ const PlayerGameResults = () => {
         <Column className='w-full'>
           {/* Winners Section */}
           {winners.length > 0 && (
-            <div className='p-4 rounded-lg shadow-lg w-full gap-4'>
+            <div className='p-4 rounded-lg w-full gap-4'>
               <H3>{t('Winners')}</H3>
               <div className='space-y-2'>
                 {winners.map((winner, index) => (
@@ -327,7 +369,7 @@ const PlayerGameResults = () => {
 
           {/* Leaderboard Section */}
           {leaderboard.length > 0 && (
-            <div className='p-4 rounded-lg shadow-lg w-full gap-4'>
+            <div className='p-4 rounded-lg w-full gap-4'>
               <H3>{t('Leaderboard')}</H3>
               <div className='space-y-2'>
                 {leaderboard.map((player) => (
@@ -382,9 +424,7 @@ const PlayerGameResults = () => {
 
       {/* If game hasn't ended, show waiting message in place of leaderboard */}
       {!gameEnded && hasSubmittedAnswers && (
-        <div className='w-full p-4 rounded-lg shadow-lg flex flex-col items-center justify-center'>
-          <RiTimeLine size={48} className='text-secondaryText' />
-          <H3 className='text-center'>{t('Waiting for game to end')}</H3>
+        <div className='w-full p-4 rounded-lg flex flex-col items-center justify-center'>
           <SecondaryText className='text-center'>
             {t(
               'The admin will end the game shortly. Leaderboard and rewards will be available once the game has ended.'

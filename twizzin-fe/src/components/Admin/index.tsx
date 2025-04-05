@@ -15,6 +15,9 @@ import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { initializeConfig } from '@/utils';
 import { useAppContext } from '@/contexts';
 import { Header } from '../Header';
+import { getCurrentConfig } from '@/utils';
+
+const { network } = getCurrentConfig();
 
 export const AdminComponent = () => {
   const { t } = useAppContext();
@@ -173,11 +176,7 @@ export const AdminComponent = () => {
               {t('Config initialized successfully!')}
             </p>
             <a
-              href={`https://explorer.solana.com/tx/${status.signature}${
-                process.env.NEXT_PUBLIC_ENVIRONMENT === 'devnet'
-                  ? '?cluster=devnet'
-                  : ''
-              }`}
+              href={`https://explorer.solana.com/tx/${status.signature}?cluster=${network}`}
               target='_blank'
               rel='noopener noreferrer'
               className='text-sm text-blue-500 hover:underline'

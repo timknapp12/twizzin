@@ -1,10 +1,11 @@
 import React from 'react';
 import { Column, Row, Grid, Label, PrimaryText, H5 } from '@/components';
 import { TbListDetails } from 'react-icons/tb';
-import { FaCircleCheck } from 'react-icons/fa6';
+import { FaCircleCheck, FaRegCopy } from 'react-icons/fa6';
 import { useAppContext } from '@/contexts';
 import { CreateGameData, QuestionForDb } from '@/types';
 import { displayOrderMap } from '@/types';
+import { toast } from 'react-toastify';
 
 interface DisplayAddedGameProps {
   gameData: CreateGameData;
@@ -39,7 +40,7 @@ const DisplayAddedGame: React.FC<DisplayAddedGameProps> = ({
       <Column className='w-full gap-4'>
         <Column className='w-full'>
           <Column className='w-full'>
-            <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg  bg-[#FBF9E9] gap-4 w-full max-w-small mx-auto  text-[10px] md:text-[14px] active:opacity-80'>
+            <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg  bg-[#FBF9E9] gap-4 w-full max-w-small mx-auto md:text-[14px] active:opacity-80'>
               <Row className='gap-2'>
                 <TbListDetails size={20} color='var(--color-tertiary)' />
                 <Label style={{ marginBottom: '-2px' }}>
@@ -48,6 +49,19 @@ const DisplayAddedGame: React.FC<DisplayAddedGameProps> = ({
                 <Label style={{ color: primaryColor, marginBottom: '-2px' }}>
                   {gameData.gameCode}
                 </Label>
+                <FaRegCopy
+                  size={14}
+                  className='cursor-pointer hover:opacity-80 text-secondaryText'
+                  // color='var(--color-tertiary)'
+                  onClick={() => {
+                    navigator.clipboard
+                      .writeText(gameData.gameCode!)
+                      .then(() =>
+                        toast.success(t('Game code copied to clipboard'))
+                      )
+                      .catch(() => toast.error(t('Failed to copy game code')));
+                  }}
+                />
               </Row>
             </div>
           </Column>

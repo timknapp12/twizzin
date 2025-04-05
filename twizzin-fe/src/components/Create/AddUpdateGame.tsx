@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { useAppContext, useCreateGameContext } from '@/contexts';
 import {
   Column,
@@ -23,7 +25,7 @@ import { getCurrentConfig, validateGame, getGameFromDb } from '@/utils';
 import { useScreenSize } from '@/hooks/useScreenSize';
 import { GameDataChangeEvent } from '@/types';
 import { toast } from 'react-toastify';
-import { useRouter } from 'next/navigation';
+import bot from '../../assets/svgs/Bots--Streamline-Manila.svg';
 
 const { network } = getCurrentConfig();
 
@@ -215,7 +217,7 @@ const AddUpdateGame: React.FC<AddUpdateGameProps> = ({
   return (
     <Column className='w-full h-full flex-grow gap-12' justify='between'>
       <Column className='w-full'>
-        <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg bg-[#E8F7EA] gap-4 w-full max-w-small mx-auto text-[16px] text-green active:opacity-80'>
+        <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg bg-[#E8F7EA] gap-4 w-full max-w-small mx-auto text-[14px] text-green active:opacity-80'>
           <Row className='gap-2'>
             <GiBrain size={20} />
             {doesGameCodeExist || isEditMode
@@ -223,6 +225,12 @@ const AddUpdateGame: React.FC<AddUpdateGameProps> = ({
               : t('Create a Twizzin game')}
           </Row>
         </div>
+        <Image
+          src={bot}
+          alt='create game bot'
+          style={{ height: 150, width: 150, paddingTop: 12 }}
+          priority
+        />
         <Grid min={adjustedMin} gapSize='1rem' className='w-full p-4'>
           <Input
             type='text'

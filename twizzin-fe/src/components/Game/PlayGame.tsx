@@ -205,7 +205,7 @@ const PlayGame = ({ goToResults = () => {} }: PlayGameProps) => {
     return (
       <Column className='gap-4 w-full' justify='start'>
         <H2>{name}</H2>
-        <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg bg-[#FBF9E9] gap-4 w-full max-w-small mx-auto text-[16px] text-[#655B30] active:opacity-80'>
+        <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg bg-[#FBF9E9] gap-4 w-full max-w-small mx-auto text-[14px] text-[#655B30] active:opacity-80'>
           <Row className='gap-2'>
             <RiSurveyLine size={28} className='text-yellow' />
             <Label style={{ marginBottom: -4 }}>
@@ -221,7 +221,7 @@ const PlayGame = ({ goToResults = () => {} }: PlayGameProps) => {
     <form onSubmit={handleFormSubmit} className='gap-4 w-full flex flex-col'>
       {/* Timer Header */}
       <H2>{name}</H2>
-      <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg bg-[#E8F7EA] gap-4 w-full max-w-small mx-auto text-[16px] text-green active:opacity-80'>
+      <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg bg-[#E8F7EA] gap-4 w-full max-w-small mx-auto text-[14px] text-green active:opacity-80'>
         <Row className='gap-2'>
           <RiSurveyLine size={28} />
           <Label style={{ marginBottom: -4, color: 'var(--color-success)' }}>
@@ -236,7 +236,7 @@ const PlayGame = ({ goToResults = () => {} }: PlayGameProps) => {
       </H3Secondary>
 
       {/* Question Text */}
-      <div className='p-6 rounded-lg shadow-xl'>
+      <div className='p-6 rounded-lg bg-surface'>
         <H3 className='mb-4' style={{ userSelect: 'none' }}>
           {currentQuestion.question_text}
         </H3>

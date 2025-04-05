@@ -1,10 +1,11 @@
 Before DEMO:
 
-- copy game code to clipboard
-- show game admins their games
+- total time of game was wrong
 - backpack failed to join game with a blockhash error
 - all players got errors on game submission
 - add 1 XP per player for the game creator
+  // TODO dont let player try to join game if no wallet is connected
+  // TODO - finish time format in game results
 
 refactor after MVP:
 
