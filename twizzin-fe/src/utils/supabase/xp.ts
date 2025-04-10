@@ -242,7 +242,7 @@ export async function getUserXPLevel(wallet: string): Promise<{
       progress = (totalXP - currentLevelXP) / (nextLevelXP - currentLevelXP);
     }
 
-    // Get game history with details using start_time, including finalRank
+    // Get game history with details using end_time, including finalRank
     const { data: gameData, error: gameError } = await supabase
       .from('player_games')
       .select(
@@ -254,12 +254,12 @@ export async function getUserXPLevel(wallet: string): Promise<{
         game:games (
           id,
           name,
-          start_time
+          end_time
         )
       `
       )
       .eq('player_wallet', wallet)
-      .order('game(start_time)', { ascending: false });
+      .order('game(end_time)', { ascending: false });
 
     if (gameError) {
       console.error('Error fetching game history:', gameError);
@@ -283,7 +283,7 @@ export async function getUserXPLevel(wallet: string): Promise<{
         return {
           gameId: game.game.id,
           gameName: game.game.name,
-          gameDate: game.game.start_time || 'Not Started',
+          gameDate: game.game.end_time || 'Not Finished',
           questionsCorrect: game.num_correct || 0,
           totalQuestions: count || 0,
           xpEarned: game.xp_earned || 0,

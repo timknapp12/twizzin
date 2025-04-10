@@ -22,7 +22,7 @@ const XpView = ({ onSetView }: XpViewProps) => {
 
   const progressPercentage = progress ? Number(progress * 100) : 0;
   const primaryColor = 'var(--color-primaryText)';
-  console.log('gameHistory', gameHistory);
+
   return (
     <Column className='gap-4 w-full h-full' align='start'>
       <Row onClick={() => onSetView('home')} className='cursor-pointer'>

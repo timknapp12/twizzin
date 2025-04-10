@@ -4,10 +4,13 @@ Before DEMO:
 - backpack failed to join game with a blockhash error
 - all players got errors on game submission
 - add 1 XP per player for the game creator
-  // TODO dont let player try to join game if no wallet is connected
   // TODO - finish time format in game results
-
-refactor after MVP:
+  // TODO - time runs out way too fast
+  // TODO - when out of time the auto submit fails
+  // TODO - getGameByCode on game results after game has ended - doesn't get the full game - loadCompleteResults in gameContext should be called in PlayerGameResults or its parent
+  // TODO - the user submits the answers after the admin ends the game -that should not be allowed
+  // TODO uncontrolled to controlled component
+  refactor after MVP:
 
 - update join time for player game
 - handle page reloads during game
