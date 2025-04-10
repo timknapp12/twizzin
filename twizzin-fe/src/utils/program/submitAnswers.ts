@@ -3,6 +3,7 @@ import {
   PublicKey,
   SystemProgram,
   Connection,
+  SendOptions,
 } from '@solana/web3.js';
 import { Program } from '@coral-xyz/anchor';
 import { TwizzinIdl } from '@/types/idl';
@@ -17,7 +18,9 @@ export const submitAnswers = async (
     // eslint-disable-next-line no-unused-vars
     transaction: Transaction,
     // eslint-disable-next-line no-unused-vars
-    connection: Connection
+    connection: Connection,
+    // eslint-disable-next-line no-unused-vars
+    options?: SendOptions
   ) => Promise<string>,
   params: SubmitAnswersParams
 ): Promise<{
@@ -26,11 +29,22 @@ export const submitAnswers = async (
   error: string | null;
 }> => {
   try {
+    console.log('Starting submitAnswers with params:', {
+      gameCode: params.gameCode,
+      admin: params.admin.toString(),
+      answersCount: params.answers.length,
+      clientFinishTime: params.clientFinishTime,
+    });
+
     if (!publicKey) throw new Error('Wallet not connected');
 
     // 1. Derive PDAs
     const { gamePda } = deriveGamePDAs(program, params.admin, params.gameCode);
     const playerPda = derivePlayerPDA(program, gamePda, publicKey);
+    console.log('Derived PDAs:', {
+      gamePda: gamePda.toString(),
+      playerPda: playerPda.toString(),
+    });
 
     // 2. Create transaction and get blockhash
     const transaction = new Transaction();
@@ -46,6 +60,12 @@ export const submitAnswers = async (
       playerAccount: playerPda,
       systemProgram: SystemProgram.programId,
     };
+
+    console.log('Creating instruction with accounts:', {
+      player: accounts.player.toString(),
+      game: accounts.game.toString(),
+      playerAccount: accounts.playerAccount.toString(),
+    });
 
     const instruction = await program.methods
       .submitAnswers(
@@ -63,14 +83,19 @@ export const submitAnswers = async (
     transaction.add(instruction);
 
     // 4. Send and confirm transaction
-    const signature = await sendTransaction(transaction, connection);
+    console.log('Sending transaction with skip preflight...');
+    const signature = await sendTransaction(transaction, connection, {
+      skipPreflight: true,
+    });
 
+    console.log('Transaction sent, waiting for confirmation...');
     await connection.confirmTransaction({
       signature,
       blockhash,
       lastValidBlockHeight,
     });
 
+    console.log('Transaction confirmed successfully');
     return { success: true, signature, error: null };
   } catch (error: any) {
     console.error('Failed to submit answers:', error);
@@ -79,6 +104,7 @@ export const submitAnswers = async (
       message: error.message,
       logs: error.logs,
       details: error.details,
+      stack: error.stack,
     });
 
     // Extract error message from program error if available

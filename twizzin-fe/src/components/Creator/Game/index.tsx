@@ -278,7 +278,9 @@ export const CreatorGameComponent = () => {
   };
 
   const countDownText =
-    countdown === 'Game has started!' && isAdmin
+    gameState === GameState.ENDED
+      ? t('Game has ended')
+      : countdown === 'Game has started!' && isAdmin
       ? t('The game is ready for you to start it')
       : countdown === 'Game has started!'
       ? t('Waiting for admin to start game...')

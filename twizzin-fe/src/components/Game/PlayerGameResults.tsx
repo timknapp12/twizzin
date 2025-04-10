@@ -31,6 +31,7 @@ const PlayerGameResults = () => {
   const { t } = useAppContext();
   const {
     gameResult,
+    partialGameData,
     gameData,
     isLoadingResults,
     loadError,
@@ -112,9 +113,9 @@ const PlayerGameResults = () => {
   };
   const primaryColor = 'var(--color-primaryText)';
   const shortAdminWallet =
-    gameData.admin_wallet?.slice(0, 4) +
+    partialGameData?.admin_wallet?.slice(0, 4) +
     '...' +
-    gameData.admin_wallet?.slice(-4);
+    partialGameData?.admin_wallet?.slice(-4);
 
   // Calculate image source and alt text
   const isWinner = winners.some(
@@ -141,12 +142,12 @@ const PlayerGameResults = () => {
 
   return (
     <Column className='gap-4 w-full'>
-      <H2>{gameData.name}</H2>
+      <H2>{partialGameData?.name}</H2>
       <Row className='gap-2'>
         <Label>{`${t('Created by')}:`}</Label>
         <Label
           style={{ color: primaryColor }}
-        >{`${gameData.username} (${shortAdminWallet})`}</Label>
+        >{`${partialGameData?.username} (${shortAdminWallet})`}</Label>
       </Row>
 
       {/* Status banner - changes based on game state */}

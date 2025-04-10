@@ -18,6 +18,7 @@ export const startGame = async (
   params: {
     gameCode: string;
     totalTimeMs: number;
+    gameId: string;
   }
 ): Promise<{
   success: boolean;
@@ -42,24 +43,91 @@ export const startGame = async (
     transaction.add(instruction);
     const signature = await sendTransaction(transaction, connection);
 
-    // Wait for confirmation
+    // Wait for confirmation and processing
     const latestBlockhash = await connection.getLatestBlockhash();
-    await connection.confirmTransaction({
+    const confirmation = await connection.confirmTransaction({
       signature,
       ...latestBlockhash,
     });
+
+    if (confirmation.value.err) {
+      throw new Error(
+        'Transaction failed: ' + JSON.stringify(confirmation.value.err)
+      );
+    }
 
     // Fetch the game account state directly
     // @ts-ignore
     const gameState = await program.account.game.fetch(gamePda);
 
-    return {
+    const result = {
       success: true,
       signature,
       error: null,
       startTime: gameState.startTime.toNumber(),
       endTime: gameState.endTime.toNumber(),
     };
+
+    if (!result.success || !result.startTime || !result.endTime) {
+      throw new Error(result.error || 'Failed to start game on chain');
+    }
+
+    // Verify timestamps are current (not one year ahead)
+    const currentTime = Date.now();
+    const maxTimeDiff = 5000; // Allow 5 seconds difference for processing time
+
+    if (Math.abs(result.startTime - currentTime) > maxTimeDiff) {
+      console.error('Invalid start time received from program:', {
+        programStartTime: result.startTime,
+        currentTime,
+        difference: result.startTime - currentTime,
+      });
+      throw new Error('Received invalid start time from program');
+    }
+
+    if (
+      Math.abs(result.endTime - (currentTime + params.totalTimeMs)) >
+      maxTimeDiff
+    ) {
+      console.error('Invalid end time received from program:', {
+        programEndTime: result.endTime,
+        expectedEndTime: currentTime + params.totalTimeMs,
+        difference: result.endTime - (currentTime + params.totalTimeMs),
+      });
+      throw new Error('Received invalid end time from program');
+    }
+
+    console.log('Program timestamps:', {
+      startTime: result.startTime,
+      endTime: result.endTime,
+      startTimeDate: new Date(result.startTime),
+      endTimeDate: new Date(result.endTime),
+    });
+
+    // 2. Convert timestamps to ISO strings for Supabase
+    const startTimeISO = new Date(result.startTime).toISOString();
+    const endTimeISO = new Date(result.endTime).toISOString();
+
+    console.log('Database timestamps:', {
+      startTimeISO,
+      endTimeISO,
+    });
+
+    // 3. Update Supabase
+    const { error: supabaseError } = await supabase
+      .from('games')
+      .update({
+        start_time: startTimeISO,
+        end_time: endTimeISO,
+        status: 'active',
+      })
+      .eq('id', params.gameId);
+
+    if (supabaseError) {
+      throw new Error(`Failed to update Supabase: ${supabaseError.message}`);
+    }
+
+    return result;
   } catch (error: any) {
     console.error('Failed to start game:', error);
     return {
@@ -97,6 +165,7 @@ export const startGameCombined = async (
       {
         gameCode: params.gameCode,
         totalTimeMs: params.totalTimeMs,
+        gameId: params.gameId,
       }
     );
 
@@ -104,9 +173,46 @@ export const startGameCombined = async (
       throw new Error(result.error || 'Failed to start game on chain');
     }
 
+    // Verify timestamps are current (not one year ahead)
+    const currentTime = Date.now();
+    const maxTimeDiff = 5000; // Allow 5 seconds difference for processing time
+
+    if (Math.abs(result.startTime - currentTime) > maxTimeDiff) {
+      console.error('Invalid start time received from program:', {
+        programStartTime: result.startTime,
+        currentTime,
+        difference: result.startTime - currentTime,
+      });
+      throw new Error('Received invalid start time from program');
+    }
+
+    if (
+      Math.abs(result.endTime - (currentTime + params.totalTimeMs)) >
+      maxTimeDiff
+    ) {
+      console.error('Invalid end time received from program:', {
+        programEndTime: result.endTime,
+        expectedEndTime: currentTime + params.totalTimeMs,
+        difference: result.endTime - (currentTime + params.totalTimeMs),
+      });
+      throw new Error('Received invalid end time from program');
+    }
+
+    console.log('Program timestamps:', {
+      startTime: result.startTime,
+      endTime: result.endTime,
+      startTimeDate: new Date(result.startTime),
+      endTimeDate: new Date(result.endTime),
+    });
+
     // 2. Convert timestamps to ISO strings for Supabase
     const startTimeISO = new Date(result.startTime).toISOString();
     const endTimeISO = new Date(result.endTime).toISOString();
+
+    console.log('Database timestamps:', {
+      startTimeISO,
+      endTimeISO,
+    });
 
     // 3. Update Supabase
     const { error: supabaseError } = await supabase
