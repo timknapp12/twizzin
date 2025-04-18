@@ -33,7 +33,7 @@ export const Landing = () => {
         </a>
       </Row>
       <H3 className='text-center'>
-        You can also checkout our beta version on devnet here:{'  '}
+        You can also checkout our beta version on devnet here:{' '}
         <a
           href='https://twizzin.vercel.app/'
           target='_blank'
