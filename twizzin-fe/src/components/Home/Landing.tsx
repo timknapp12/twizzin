@@ -32,6 +32,17 @@ export const Landing = () => {
           <FaTelegram size={48} style={{ cursor: 'pointer' }} />
         </a>
       </Row>
+      <H3 className='text-center'>
+        You can also checkout our beta version on devnet here:{' '}
+        <a
+          href='https://twizzin.vercel.app/'
+          target='_blank'
+          rel='noopener noreferrer'
+          className='underline'
+        >
+          devnet.twizzin.xyz
+        </a>
+      </H3>
     </Column>
   );
 };
