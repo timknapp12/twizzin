@@ -209,5 +209,9 @@
   "Error refreshing game data": "Error refreshing game data",
   "Game code not found": "Game code not found",
   "Game code copied to clipboard": "Game code copied to clipboard",
-  "Failed to copy game code": "Failed to copy game code"
+  "Failed to copy game code": "Failed to copy game code",
+  "Game has ended": "Game has ended",
+  "Allow users to submit answers": "Allow users to submit answers",
+  "Submit answers within": "Submit answers within",
+  "Time is up": "Time is up"
 }
