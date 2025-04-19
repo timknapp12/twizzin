@@ -57,7 +57,7 @@ export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
     // answers: [],
     evenSplit: false,
     allAreWinners: false,
-    username: '',
+    username: userProfile?.username || '',
   };
 
   const [gameData, setGameData] = useState<CreateGameData>(initialGameData);
@@ -147,8 +147,6 @@ export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const [creationResult, setCreationResult] =
-    useState<GameCreationResult | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -223,7 +221,6 @@ export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
           params
         );
 
-        setCreationResult(result);
         return result;
       } else {
         // Handle new game creation
@@ -251,12 +248,7 @@ export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
           params
         );
 
-        setCreationResult(result);
-
         // Reset form after successful creation
-        setGameData(initialGameData);
-        setQuestions([blankQuestion]);
-        setImageFile(null);
 
         return result;
       }
@@ -273,10 +265,12 @@ export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
 
   // Function to reset the form to initial state
   const resetForm = () => {
-    setGameData(initialGameData);
+    setGameData({
+      ...initialGameData,
+      username: userProfile?.username || '',
+    });
     setQuestions([blankQuestion]);
     setImageFile(null);
-    setCreationResult(null);
     setError(null);
   };
 
@@ -353,10 +347,8 @@ export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
         handleAddBlankQuestion,
         handleCreateGame,
         totalTime,
-        creationResult,
         isCreating,
         error,
-        clearCreationResult: () => setCreationResult(null),
         clearError: () => setError(null),
         imageFile,
         handleImageChange,

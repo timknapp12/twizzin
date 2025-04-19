@@ -51,6 +51,7 @@ const AddUpdateGame: React.FC<AddUpdateGameProps> = ({
     clearError,
     handleImageChange,
     formatAndUpdateGameData,
+    resetForm,
   } = useCreateGameContext();
 
   const { connection } = useConnection();
@@ -64,6 +65,14 @@ const AddUpdateGame: React.FC<AddUpdateGameProps> = ({
 
   // Determine if we're in edit mode based on gameCode prop
   const isEditMode = !!gameCode;
+
+  useEffect(() => {
+    // Only reset the form when not in edit mode and not fetching game
+    if (!isEditMode && !gameCode) {
+      resetForm();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditMode, gameCode]);
 
   const hasLoadedRef = useRef(false);
 
