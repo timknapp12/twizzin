@@ -1,11 +1,8 @@
 Before DEMO:
 
 - backpack failed to join game with a blockhash error
-- all players got errors on game submission - something about CUs
+  // TODO all players got errors on game submission - something about CUs
 
-  // TODO - when out of time the auto submit fails \***\*\*\*\*\*\*\***
-  // TODO -remove 406 db error when player joins game \***\*\*\*\*\*\***
-  // TODO - the user submits the answers after the admin ends the game -that should not be allowed -TEST THIS ONE \***\*\*\*\*\*\*\***
   // TODO - getGameByCode on game results after game has ended - doesn't get the full game - loadCompleteResults in gameContext should be called in PlayerGameResults or its parent
   // TODO uncontrolled to controlled component
 
