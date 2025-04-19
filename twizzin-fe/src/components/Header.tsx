@@ -19,11 +19,13 @@ export const Header: React.FC = () => {
             src={twizzinIcon}
             alt='Twizzin Icon'
             className='h-9 w-auto mt-1'
+            priority
           />
           <Image
             src={twizzin}
             alt='Twizzin text'
             className='hidden md:block h-6 w-auto'
+            priority
           />
         </div>
       </Link>
