@@ -415,15 +415,18 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // New answer management functions
-  const submitAnswer = (answer: GameAnswer) => {
-    if (!gameCode) return;
+  const submitAnswer = (answer: GameAnswer): StoredGameSession | null => {
+    if (!gameCode) return null;
     // Make sure we're always using the display letter
     const modifiedAnswer = {
       ...answer,
       answer: answer.displayLetter,
     };
-    const updatedSession = saveGameAnswer(gameCode, modifiedAnswer);
-    setGameSession(updatedSession);
+    const result = saveGameAnswer(gameCode, modifiedAnswer);
+    if (result) {
+      setGameSession(result);
+    }
+    return result;
   };
 
   const getCurrentAnswer = (questionId: string): GameAnswer | undefined => {

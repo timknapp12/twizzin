@@ -232,7 +232,7 @@ export interface GameContextType {
   gameData: JoinFullGame;
   handleJoinGame: () => Promise<string | null>;
   isAdmin: boolean;
-  submitAnswer: (answer: GameAnswer) => void;
+  submitAnswer: (answer: GameAnswer) => StoredGameSession | null;
   getCurrentAnswer: (questionId: string) => GameAnswer | undefined;
   getGameProgress: () => {
     isComplete: boolean;
