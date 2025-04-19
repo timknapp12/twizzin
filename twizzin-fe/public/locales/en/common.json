@@ -215,5 +215,6 @@
   "Allow users to submit answers": "Allow users to submit answers",
   "Submit answers within": "Submit answers within",
   "Time is up": "Time is up",
-  "Game has already ended. Cannot submit answers.": "Game has already ended. Cannot submit answers."
+  "Game has already ended. Cannot submit answers.": "Game has already ended. Cannot submit answers.",
+  "No players finished the game": "No players finished the game"
 }
