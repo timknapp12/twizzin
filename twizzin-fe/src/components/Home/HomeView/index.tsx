@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button, Column, Row } from '@/components';
 import { useAppContext } from '@/contexts';
 import { CarouselItem } from '@/types';
+import { GameState, setGameState } from '@/utils/helpers/gameState';
 import ConnectWalletForRewardsButton from './ConnectWalletForRewardsButton';
 import ClaimRewardsRow from './ClaimRewardsRow';
 import Carousel from './Carousel';
@@ -61,6 +62,7 @@ const HomeView = ({ onSetView }: HomeViewProps) => {
   };
   const onJoinGame = () => {
     setIsJoinLoading(true);
+    setGameState('', GameState.BROWSING);
     router.push(`/${language}/join`);
   };
 
