@@ -423,6 +423,14 @@ const PlayerGameResults = () => {
         </Column>
       )}
 
+      {gameEnded && leaderboard.length === 0 && (
+        <div className='w-full p-4 rounded-lg flex flex-col items-center justify-center'>
+          <SecondaryText className='text-center'>
+            {t('No players finished the game')}
+          </SecondaryText>
+        </div>
+      )}
+
       {/* If game hasn't ended, show waiting message in place of leaderboard */}
       {!gameEnded && hasSubmittedAnswers && (
         <div className='w-full p-4 rounded-lg flex flex-col items-center justify-center'>
