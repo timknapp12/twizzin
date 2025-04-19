@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button, Column, Row } from '@/components';
 import { useAppContext } from '@/contexts';
 import { CarouselItem } from '@/types';
-import { GameState, setGameState } from '@/utils/helpers/gameState';
+import { GameState } from '@/utils/helpers/gameState';
 import ConnectWalletForRewardsButton from './ConnectWalletForRewardsButton';
 import ClaimRewardsRow from './ClaimRewardsRow';
 import Carousel from './Carousel';
@@ -14,6 +14,7 @@ import art2 from '../../../assets/svgs/Esports-Tournament-Players-2--Streamline-
 import art3 from '../../../assets/svgs/Online-Learning-2--Streamline-Manila.svg';
 import art4 from '../../../assets/svgs/Boasting--Streamline-Manila.svg';
 import Dot from './Dot';
+import { useGameContext } from '@/contexts';
 
 const items: CarouselItem[] = [
   {
@@ -51,6 +52,7 @@ const HomeView = ({ onSetView }: HomeViewProps) => {
   const { t, language } = useAppContext();
   const { connected } = useWallet();
   const router = useRouter();
+  const { setGameStateWithMetadata } = useGameContext();
 
   const [selectedItem, setSelectedItem] = useState<number>(0);
   const [isCreateLoading, setIsCreateLoading] = useState(false);
@@ -62,7 +64,7 @@ const HomeView = ({ onSetView }: HomeViewProps) => {
   };
   const onJoinGame = () => {
     setIsJoinLoading(true);
-    setGameState('', GameState.BROWSING);
+    setGameStateWithMetadata(GameState.BROWSING);
     router.push(`/${language}/join`);
   };
 
