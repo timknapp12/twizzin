@@ -82,7 +82,7 @@ export const startGame = async (
         currentTime,
         difference: result.startTime - currentTime,
       });
-      throw new Error('Received invalid start time from program');
+      console.warn('Received invalid start time from program');
     }
 
     if (
@@ -94,7 +94,7 @@ export const startGame = async (
         expectedEndTime: currentTime + params.totalTimeMs,
         difference: result.endTime - (currentTime + params.totalTimeMs),
       });
-      throw new Error('Received invalid end time from program');
+      console.warn('Received invalid end time from program');
     }
 
     console.log('Program timestamps:', {
@@ -183,7 +183,7 @@ export const startGameCombined = async (
         currentTime,
         difference: result.startTime - currentTime,
       });
-      throw new Error('Received invalid start time from program');
+      console.warn('Received invalid start time from program');
     }
 
     if (
@@ -195,7 +195,7 @@ export const startGameCombined = async (
         expectedEndTime: currentTime + params.totalTimeMs,
         difference: result.endTime - (currentTime + params.totalTimeMs),
       });
-      throw new Error('Received invalid end time from program');
+      console.warn('Received invalid end time from program');
     }
 
     console.log('Program timestamps:', {
