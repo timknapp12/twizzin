@@ -176,7 +176,13 @@
 -- CREATE POLICY "Allow public access to game-images"
 -- ON storage.objects FOR ALL
 -- USING ( bucket_id = 'game-images' )
+
 -- WITH CHECK ( bucket_id = 'game-images' );
+-- CREATE POLICY "Allow public read access for game-images" 
+-- ON storage.objects 
+-- FOR SELECT 
+-- TO public 
+-- USING (bucket_id = 'game-images');
 
 -- -- First, check if the bucket exists and create it if it doesn't
 -- INSERT INTO storage.buckets (id, name, public)
@@ -188,3 +194,9 @@
 -- ON storage.objects FOR ALL
 -- USING ( bucket_id = 'token-images' )
 -- WITH CHECK ( bucket_id = 'token-images' );
+
+-- CREATE POLICY "Allow public read access for token-images" 
+-- ON storage.objects 
+-- FOR SELECT 
+-- TO public 
+-- USING (bucket_id = 'token-images');
