@@ -47,6 +47,7 @@ import { useAppContext, useProgram } from '.';
 import { PublicKey } from '@solana/web3.js';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { BN } from '@coral-xyz/anchor';
+import { recordPlayerJoinGame } from '@/utils/supabase/playerJoinGame';
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
@@ -296,15 +297,10 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
       let hasJoined = false;
       try {
         // @ts-ignore
-        const playerAccount = await program.account.playerAccount.fetch(
-          playerPda
-        );
-        console.log('Player account exists:', playerAccount);
+        await program.account.playerAccount.fetch(playerPda);
         hasJoined = true;
       } catch (e: any) {
-        if (e.message.includes('does not exist')) {
-          console.log('Player account does not exist.');
-        } else {
+        if (!e.message.includes('does not exist')) {
           console.error('Error fetching playerAccount:', e);
           throw e;
         }
@@ -316,6 +312,20 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
           joinedAt: Date.now(),
           gamePda: gamePda.toString(),
         });
+
+        // Also update the player's username in the database if needed
+        if (username) {
+          try {
+            await recordPlayerJoinGame(
+              partialGameData.id,
+              publicKey.toString(),
+              username
+            );
+          } catch (error) {
+            console.error('Error updating player username:', error);
+            // Don't throw here as the player is already joined
+          }
+        }
 
         return null;
       }
@@ -336,20 +346,15 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
         params
       );
 
-      if (result) {
-        // Update state to JOINED after successfully joining
-        setGameStateWithMetadata(GameState.JOINED, {
-          joinedAt: Date.now(),
-          gamePda: gamePda.toString(),
-          signature: result.signature,
-        });
+      // Update game state to JOINED after successful join
+      setGameStateWithMetadata(GameState.JOINED, {
+        joinedAt: Date.now(),
+        gamePda: gamePda.toString(),
+      });
 
-        return result.signature || null;
-      }
-
-      return null;
-    } catch (error) {
-      console.error('Error joining game:', error);
+      return result.signature;
+    } catch (error: any) {
+      console.error('Error in handleJoinGame:', error);
       throw error;
     }
   };
@@ -367,7 +372,6 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
       partialGameData.start_time,
       partialGameData.end_time
     );
-    console.log('totalTimeMs', totalTimeMs);
     // Validate the time calculation
     if (typeof totalTimeMs !== 'number' || isNaN(totalTimeMs)) {
       throw new Error('Invalid time calculation');
@@ -664,8 +668,6 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
         endedAt: Date.now(),
         signature: result.signature,
       });
-
-      console.log('Game end transaction successful');
       fetchUserXPAndRewards();
       return result.signature;
     } catch (error) {
@@ -727,8 +729,6 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
               const expectedGameAddress = gamePda.toString();
 
               if (eventGameAddress === expectedGameAddress) {
-                console.log('Game ended event received:', event);
-
                 setGameData((prev) => ({
                   ...prev,
                   status: 'ended',
@@ -742,9 +742,6 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
 
                 // Start listening for database updates if we're a player
                 if (!isAdmin && publicKey) {
-                  console.log(
-                    'Setting up database subscription for updates...'
-                  );
                   setupPlayerResultSubscription(
                     gameData.id,
                     publicKey.toString(),
@@ -844,12 +841,6 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
               totalQuestions: gameData.questions?.length || 0,
               answeredQuestions: [],
               completedAt: null,
-            });
-
-            console.log('Admin game results loaded:', {
-              gameData: gameDataResult,
-              winners: leaderboardResults?.winners?.length || 0,
-              leaderboard: leaderboardResults?.allPlayers?.length || 0,
             });
           } catch (adminError) {
             console.error('Error loading admin results:', adminError);
@@ -954,6 +945,8 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
         gameState,
         setGameStateWithMetadata,
         canTransitionTo,
+        gameSession,
+        setGameSession,
       }}
     >
       {children}
