@@ -19,11 +19,9 @@ export const recordPlayerJoinGame = async (
       .select('id, join_time')
       .eq('player_wallet', playerWallet)
       .eq('game_id', gameId)
-      .single();
+      .maybeSingle();
 
-    if (checkError && checkError.code !== 'PGRST116') {
-      // Not a "not found" error
-      console.error('Error checking existing player game record:', checkError);
+    if (checkError) {
       throw new Error('Failed to check existing player game record');
     }
 
@@ -75,7 +73,6 @@ export const recordPlayerJoinGame = async (
 
 // Import the ensurePlayerExists function or include it here
 const ensurePlayerExists = async (walletAddress: string, username?: string) => {
-  console.log('username in ensurePlayerExists in joinGameCombined', username);
   try {
     // First try to get existing player
     const { data: existingPlayer } = await supabase
