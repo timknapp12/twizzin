@@ -89,7 +89,8 @@
   "Back": "Back",
   "Claimed": "Claimed",
   "Claim": "Claim",
-  "Entry fee is the amount each player must pay to enter the game (optional)": "Entry fee is the amount each player must pay to enter the game (optional)",
+  "Player entry fee": "Player entry fee",
+  "Player entry fee is the amount each player must pay to enter the game (optional)": "Player entry fee is the amount each player must pay to enter the game (optional)",
   "Commission is the percentage of the pot that you, the game admin, will receive (optional)": "Commission is the percentage of the pot that you, the game admin, will receive (optional)",
   "Admin donation is the amount that you, the game admin, will donate to the pot (optional)": "Admin donation is the amount that you, the game admin, will donate to the pot (optional)",
   "The number of winners that will be paid out in the game (1-200)": "The number of winners that will be paid out in the game (1-200)",
@@ -209,5 +210,11 @@
   "Error refreshing game data": "Error refreshing game data",
   "Game code not found": "Game code not found",
   "Game code copied to clipboard": "Game code copied to clipboard",
-  "Failed to copy game code": "Failed to copy game code"
+  "Failed to copy game code": "Failed to copy game code",
+  "Game has ended": "Game has ended",
+  "Allow users to submit answers": "Allow users to submit answers",
+  "Submit answers within": "Submit answers within",
+  "Time is up": "Time is up",
+  "Game has already ended. Cannot submit answers.": "Game has already ended. Cannot submit answers.",
+  "No players finished the game": "No players finished the game"
 }

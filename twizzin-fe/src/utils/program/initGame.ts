@@ -4,6 +4,7 @@ import {
   PublicKey,
   SystemProgram,
   Connection,
+  ComputeBudgetProgram,
 } from '@solana/web3.js';
 import {
   TOKEN_PROGRAM_ID,
@@ -40,7 +41,9 @@ export const initializeGame = async (
     // eslint-disable-next-line no-unused-vars
     transaction: Transaction,
     // eslint-disable-next-line no-unused-vars
-    connection: Connection
+    connection: Connection,
+    // eslint-disable-next-line no-unused-vars
+    options?: { skipPreflight: boolean }
   ) => Promise<string>,
   params: InitGameParams
 ): Promise<{
@@ -121,10 +124,18 @@ export const initializeGame = async (
 
     const transaction = new Transaction();
 
+    // Add compute budget instruction to increase CU limit
+    const computeBudgetInstruction = ComputeBudgetProgram.setComputeUnitLimit({
+      units: 1_400_000, // Maximum compute units for safety
+    });
+    transaction.add(computeBudgetInstruction);
+
     // Add all instructions
     transaction.add(...preInstructions, instruction);
 
-    const signature = await sendTransaction(transaction, connection);
+    const signature = await sendTransaction(transaction, connection, {
+      skipPreflight: true,
+    });
 
     // Wait for confirmation
     const latestBlockhash = await connection.getLatestBlockhash();

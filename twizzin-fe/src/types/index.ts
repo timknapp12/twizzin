@@ -98,10 +98,8 @@ export interface CreateGameContextType {
   handleAddBlankQuestion: () => void;
   handleCreateGame: () => Promise<GameCreationResult | null>;
   totalTime: number;
-  creationResult: GameCreationResult | null;
   isCreating: boolean;
   error: string | null;
-  clearCreationResult: () => void;
   clearError: () => void;
   imageFile: File | null;
   handleImageChange: (file: File | null) => void;
@@ -234,7 +232,7 @@ export interface GameContextType {
   gameData: JoinFullGame;
   handleJoinGame: () => Promise<string | null>;
   isAdmin: boolean;
-  submitAnswer: (answer: GameAnswer) => void;
+  submitAnswer: (answer: GameAnswer) => StoredGameSession | null;
   getCurrentAnswer: (questionId: string) => GameAnswer | undefined;
   getGameProgress: () => {
     isComplete: boolean;
@@ -251,6 +249,8 @@ export interface GameContextType {
   gameState: GameState;
   setGameStateWithMetadata: (state: GameState, metadata?: any) => void;
   canTransitionTo: (targetState: GameState) => boolean;
+  gameSession: StoredGameSession | null;
+  setGameSession: (session: StoredGameSession | null) => void;
 }
 
 export interface JoinGameParams {

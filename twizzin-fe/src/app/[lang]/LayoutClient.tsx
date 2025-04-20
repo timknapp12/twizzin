@@ -36,7 +36,7 @@ export default function LayoutClient({ children, lang }: LayoutClientProps) {
           <AppContextProvider>
             <ErrorBoundary>
               {children}
-              <ToastContainer position='bottom-right' />
+              <ToastContainer position='top-right' />
             </ErrorBoundary>
           </AppContextProvider>
         </ProgramContextProvider>

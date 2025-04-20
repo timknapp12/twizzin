@@ -51,6 +51,7 @@ const AddUpdateGame: React.FC<AddUpdateGameProps> = ({
     clearError,
     handleImageChange,
     formatAndUpdateGameData,
+    resetForm,
   } = useCreateGameContext();
 
   const { connection } = useConnection();
@@ -64,6 +65,14 @@ const AddUpdateGame: React.FC<AddUpdateGameProps> = ({
 
   // Determine if we're in edit mode based on gameCode prop
   const isEditMode = !!gameCode;
+
+  useEffect(() => {
+    // Only reset the form when not in edit mode and not fetching game
+    if (!isEditMode && !gameCode) {
+      resetForm();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditMode, gameCode]);
 
   const hasLoadedRef = useRef(false);
 
@@ -115,11 +124,18 @@ const AddUpdateGame: React.FC<AddUpdateGameProps> = ({
     const { name, value, type } = e.target;
 
     if (type === 'number') {
-      const parsedValue = parseFloat(value);
-      const finalValue = isNaN(parsedValue) ? 0 : parsedValue;
-      handleGameData({
-        target: { name, value: finalValue, type: 'number' },
-      } as { target: { name: string; value: number | string; type: string } });
+      // Allow empty string when input is cleared
+      if (value === '') {
+        handleGameData({
+          target: { name, value: '', type: 'number' },
+        } as { target: { name: string; value: string | number; type: string } });
+      } else {
+        const parsedValue = parseFloat(value);
+        const finalValue = isNaN(parsedValue) ? 0 : parsedValue;
+        handleGameData({
+          target: { name, value: finalValue, type: 'number' },
+        } as { target: { name: string; value: number | string; type: string } });
+      }
     } else {
       handleGameData(e);
     }
@@ -144,7 +160,28 @@ const AddUpdateGame: React.FC<AddUpdateGameProps> = ({
         throw new Error(t('Please connect your wallet'));
       }
 
-      const validationError = validateGame(gameData, questions);
+      // Convert empty strings to 0 for number fields before validation
+      const gameDataForValidation = {
+        ...gameData,
+        entryFee:
+          typeof gameData.entryFee === 'string' && gameData.entryFee === ''
+            ? 0
+            : Number(gameData.entryFee),
+        donation:
+          typeof gameData.donation === 'string' && gameData.donation === ''
+            ? 0
+            : Number(gameData.donation),
+        commission:
+          typeof gameData.commission === 'string' && gameData.commission === ''
+            ? 0
+            : Number(gameData.commission),
+        maxWinners:
+          typeof gameData.maxWinners === 'string' && gameData.maxWinners === ''
+            ? 1
+            : Number(gameData.maxWinners),
+      };
+
+      const validationError = validateGame(gameDataForValidation, questions);
       if (validationError) {
         throw new Error(validationError);
       }
@@ -253,12 +290,13 @@ const AddUpdateGame: React.FC<AddUpdateGameProps> = ({
             name='entryFee'
             value={gameData.entryFee}
             onChange={handleInputChange}
-            placeholder={t('Entry Fee')}
-            label={t('Entry Fee')}
+            placeholder={t('Player entry fee')}
+            label={t('Player entry fee')}
+            min={0}
             callout={
               <Callout
                 content={t(
-                  'Entry fee is the amount each player must pay to enter the game (optional)'
+                  'Player entry fee is the amount each player must pay to enter the game (optional)'
                 )}
                 position='left'
               />
@@ -289,6 +327,7 @@ const AddUpdateGame: React.FC<AddUpdateGameProps> = ({
             onChange={handleInputChange}
             placeholder={t('Donation to the pool by you')}
             label={t('Donation to the pool by you')}
+            min={0}
             callout={
               <Callout
                 content={t(

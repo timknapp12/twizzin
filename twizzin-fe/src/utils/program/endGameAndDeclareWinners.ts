@@ -3,6 +3,7 @@ import {
   Connection,
   Transaction,
   SystemProgram,
+  ComputeBudgetProgram,
 } from '@solana/web3.js';
 import { Program } from '@coral-xyz/anchor';
 import { TwizzinIdl } from '@/types/idl';
@@ -72,6 +73,12 @@ export async function endGameAndDeclareWinners(
 
     // Create and build transaction
     const transaction = new Transaction();
+
+    // Add compute budget instruction to increase CU limit
+    const computeBudgetInstruction = ComputeBudgetProgram.setComputeUnitLimit({
+      units: 1_400_000,
+    });
+    transaction.add(computeBudgetInstruction);
 
     const endGameAccounts = {
       admin,

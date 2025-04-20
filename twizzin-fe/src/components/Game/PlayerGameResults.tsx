@@ -23,7 +23,7 @@ import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { formatDetailedGameTime, GameState } from '@/utils';
 import Image from 'next/image';
 import waiting from '@/assets/svgs/Loading--Streamline-Manila.svg';
-import results from '@/assets/svgs/Competitor-Analysis--Streamline-Manila.svg';
+import results from '@/assets/svgs/Esports-Tournament-Players-1--Streamline-Manila.svg';
 import trophy from '@/assets/svgs/Trophy-1--Streamline-Manila.svg';
 import treasure from '@/assets/svgs/Treasure-Chest--Streamline-Manila.svg';
 
@@ -421,6 +421,14 @@ const PlayerGameResults = () => {
             </div>
           )}
         </Column>
+      )}
+
+      {gameEnded && leaderboard.length === 0 && (
+        <div className='w-full p-4 rounded-lg flex flex-col items-center justify-center'>
+          <SecondaryText className='text-center'>
+            {t('No players finished the game')}
+          </SecondaryText>
+        </div>
       )}
 
       {/* If game hasn't ended, show waiting message in place of leaderboard */}
