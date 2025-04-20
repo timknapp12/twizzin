@@ -1,11 +1,13 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Column, Label, Row, Button, H2, H3, H3Secondary } from '@/components';
-import { useGameContext, useAppContext } from '@/contexts';
+import { useGameContext } from '../../contexts/GameContext';
+import { useAppContext } from '@/contexts';
 import { countDownGameTime, getCurrentConfig, GameState } from '@/utils';
 import { RiSurveyLine } from 'react-icons/ri';
 import { FaArrowLeft, FaArrowRight } from 'react-icons/fa';
 import EndGameButton from './EndGameButton';
 import { toast } from 'react-toastify';
+import { StoredGameSession } from '@/types';
 
 const { network } = getCurrentConfig();
 
@@ -22,12 +24,17 @@ const PlayGame = ({ goToResults = () => {} }: PlayGameProps) => {
     handleSubmitAnswers,
     isAdmin,
     gameState,
+    gameSession,
+    setGameSession,
   } = useGameContext();
 
   const [remainingTime, setRemainingTime] = useState('');
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isTimeExpired, setIsTimeExpired] = useState(false);
+  const [bufferTimeRemaining, setBufferTimeRemaining] = useState<string>('');
+  const hasHandledTimeExpiration = useRef(false);
+
   const { name, questions, end_time } = gameData || {};
   const currentQuestion = questions?.[currentQuestionIndex];
 
@@ -36,69 +43,56 @@ const PlayGame = ({ goToResults = () => {} }: PlayGameProps) => {
     ? getCurrentAnswer(currentQuestion.id)?.answerId
     : '';
 
-  const handleAutoSubmitUnanswered = useCallback(() => {
-    if (!questions) return;
+  const handleAutoSubmitUnanswered =
+    useCallback((): StoredGameSession | null => {
+      if (!questions || !gameSession) return null;
 
-    // For each question that doesn't have an answer
-    questions.forEach((question) => {
-      const existingAnswer = getCurrentAnswer(question.id);
-      if (!existingAnswer && question.answers.length > 0) {
-        // Auto-submit the first answer
-        const firstAnswer = question.answers[0];
-        submitAnswer({
-          questionId: question.id,
-          answerId: firstAnswer.id,
-          answer: firstAnswer.answer_text,
-          displayOrder: question.display_order,
-          timestamp: new Date(end_time).getTime(), // Use game end time
-          displayLetter: firstAnswer.display_letter,
-        });
-      }
-    });
-  }, [questions, getCurrentAnswer, submitAnswer, end_time]);
+      // Set the submitted time to the game's end time
+      const endTime = new Date(end_time).getTime();
+      let updatedSession: StoredGameSession = { ...gameSession };
+      updatedSession.submittedTime = endTime;
 
-  // Handle time expiration
-  const handleTimeExpired = useCallback(async () => {
-    if (isTimeExpired || isAdmin) return;
-
-    setIsTimeExpired(true);
-    handleAutoSubmitUnanswered();
-    toast.error(t('Time has expired. Your answers have been submitted.'));
-    // Force submit all answers
-    try {
-      setIsSubmitting(true);
-      const signature = await handleSubmitAnswers();
-      if (signature) {
-        toast.success(
-          <div>
-            {t('Time expired - Answers submitted!')}
-            <a
-              href={`https://explorer.solana.com/tx/${signature}?cluster=${network}`}
-              target='_blank'
-              rel='noopener noreferrer'
-              className='text-secondary hover:text-primary ml-2'
-            >
-              {t('View transaction')}
-            </a>
-          </div>,
-          {
-            autoClose: false,
+      // For each question that doesn't have an answer
+      for (const question of questions) {
+        const existingAnswer = getCurrentAnswer(question.id);
+        if (!existingAnswer && question.answers.length > 0) {
+          // Auto-submit the first answer
+          const firstAnswer = question.answers[0];
+          const newSession = submitAnswer({
+            questionId: question.id,
+            answerId: firstAnswer.id,
+            answer: firstAnswer.answer_text,
+            displayOrder: question.display_order,
+            timestamp: endTime,
+            displayLetter: firstAnswer.display_letter,
+          });
+          if (newSession) {
+            updatedSession = newSession;
           }
-        );
+        }
       }
-    } catch (error) {
-      toast.error(t('Error submitting answers when time expired'));
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [
-    handleSubmitAnswers,
-    handleAutoSubmitUnanswered,
-    isTimeExpired,
-    t,
-    isAdmin,
-  ]);
 
+      return updatedSession;
+    }, [questions, gameSession, getCurrentAnswer, submitAnswer, end_time]);
+
+  const handleTimeExpired = useCallback((): StoredGameSession | null => {
+    const updatedSession = handleAutoSubmitUnanswered();
+    if (updatedSession) {
+      return updatedSession;
+    }
+    return null;
+  }, [handleAutoSubmitUnanswered]);
+
+  // Show toast when time expires
+  useEffect(() => {
+    if (isTimeExpired && !isAdmin && !bufferTimeRemaining) {
+      toast.warning(
+        t('Time has expired. Please review and submit your answers.')
+      );
+    }
+  }, [isTimeExpired, isAdmin, t]);
+
+  // Timer effect - only handles checking time and setting isTimeExpired
   useEffect(() => {
     if (gameState !== GameState.ACTIVE || !end_time) return;
 
@@ -107,8 +101,7 @@ const PlayGame = ({ goToResults = () => {} }: PlayGameProps) => {
 
     // Check if time has already expired
     if (now >= endTimeDate) {
-      handleTimeExpired();
-      setRemainingTime('00:00');
+      setIsTimeExpired(true);
       return;
     }
 
@@ -117,16 +110,67 @@ const PlayGame = ({ goToResults = () => {} }: PlayGameProps) => {
       const timeLeft = countDownGameTime(end_time);
       setRemainingTime(timeLeft);
 
-      if (timeLeft === '00:00') {
-        handleTimeExpired();
+      if (timeLeft === 'Time is up!') {
+        setIsTimeExpired(true);
+        return true; // Signal to stop the timer
       }
+      return false; // Continue the timer
     };
 
     updateTimer(); // Initial call
-    const timer = setInterval(updateTimer, 1000);
+    const timer = setInterval(() => {
+      const shouldStop = updateTimer();
+      if (shouldStop) {
+        clearInterval(timer);
+      }
+    }, 1000);
 
     return () => clearInterval(timer);
-  }, [end_time, gameState, handleTimeExpired]);
+  }, [end_time, gameState, setIsTimeExpired]);
+
+  // Separate effect to handle game session updates when time expires
+  useEffect(() => {
+    if (isTimeExpired && !hasHandledTimeExpiration.current) {
+      const updatedSession = handleTimeExpired();
+      if (updatedSession !== null) {
+        setGameSession(updatedSession);
+        hasHandledTimeExpiration.current = true;
+      }
+    }
+  }, [isTimeExpired, handleTimeExpired, setGameSession]);
+
+  // Reset the ref when game state changes
+  useEffect(() => {
+    hasHandledTimeExpiration.current = false;
+  }, [gameState]);
+
+  // Separate effect for buffer time
+  useEffect(() => {
+    if (!isTimeExpired || !end_time) return;
+
+    const endTimeMs = new Date(end_time).getTime();
+    const bufferEndTime = endTimeMs + 30000;
+
+    const updateBufferTimer = () => {
+      const bufferTime = countDownGameTime(bufferEndTime);
+      setBufferTimeRemaining(bufferTime);
+
+      if (bufferTime === 'Time is up!') {
+        return true; // Signal to stop the timer
+      }
+      return false; // Continue the timer
+    };
+
+    updateBufferTimer(); // Initial call
+    const timer = setInterval(() => {
+      const shouldStop = updateBufferTimer();
+      if (shouldStop) {
+        clearInterval(timer);
+      }
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [isTimeExpired, end_time]);
 
   const handlePreviousQuestion = () => {
     if (currentQuestionIndex > 0) {
@@ -159,6 +203,16 @@ const PlayGame = ({ goToResults = () => {} }: PlayGameProps) => {
   };
 
   const onSubmitAnswers = async () => {
+    // Check if game has ended or buffer time has expired
+    if (
+      gameData?.status === 'ended' ||
+      gameState === GameState.ENDED ||
+      bufferTimeRemaining === 'Time is up!'
+    ) {
+      toast.error(t('Game has already ended. Cannot submit answers.'));
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const signature = await handleSubmitAnswers();
@@ -197,6 +251,14 @@ const PlayGame = ({ goToResults = () => {} }: PlayGameProps) => {
   };
 
   const isLastQuestion = currentQuestionIndex === (questions?.length || 0) - 1;
+  const bufferTimeText = isAdmin
+    ? // show admin how much time to allow users to submit
+      `${t('Allow users to submit answers')}: ${bufferTimeRemaining}`
+    : bufferTimeRemaining === 'Time is up!'
+    ? // show time is up to both admin and player
+      t('Time is up')
+    : // show player how much time they have left to submit
+      `${t('Submit answers within')} ${bufferTimeRemaining}`;
 
   if (!currentQuestion) return null;
 
@@ -225,7 +287,9 @@ const PlayGame = ({ goToResults = () => {} }: PlayGameProps) => {
         <Row className='gap-2'>
           <RiSurveyLine size={28} />
           <Label style={{ marginBottom: -4, color: 'var(--color-success)' }}>
-            {`${t('Game in progress')}: ${remainingTime}`}
+            {isTimeExpired
+              ? `${bufferTimeText}`
+              : `${t('Game in progress')}: ${remainingTime}`}
           </Label>
         </Row>
       </div>
@@ -271,7 +335,7 @@ const PlayGame = ({ goToResults = () => {} }: PlayGameProps) => {
             secondary
             type='button'
             onClick={handlePreviousQuestion}
-            disabled={currentQuestionIndex === 0 || isTimeExpired}
+            disabled={currentQuestionIndex === 0}
             className='flex items-center gap-2'
           >
             <FaArrowLeft size={16} />
@@ -282,9 +346,7 @@ const PlayGame = ({ goToResults = () => {} }: PlayGameProps) => {
           <Button
             type='submit'
             disabled={
-              (!selectedAnswer && !isAdmin) ||
-              isTimeExpired ||
-              (isAdmin && isLastQuestion)
+              (!selectedAnswer && !isAdmin) || (isAdmin && isLastQuestion)
             }
             className='flex items-center gap-2'
             isLoading={isSubmitting}
@@ -300,7 +362,12 @@ const PlayGame = ({ goToResults = () => {} }: PlayGameProps) => {
           </Button>
         </div>
       </Row>
-      {isAdmin && <EndGameButton goToResults={goToResults} />}
+      {isAdmin && (
+        <EndGameButton
+          goToResults={goToResults}
+          bufferTimeRemaining={bufferTimeRemaining}
+        />
+      )}
     </form>
   );
 };
