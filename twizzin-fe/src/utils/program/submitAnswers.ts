@@ -4,6 +4,7 @@ import {
   SystemProgram,
   Connection,
   SendOptions,
+  ComputeBudgetProgram,
 } from '@solana/web3.js';
 import { Program } from '@coral-xyz/anchor';
 import { TwizzinIdl } from '@/types/idl';
@@ -52,6 +53,12 @@ export const submitAnswers = async (
       await connection.getLatestBlockhash('confirmed');
     transaction.recentBlockhash = blockhash;
     transaction.feePayer = publicKey;
+
+    // Add compute budget instruction to increase CU limit
+    const computeBudgetInstruction = ComputeBudgetProgram.setComputeUnitLimit({
+      units: 1_400_000,
+    });
+    transaction.add(computeBudgetInstruction);
 
     // 3. Create instruction for submitting answers
     const accounts = {
