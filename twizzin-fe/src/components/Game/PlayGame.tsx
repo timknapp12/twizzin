@@ -85,12 +85,17 @@ const PlayGame = ({ goToResults = () => {} }: PlayGameProps) => {
 
   // Show toast when time expires
   useEffect(() => {
-    if (isTimeExpired && !isAdmin && !bufferTimeRemaining) {
+    if (
+      isTimeExpired &&
+      !isAdmin &&
+      !bufferTimeRemaining &&
+      gameState !== GameState.SUBMITTED
+    ) {
       toast.warning(
         t('Time has expired. Please review and submit your answers.')
       );
     }
-  }, [isTimeExpired, isAdmin, t]);
+  }, [isTimeExpired, isAdmin, t, gameState]);
 
   // Timer effect - only handles checking time and setting isTimeExpired
   useEffect(() => {
