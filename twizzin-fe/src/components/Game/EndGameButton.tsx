@@ -45,7 +45,9 @@ const EndGameButton = ({
           <Label>{t('Give time for players to submit answers')}</Label>
           {bufferTimeRemaining !== null && (
             <p className='text-sm' style={{ color: errorColor }}>
-              {`${t('Time remaining')}: ${bufferTimeRemaining}`}
+              {bufferTimeRemaining === 'Time is up!'
+                ? t('Time is up!')
+                : `${t('Time remaining')}: ${bufferTimeRemaining}`}
             </p>
           )}
         </>
