@@ -12,7 +12,7 @@ const nextConfig = {
   images: {
     domains: [
       'dygaclxomuoxsyyxdzht.supabase.co', // development/current
-      'your-staging-project.supabase.co', // staging
+      'pmtjwqqfkqzbxxxurbqk.supabase.co', // staging
       'your-production-project.supabase.co', // production
     ],
   },
