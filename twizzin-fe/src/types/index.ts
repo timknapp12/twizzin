@@ -24,6 +24,7 @@ export interface AppContextType {
   progress?: number;
   gameHistory?: GameHistory[];
   unclaimedRewards?: number;
+  setIsBetaModalOpen: (value: boolean) => void;
 }
 
 export interface UserProfile {

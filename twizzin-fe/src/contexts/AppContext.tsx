@@ -23,6 +23,7 @@ import { localeMap, getPlayerDataWithRewards, getUserXPLevel } from '@/utils';
 import { processPlayerRewardsResponse } from '@/types/dbTypes';
 import { CreateGameProvider } from './CreateGameContext';
 import { GameContextProvider } from './GameContext';
+import { BetaModal } from '@/components/modals';
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -49,6 +50,8 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [gameHistory, setGameHistory] = useState<GameHistory[]>([]);
   const router = useRouter();
   const pathname = usePathname();
+
+  const [isBetaModalOpen, setIsBetaModalOpen] = useState(false);
 
   // Initialize language from localStorage or default to 'en'
   const [language, setLanguage] = useState(() => {
@@ -201,11 +204,18 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         progress,
         gameHistory,
         unclaimedRewards,
+        setIsBetaModalOpen,
       }}
     >
       <CreateGameProvider>
         <GameContextProvider>{children}</GameContextProvider>
       </CreateGameProvider>
+      {isBetaModalOpen && (
+        <BetaModal
+          isOpen={isBetaModalOpen}
+          onClose={() => setIsBetaModalOpen(false)}
+        />
+      )}
     </AppContext.Provider>
   );
 };
