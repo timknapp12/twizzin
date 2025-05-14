@@ -229,7 +229,7 @@ const JoinGameDetails = ({
             <Label style={{ color: primaryColor }}>{question_count}</Label>
           </Row>
           <Row className='gap-2'>
-            <Label>{t('Total game time')}:</Label>
+            <Label>{t('Total game time in seconds')}:</Label>
             <Label style={{ color: primaryColor }}>{totalTime}</Label>
           </Row>
           <Row className='gap-2'>

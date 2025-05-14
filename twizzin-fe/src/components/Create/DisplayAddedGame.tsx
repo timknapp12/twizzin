@@ -105,8 +105,17 @@ const DisplayAddedGame: React.FC<DisplayAddedGameProps> = ({
               {formatDate(gameData.startTime)}
             </Label>
           </Row>
+          <Row className='gap-2'>
+            <Label>{t('Number of questions')}:</Label>
+            <Label style={{ color: primaryColor }}>{questions.length}</Label>
+          </Row>
+          <Row className='gap-2'>
+            <Label>{t('Split')}:</Label>
+            <Label style={{ color: primaryColor }}>
+              {gameData.evenSplit ? 'Evenly split among all winners' : 'Tiered'}
+            </Label>
+          </Row>
         </Grid>
-
         <Row justify='end' className='w-full pr-4'>
           <Label className='mr-2'>{t('Total game time in seconds')}:</Label>
           <Label style={{ color: primaryColor }}>{totalTime}</Label>
