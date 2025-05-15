@@ -9,7 +9,7 @@ import { toast } from 'react-toastify';
 
 const JoinForm = () => {
   const { t, language } = useAppContext();
-  const { gameCode, setGameCode, getGameByCode } = useGameContext();
+  const { gameCode, setGameCode, getGameByCode, gameState } = useGameContext();
   const router = useRouter();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -31,9 +31,14 @@ const JoinForm = () => {
       }
       // Get the game data - this will set isAdmin internally
       const isAdmin = await getGameByCode(gameCode.toUpperCase());
-      // Navigate to the appropriate page based on admin status
+      
+      // Navigate to the appropriate page based on admin status and game state
       if (isAdmin) {
         router.push(`/${language}/creator/game/${gameCode.toUpperCase()}`);
+      } else if (gameState === 'ACTIVE') {
+        // If game is active, navigate to the game view
+        router.push(`/${language}/game/${gameCode.toUpperCase()}`);
+        toast.info(t('Game is already in progress'));
       } else {
         router.push(`/${language}/game/${gameCode.toUpperCase()}`);
       }

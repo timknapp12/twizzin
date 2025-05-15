@@ -5,8 +5,11 @@ import { supabase } from './supabaseClient';
  * @param walletAddress The player's wallet address
  * @returns Player profile and games with rewards information
  */
-
 export const getPlayerDataWithRewards = async (walletAddress: string) => {
+  if (!walletAddress) {
+    console.warn('getPlayerDataWithRewards: Missing walletAddress.');
+    return null;
+  }
   try {
     // First, get the basic player data
     const { data: playerData, error: playerError } = await supabase
@@ -102,7 +105,7 @@ export const getPlayerDataWithRewards = async (walletAddress: string) => {
       games: gamesWithDetails,
     };
   } catch (error) {
-    console.error('Error in getPlayerDataWithRewards:', error);
+    console.error('Error fetching player data with rewards:', error);
     throw error;
   }
 };

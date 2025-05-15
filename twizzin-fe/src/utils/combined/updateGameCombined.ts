@@ -9,6 +9,22 @@ import { generateMerkleRoot } from '../merkle/generateMerkleRoot';
 import { supabase } from '../supabase/supabaseClient';
 import { getAnchorTimestamp, getSupabaseTimestamp } from '../helpers';
 
+type VerificationFunction = <T>(operation: () => Promise<T>, errorMessage?: string) => Promise<T | null>;
+
+type UpdateGameData = {
+  name: string;
+  entry_fee: number;
+  commission_bps: number;
+  start_time: string;
+  end_time: string;
+  max_winners: number;
+  donation_amount: number;
+  all_are_winners: boolean;
+  even_split: boolean;
+  username?: string;
+  img_url?: string;
+};
+
 export const updateGameCombined = async (
   program: Program<TwizzinIdl>,
   connection: Connection,
@@ -19,7 +35,8 @@ export const updateGameCombined = async (
     // eslint-disable-next-line no-unused-vars
     connection: Connection
   ) => Promise<string>,
-  params: UpdateGameCombinedParams
+  params: UpdateGameCombinedParams,
+  withVerification: VerificationFunction
 ) => {
   if (!publicKey) throw new Error('Wallet not connected');
   console.log('Starting game update process...');
@@ -48,19 +65,25 @@ export const updateGameCombined = async (
       existingGame.id,
       {
         name: params.name,
-        entryFee: params.entryFee,
-        commissionBps: params.commission,
-        startTime: getSupabaseTimestamp(params.startTime),
-        endTime: getSupabaseTimestamp(params.endTime),
-        maxWinners: params.maxWinners,
-        donationAmount: params.donationAmount ? params.donationAmount : 0,
-        allAreWinners: params.allAreWinners || false,
-        evenSplit: params.evenSplit || false,
+        entry_fee: params.entryFee,
+        commission_bps: params.commission,
+        start_time: getSupabaseTimestamp(params.startTime),
+        end_time: getSupabaseTimestamp(params.endTime),
+        max_winners: params.maxWinners,
+        donation_amount: params.donationAmount ? params.donationAmount : 0,
+        all_are_winners: params.allAreWinners || false,
+        even_split: params.evenSplit || false,
         username: params.username,
       },
       params.questions,
-      params.imageFile
+      params.imageFile,
+      withVerification
     );
+
+    if (!dbResult) {
+      throw new Error('Failed to update game in database');
+    }
+
     console.log('✅ Database entries updated successfully');
 
     // 3. Generate merkle root AFTER database update
@@ -75,57 +98,60 @@ export const updateGameCombined = async (
     const startTime = getAnchorTimestamp(params.startTime) + addOneYear;
     const endTime = getAnchorTimestamp(params.endTime) + addOneYear;
 
-    const paramsForOnChain = {
-      gameCode: params.gameCode,
-      name: params.name,
-      entryFee: params.entryFee,
-      commission: params.commission,
-      startTime,
-      endTime,
-      maxWinners: params.maxWinners,
-      answerHash: merkleRootChanged ? answerHash : undefined,
-      donationAmount: params.donationAmount || 0,
-      allAreWinners: params.allAreWinners || false,
-      evenSplit: params.evenSplit || false,
-      tokenMint: params.tokenMint,
-      isNative,
-    };
-    console.log('✅ On-chain parameters prepared');
-
-    // 5. Update on-chain
-    console.log('Step 5: Updating game on-chain...');
-    const onChainResult = await updateGame(
-      program,
-      connection,
-      publicKey,
-      sendTransaction,
-      paramsForOnChain
-    );
-
-    if (!onChainResult.success) {
-      throw new Error(`Failed to update game on-chain: ${onChainResult.error}`);
-    }
-    console.log('✅ Game updated on-chain successfully');
-
-    // 6. Update database with new merkle root if it changed
+    // 5. Update on-chain if merkle root changed
+    let onChainResult = null;
     if (merkleRootChanged) {
-      console.log('Step 6: Updating database with merkle root...');
+      console.log('Step 5: Updating game on-chain...');
+      onChainResult = await updateGame(
+        program,
+        connection,
+        publicKey,
+        sendTransaction,
+        {
+          gameCode: params.gameCode,
+          answerHash,
+          startTime,
+          endTime,
+          tokenMint: params.tokenMint,
+          isNative,
+        }
+      );
+
+      if (!onChainResult.success) {
+        throw new Error(
+          `Failed to update game on-chain: ${onChainResult.error}`
+        );
+      }
+      console.log('✅ Game updated on-chain successfully');
+
+      // 6. Update database with new merkle root
+      console.log('Step 6: Updating database with new merkle root...');
       await supabase
         .from('games')
         .update({
           answer_merkle_root: answerHash,
         })
         .eq('id', existingGame.id);
-      console.log('✅ Database updated with merkle root');
+      console.log('✅ Database updated with new merkle root');
+    } else {
+      console.log('Skipping on-chain update as merkle root is unchanged');
     }
 
     console.log('🎉 Game update completed successfully!');
     return {
-      onChain: onChainResult,
-      database: dbResult,
+      onChain: {
+        success: true,
+        signature: onChainResult?.signature || null,
+        error: onChainResult?.error || null,
+      },
+      database: {
+        game: dbResult.game,
+        questions: dbResult.questions,
+        answers: dbResult.answers,
+      },
     };
   } catch (err: unknown) {
-    console.log('❌ Error updating game:', err);
+    console.error('Failed to update game:', err);
     throw err;
   }
 };

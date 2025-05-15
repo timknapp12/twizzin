@@ -1,5 +1,5 @@
-import { SubmitAnswersToDbParams, VerifiedAnswer } from '@/types';
-import { supabase } from '../supabase/supabaseClient';
+import { supabase } from './supabaseClient';
+import { VerifiedAnswer } from '@/types';
 
 // Helper function to create hash from answers using Web Crypto API
 const createAnswerHash = async (answers: VerifiedAnswer[]): Promise<string> => {
@@ -28,88 +28,55 @@ const createAnswerHash = async (answers: VerifiedAnswer[]): Promise<string> => {
     .join('');
 };
 
-export const submitAnswersToDb = async ({
-  gameId,
-  playerWallet,
-  gameSession,
-  signature,
-  numCorrect,
-}: SubmitAnswersToDbParams): Promise<{
-  success: boolean;
-  error: string | null;
-}> => {
-  try {
-    // Calculate answer hash
-    const answerHash = await createAnswerHash(gameSession.answers);
+type VerificationFunction = <T>(operation: () => Promise<T>, errorMessage?: string) => Promise<T | null>;
 
-    // First insert/update the player_games record and get the ID
-    const { data: playerGame, error: playerGameError } = await supabase
-      .from('player_games')
-      .upsert(
-        {
-          player_wallet: playerWallet,
-          game_id: gameId,
-          finished_time: new Date(gameSession.finishTime).toISOString(),
-          num_correct: numCorrect,
-          answer_hash: answerHash,
-          solana_signature: signature,
-        },
-        {
-          // Add this configuration to match recordPlayerJoinGame
-          onConflict: 'player_wallet,game_id',
-          ignoreDuplicates: false,
-        }
-      )
-      .select('id')
-      .single();
+export const submitAnswersToDb = async (
+  gameId: string,
+  playerWallet: string,
+  answers: VerifiedAnswer[],
+  withVerification: VerificationFunction
+) => {
+  return withVerification(async () => {
+    try {
+      // First, check if the player has already submitted answers
+      const { data: existingSubmission, error: checkError } = await supabase
+        .from('player_answers')
+        .select('id')
+        .eq('game_id', gameId)
+        .eq('player_wallet', playerWallet)
+        .single();
 
-    if (playerGameError) {
-      console.error('Error creating player game record:', playerGameError);
-      return {
-        success: false,
-        error: playerGameError.message || 'Failed to create player game record',
-      };
+      if (checkError && checkError.code !== 'PGRST116') {
+        throw checkError;
+      }
+
+      if (existingSubmission) {
+        throw new Error('Player has already submitted answers for this game');
+      }
+
+      // Insert all answers in a single transaction
+      const { data: submittedAnswers, error: submitError } = await supabase
+        .from('player_answers')
+        .insert(
+          answers.map((answer) => ({
+            game_id: gameId,
+            player_wallet: playerWallet,
+            question_id: answer.questionId,
+            selected_answer: answer.answer,
+            is_correct: answer.isCorrect,
+            answered_at: new Date().toISOString(),
+          }))
+        )
+        .select();
+
+      if (submitError) {
+        throw submitError;
+      }
+
+      return submittedAnswers;
+    } catch (error) {
+      console.error('Error submitting answers:', error);
+      throw error;
     }
-
-    if (!playerGame || !playerGame.id) {
-      return {
-        success: false,
-        error: 'Failed to get player game ID',
-      };
-    }
-
-    // Prepare the player answer records
-    const playerAnswers = gameSession.answers.map((answer) => ({
-      player_game_id: playerGame.id,
-      question_id: answer.questionId,
-      selected_answer: answer.answer,
-      is_correct: answer.isCorrect,
-      answered_at: new Date(gameSession.finishTime).toISOString(),
-    }));
-
-    // Insert all player answers
-    const { error: answersError } = await supabase
-      .from('player_answers')
-      .upsert(playerAnswers, {
-        // Also add this configuration for player_answers
-        onConflict: 'player_game_id,question_id',
-        ignoreDuplicates: false,
-      });
-
-    if (answersError) {
-      console.error('Error inserting player answers:', answersError);
-      return {
-        success: false,
-        error: answersError.message || 'Failed to insert player answers',
-      };
-    }
-
-    return { success: true, error: null };
-  } catch (error: any) {
-    console.error('Error submitting answers to DB:', error);
-    return {
-      success: false,
-      error: error.message || 'Failed to submit answers to database',
-    };
-  }
+  });
 };

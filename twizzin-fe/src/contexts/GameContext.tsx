@@ -48,6 +48,7 @@ import { PublicKey } from '@solana/web3.js';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { BN } from '@coral-xyz/anchor';
 import { recordPlayerJoinGame } from '@/utils/supabase/playerJoinGame';
+import { useVerification } from '@/hooks/useVerification';
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
@@ -63,6 +64,7 @@ export const useGameContext = () => {
 
 export const GameContextProvider = ({ children }: { children: ReactNode }) => {
   const { t, fetchUserXPAndRewards, userProfile } = useAppContext();
+  const { withVerification } = useVerification();
   const [username, setUsername] = useState('');
   const [gameCode, setGameCode] = useState('');
   const [partialGameData, setPartialGameData] = useState<PartialGame | null>(
@@ -163,7 +165,13 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
 
   const getGameByCode = async (code: string): Promise<Boolean> => {
     try {
-      const game = await getPartialGameFromDb(code);
+      const game = await withVerification(
+        () => getPartialGameFromDb(code, withVerification),
+        'Please verify your wallet to view game details'
+      );
+      
+      if (!game) return false;
+      
       setPartialGameData(game);
       setGameCode(game.game_code);
 
@@ -175,13 +183,25 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
 
       // If admin, get the full game data right away
       if (isGameAdmin) {
-        const fullGame = await getGameFromDb(game.game_code);
-        setGameData(fullGame);
-        setGameStateInternal(GameState.JOINED);
-        return true;
+        const fullGame = await withVerification(
+          () => getGameFromDb(game.game_code, withVerification),
+          'Please verify your wallet to view full game details'
+        );
+        if (fullGame) {
+          setGameData(fullGame);
+          setGameStateInternal(GameState.JOINED);
+          return true;
+        }
       }
 
-      // For regular players, set partial data and state only
+      // For regular players, check if game is already active
+      if (game.status === 'active') {
+        // If game is active, set state to ACTIVE instead of JOINING
+        setGameStateWithMetadata(GameState.ACTIVE, { gameId: game.id });
+        return false;
+      }
+
+      // For regular players joining a non-active game
       const savedState = getGameState(game.game_code);
       if (savedState && savedState.state === GameState.JOINED) {
         setGameStateWithMetadata(GameState.JOINED, {
@@ -227,7 +247,8 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
 
               try {
                 const fullGameData = await getGameFromDb(
-                  partialGameData.game_code
+                  partialGameData.game_code,
+                  withVerification
                 );
                 setGameData({
                   ...fullGameData,
@@ -319,6 +340,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
             await recordPlayerJoinGame(
               partialGameData.id,
               publicKey.toString(),
+              withVerification,
               username
             );
           } catch (error) {
@@ -788,75 +810,57 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
     setGameStateWithMetadata,
   ]);
 
-  useEffect(() => {
-    // Early return if we don't have game code or ID
-    if (!gameData?.game_code || !gameData?.id) return;
+  const loadCompleteResults = async () => {
+    if (!gameData?.id || !gameData?.game_code) return;
 
-    // Check for stored state on mount or if status is undefined
-    if (!gameData.status || gameData.status === '') {
-      const savedState = getGameState(gameData.game_code);
-      if (savedState && savedState.state === GameState.ENDED) {
-        setGameData((prev) => ({
-          ...prev,
-          status: 'ended',
-        }));
-        return; // Exit early as the status change will trigger this effect again
-      }
-    }
+    setIsLoadingResults(true);
+    setLoadError(null);
 
-    // Only run when the game has ended status
-    const isEnded =
-      gameData.status === 'ended' || gameState === GameState.ENDED;
-
-    if (!isEnded) return;
-
-    const loadCompleteResults = async () => {
-      try {
-        setIsLoadingResults(true);
-        setLoadError(null);
-
-        // Different approach for admin vs player
-        if (isAdmin) {
-          try {
-            // For admins, fetch game data and leaderboard info directly
-            const [gameDataResult, leaderboardResults] = await Promise.all([
-              supabase
-                .from('games')
-                .select('*')
-                .eq('id', gameData.id)
-                .single()
-                .then(({ data }) => data),
-              fetchGameLeaderboard(gameData.id),
-            ]);
-
-            // Update game data with latest information
-            setGameData((prev) => ({
-              ...prev,
-              ...(gameDataResult || {}),
-              status: 'ended',
-            }));
-
-            // Set game result with leaderboard data only for admins
-            setGameResult({
-              winners: leaderboardResults?.winners || [],
-              leaderboard: leaderboardResults?.allPlayers || [],
-              totalCorrect: 0,
-              totalQuestions: gameData.questions?.length || 0,
-              answeredQuestions: [],
-              completedAt: null,
-            });
-          } catch (adminError) {
-            console.error('Error loading admin results:', adminError);
-            setLoadError('Failed to load game results. Please try refreshing.');
-          }
-        } else {
-          // Regular player flow
-          const results = await fetchCompleteGameResults(
+    try {
+      if (isAdmin) {
+        // Admin flow
+        const results = await withVerification(
+          () => fetchCompleteGameResults(
             gameData.id,
             gameData.game_code,
-            publicKey?.toString()
-          );
+            publicKey?.toString(),
+            withVerification
+          ),
+          'Please verify your wallet to view game results'
+        );
 
+        if (results) {
+          // Update game data with latest information
+          setGameData((prev) => ({
+            ...prev,
+            ...results.gameData,
+            status: 'ended',
+          }));
+
+          // Update game result with complete data
+          setGameResult((prevResult) => {
+            if (!results.playerResult) return prevResult;
+            return {
+              ...(prevResult || {}),
+              ...results.playerResult,
+              winners: results.winners,
+              leaderboard: results.leaderboard,
+            } as GameResultFromDb;
+          });
+        }
+      } else {
+        // Regular player flow
+        const results = await withVerification(
+          () => fetchCompleteGameResults(
+            gameData.id,
+            gameData.game_code,
+            publicKey?.toString(),
+            withVerification
+          ),
+          'Please verify your wallet to view game results'
+        );
+
+        if (results) {
           // Update game data with latest information
           setGameData((prev) => ({
             ...prev,
@@ -895,26 +899,15 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
 
         setIsLoadingResults(false);
         fetchUserXPAndRewards();
-      } catch (error) {
-        console.error('Error loading complete game results:', error);
-        setLoadError(
-          'Failed to load game results. Please try refreshing the page.'
-        );
-        setIsLoadingResults(false);
       }
-    };
-    // Kick off the data loading
-    loadCompleteResults();
-  }, [
-    gameData?.status,
-    gameData?.game_code,
-    gameData?.id,
-    publicKey,
-    fetchUserXPAndRewards,
-    gameData?.questions,
-    isAdmin,
-    gameState,
-  ]);
+    } catch (error) {
+      console.error('Error loading complete game results:', error);
+      setLoadError(
+        'Failed to load game results. Please try refreshing the page.'
+      );
+      setIsLoadingResults(false);
+    }
+  };
 
   // Cleanup player result subscription on component unmount
   useEffect(() => {

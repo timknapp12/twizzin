@@ -24,6 +24,7 @@ import { createGameCombined, updateGameCombined } from '@/utils';
 import { useProgram } from './ProgramContext';
 import { useAppContext } from './AppContext';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { useVerification } from '@/hooks/useVerification';
 
 const CreateGameContext = createContext<CreateGameContextType | undefined>(
   undefined
@@ -45,6 +46,7 @@ export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
   const wallet = useWallet();
   const { connection } = useConnection();
   const { publicKey, sendTransaction } = wallet;
+  const { withVerification } = useVerification();
 
   const initialGameData: CreateGameData = {
     gameName: '',
@@ -218,10 +220,21 @@ export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
           connection,
           publicKey,
           sendTransaction,
-          params
+          params,
+          withVerification
         );
 
-        return result;
+        if (!result.onChain.success) {
+          throw new Error(result.onChain.error || 'Failed to update game');
+        }
+
+        return {
+          ...result,
+          database: {
+            ...result.database,
+            answers: result.database.questions.flatMap(q => q.answers || [])
+          }
+        };
       } else {
         // Handle new game creation
         const params: CreateGameCombinedParams = {
@@ -245,12 +258,21 @@ export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
           connection,
           publicKey,
           sendTransaction,
-          params
+          params,
+          withVerification
         );
 
-        // Reset form after successful creation
+        if (!result.onChain.success) {
+          throw new Error(result.onChain.error || 'Failed to create game');
+        }
 
-        return result;
+        return {
+          ...result,
+          database: {
+            ...result.database,
+            answers: result.database.questions.flatMap(q => q.answers || [])
+          }
+        };
       }
     } catch (err: unknown) {
       console.error('Failed to create/update game:', err);

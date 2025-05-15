@@ -12,6 +12,8 @@ interface UsernameMap {
   [key: string]: string | null;
 }
 
+type VerificationFunction = <T>(operation: () => Promise<T>, errorMessage?: string) => Promise<T | null>;
+
 export const fetchRawGameResult = async (
   gameId: string,
   playerWallet: string
@@ -130,51 +132,56 @@ export const fetchGameResult = async (
 
 // New functions for winners and leaderboard
 export const fetchGameSubmissions = async (
-  gameId: string
+  gameId: string,
+  withVerification: VerificationFunction
 ): Promise<PlayerSubmission[]> => {
-  // First, get the player_games data
-  const { data, error } = await supabase
-    .from('player_games')
-    .select('player_wallet, num_correct, finished_time')
-    .eq('game_id', gameId)
-    .not('finished_time', 'is', null) // Only get completed games
-    .order('num_correct', { ascending: false })
-    .order('finished_time', { ascending: true });
+  const result = await withVerification(async () => {
+    // First, get the player_games data
+    const { data, error } = await supabase
+      .from('player_games')
+      .select('player_wallet, num_correct, finished_time')
+      .eq('game_id', gameId)
+      .not('finished_time', 'is', null) // Only get completed games
+      .order('num_correct', { ascending: false })
+      .order('finished_time', { ascending: true });
 
-  if (error)
-    throw new Error(`Failed to fetch game submissions: ${error.message}`);
+    if (error)
+      throw new Error(`Failed to fetch game submissions: ${error.message}`);
 
-  if (!data || data.length === 0) return [];
+    if (!data || data.length === 0) return [];
 
-  // Get all unique wallet addresses to query usernames
-  const walletAddresses = data.map((item) => item.player_wallet);
+    // Get all unique wallet addresses to query usernames
+    const walletAddresses = data.map((item) => item.player_wallet);
 
-  // Get usernames for all players in one query
-  const { data: playersData, error: playersError } = await supabase
-    .from('players')
-    .select('wallet_address, username')
-    .in('wallet_address', walletAddresses);
+    // Get usernames for all players in one query
+    const { data: playersData, error: playersError } = await supabase
+      .from('players')
+      .select('wallet_address, username')
+      .in('wallet_address', walletAddresses);
 
-  if (playersError)
-    throw new Error(
-      `Failed to fetch player usernames: ${playersError.message}`
-    );
+    if (playersError)
+      throw new Error(
+        `Failed to fetch player usernames: ${playersError.message}`
+      );
 
-  // Create a map of wallet addresses to usernames for quick lookup
-  const usernameMap: Record<string, string> = {};
-  playersData?.forEach((player) => {
-    usernameMap[player.wallet_address] = player.username;
+    // Create a map of wallet addresses to usernames for quick lookup
+    const usernameMap: Record<string, string> = {};
+    playersData?.forEach((player) => {
+      usernameMap[player.wallet_address] = player.username;
+    });
+
+    // Transform the data to include username
+    const transformedData = data.map((submission) => ({
+      player_wallet: submission.player_wallet,
+      num_correct: submission.num_correct,
+      finished_time: submission.finished_time,
+      username: usernameMap[submission.player_wallet] || null,
+    })) as PlayerSubmission[];
+
+    return transformedData;
   });
 
-  // Transform the data to include username
-  const transformedData = data.map((submission) => ({
-    player_wallet: submission.player_wallet,
-    num_correct: submission.num_correct,
-    finished_time: submission.finished_time,
-    username: usernameMap[submission.player_wallet] || null,
-  })) as PlayerSubmission[];
-
-  return transformedData;
+  return result || [];
 };
 
 export const determineWinnersAndLeaderboard = (
@@ -210,56 +217,77 @@ export const determineWinnersAndLeaderboard = (
 };
 
 export const fetchGameLeaderboard = async (
-  gameId: string
+  gameId: string,
+  withVerification: VerificationFunction
 ): Promise<GameResults | null> => {
-  try {
-    // Fetch game configuration
-    const { data: game, error: gameError } = await supabase
-      .from('games')
-      .select('max_winners, all_are_winners')
-      .eq('id', gameId)
-      .single();
+  return withVerification(async () => {
+    if (!gameId) {
+      console.warn('fetchGameLeaderboard: Missing gameId.');
+      return null;
+    }
 
-    if (gameError) throw gameError;
-    if (!game) return null;
+    try {
+      // Fetch game configuration
+      const { data: game, error: gameError } = await supabase
+        .from('games')
+        .select('max_winners, all_are_winners')
+        .eq('id', gameId)
+        .single();
 
-    // Fetch submissions
-    const submissions = await fetchGameSubmissions(gameId);
+      if (gameError) throw gameError;
+      if (!game) return null;
 
-    // Calculate winners and leaderboard
-    return determineWinnersAndLeaderboard(
-      submissions,
-      game.max_winners,
-      game.all_are_winners
-    );
-  } catch (error) {
-    console.error('Error fetching game leaderboard:', error);
-    throw error;
-  }
+      // Fetch submissions
+      const submissions = await fetchGameSubmissions(gameId, withVerification);
+
+      // Calculate winners and leaderboard
+      return determineWinnersAndLeaderboard(
+        submissions,
+        game.max_winners,
+        game.all_are_winners
+      );
+    } catch (error) {
+      console.error('Error fetching game leaderboard:', error);
+      throw error;
+    }
+  });
 };
 
 // Utility to fetch both game result and leaderboard
 export const fetchGameResultAndLeaderboard = async (
   gameId: string,
-  playerWallet: string
+  playerWallet: string,
+  withVerification: VerificationFunction
 ): Promise<{
   playerResult: GameResultFromDb | null;
   gameResults: GameResults | null;
 }> => {
-  try {
-    const [playerResult, gameResults] = await Promise.all([
-      fetchGameResult(gameId, playerWallet),
-      fetchGameLeaderboard(gameId),
-    ]);
+  const result = await withVerification(async () => {
+    if (!gameId || !playerWallet) {
+      console.warn('fetchGameResultAndLeaderboard: Missing required parameters.');
+      return {
+        playerResult: null,
+        gameResults: null,
+      };
+    }
 
-    return {
-      playerResult,
-      gameResults,
-    };
-  } catch (error) {
-    console.error('Error fetching game result and leaderboard:', error);
-    throw error;
-  }
+    try {
+      const [playerResult, gameResults] = await Promise.all([
+        fetchGameResult(gameId, playerWallet),
+        fetchGameLeaderboard(gameId, withVerification),
+      ]);
+
+      return {
+        playerResult,
+        gameResults,
+      };
+    } catch (error) {
+      console.error('Error fetching game result and leaderboard:', error);
+      throw error;
+    }
+  });
+
+  return result || { playerResult: null, gameResults: null };
 };
 
 // Data fetching when game ends
@@ -269,7 +297,8 @@ const RETRY_DELAY = 2000;
 export const fetchCompleteGameResults = async (
   gameId: string,
   gameCode: string,
-  playerWallet?: string,
+  playerWallet: string | undefined,
+  withVerification: VerificationFunction,
   attempt = 1
 ): Promise<{
   gameData: GameResultFromDb & { adminUsername: string | null };
@@ -277,115 +306,119 @@ export const fetchCompleteGameResults = async (
   winners: (PlayerResult & { username: string | null })[];
   playerResult: (GameResultFromDb & { username: string | null }) | null;
 }> => {
-  try {
-    // Step 1: Fetch core game data (always needed)
-    const { data: gameData, error: gameError } = await supabase
-      .from('games')
-      .select('*')
-      .eq('id', gameId)
-      .single();
+  const result = await withVerification(async () => {
+    if (!gameId) {
+      console.warn('fetchCompleteGameResults: Missing gameId.');
+      return {
+        gameData: {} as GameResultFromDb & { adminUsername: string | null },
+        leaderboard: [],
+        winners: [],
+        playerResult: null,
+      };
+    }
 
-    if (gameError) throw gameError;
-
-    // Step 2: Fetch admin username
-    let adminUsername = null;
-    if (gameData.admin_wallet) {
-      const { data: adminData } = await supabase
-        .from('players')
-        .select('username')
-        .eq('wallet_address', gameData.admin_wallet)
+    try {
+      // Step 1: Fetch core game data (always needed)
+      const { data: gameData, error: gameError } = await supabase
+        .from('games')
+        .select('*')
+        .eq('id', gameId)
         .single();
 
-      adminUsername = adminData?.username || null;
-    }
+      if (gameError) throw gameError;
 
-    // Step 3: Fetch leaderboard data (for all users)
-    const gameResults = await fetchGameLeaderboard(gameId);
+      // Step 2: Fetch admin username
+      let adminUsername = null;
+      if (gameData.admin_wallet) {
+        const { data: adminData } = await supabase
+          .from('players')
+          .select('username')
+          .eq('wallet_address', gameData.admin_wallet)
+          .single();
 
-    // Step 4: Fetch usernames for all players in the leaderboard
-    const playerWallets =
-      gameResults?.allPlayers.map((player) => player.wallet) || [];
-    let playerUsernames: UsernameMap = {}; // Use the defined type
+        adminUsername = adminData?.username || null;
+      }
 
-    if (playerWallets.length > 0) {
-      const { data: playersData } = await supabase
-        .from('players')
-        .select('wallet_address, username')
-        .in('wallet_address', playerWallets);
+      // Step 3: Fetch leaderboard data (for all users)
+      const gameResults = await fetchGameLeaderboard(gameId, withVerification);
 
-      // Create a lookup map of wallet to username
-      playerUsernames = (playersData || []).reduce(
-        (acc: UsernameMap, player) => {
-          acc[player.wallet_address] = player.username;
-          return acc;
-        },
-        {}
+      // Step 4: Fetch usernames for all players in the leaderboard
+      const playerWallets =
+        gameResults?.allPlayers.map((player) => player.wallet) || [];
+      let playerUsernames: UsernameMap = {}; // Use the defined type
+
+      if (playerWallets.length > 0) {
+        const { data: playersData } = await supabase
+          .from('players')
+          .select('wallet_address, username')
+          .in('wallet_address', playerWallets);
+
+        // Create a lookup map of wallet to username
+        playerUsernames = (playersData || []).reduce(
+          (acc: UsernameMap, player) => {
+            acc[player.wallet_address] = player.username;
+            return acc;
+          },
+          {}
+        );
+      }
+
+      // Step 5: Add usernames to leaderboard and winners
+      const leaderboardWithUsernames = (gameResults?.allPlayers || []).map(
+        (player) => ({
+          ...player,
+          username: playerUsernames[player.wallet] || null,
+        })
       );
-    }
 
-    // Step 5: Add usernames to leaderboard and winners
-    const leaderboardWithUsernames = (gameResults?.allPlayers || []).map(
-      (player) => ({
+      const winnersWithUsernames = (gameResults?.winners || []).map((player) => ({
         ...player,
         username: playerUsernames[player.wallet] || null,
-      })
-    );
+      }));
 
-    const winnersWithUsernames = (gameResults?.winners || []).map((player) => ({
-      ...player,
-      username: playerUsernames[player.wallet] || null,
-    }));
-
-    // Step 6: Fetch player-specific data if a wallet was provided
-    let playerResult = null;
-    if (playerWallet) {
-      playerResult = await fetchGameResult(gameId, playerWallet);
-      // Add player username to player result
-      if (playerResult) {
-        playerResult = {
-          ...playerResult,
-          username: playerUsernames[playerWallet] || null,
-        };
+      // Step 6: Fetch player-specific data if a wallet was provided
+      let playerResult = null;
+      if (playerWallet) {
+        playerResult = await fetchGameResult(gameId, playerWallet);
+        // Add player username to player result
+        if (playerResult) {
+          playerResult = {
+            ...playerResult,
+            username: playerUsernames[playerWallet] || null,
+          };
+        }
       }
+
+      // Log the fetched data for debugging
+      console.log('Complete game results fetched:', {
+        gameData: { ...gameData, adminUsername },
+        leaderboard: leaderboardWithUsernames,
+        winners: winnersWithUsernames,
+        playerResult,
+        timestamp: new Date().toISOString(),
+      });
+
+      // Step 7: Return combined results
+      return {
+        gameData: { ...gameData, adminUsername },
+        leaderboard: leaderboardWithUsernames,
+        winners: winnersWithUsernames,
+        playerResult,
+      };
+    } catch (error) {
+      console.error('Error fetching complete game results:', error);
+      throw error;
     }
+  });
 
-    // Log the fetched data for debugging
-    console.log('Complete game results fetched:', {
-      gameData: { ...gameData, adminUsername },
-      leaderboard: leaderboardWithUsernames,
-      winners: winnersWithUsernames,
-      playerResult,
-      timestamp: new Date().toISOString(),
-    });
-
-    // Step 7: Return combined results
-    return {
-      gameData: { ...gameData, adminUsername },
-      leaderboard: leaderboardWithUsernames,
-      winners: winnersWithUsernames,
-      playerResult,
-    };
-  } catch (error) {
-    console.error(
-      `Error fetching complete game results (attempt ${attempt}):`,
-      error
-    );
-
-    if (attempt < RETRY_ATTEMPTS) {
-      await new Promise((resolve) =>
-        setTimeout(resolve, RETRY_DELAY * attempt)
-      );
-      return fetchCompleteGameResults(
-        gameId,
-        gameCode,
-        playerWallet,
-        attempt + 1
-      );
-    }
-
-    throw error;
-  }
+  return result || {
+    gameData: {} as GameResultFromDb & { adminUsername: string | null },
+    leaderboard: [],
+    winners: [],
+    playerResult: null,
+  };
 };
+
 // Subscribe to changes in player_games table for this player and game
 export const setupPlayerResultSubscription = (
   gameId: string,

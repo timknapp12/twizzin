@@ -26,6 +26,7 @@ import { useScreenSize } from '@/hooks/useScreenSize';
 import { GameDataChangeEvent } from '@/types';
 import { toast } from 'react-toastify';
 import bot from '../../assets/svgs/Bots--Streamline-Manila.svg';
+import { useVerification } from '@/hooks/useVerification';
 
 const { network } = getCurrentConfig();
 
@@ -40,6 +41,7 @@ const AddUpdateGame: React.FC<AddUpdateGameProps> = ({
 }) => {
   const { t, language } = useAppContext();
   const router = useRouter();
+  const { withVerification } = useVerification();
   const {
     gameData,
     handleGameData,
@@ -82,7 +84,16 @@ const AddUpdateGame: React.FC<AddUpdateGameProps> = ({
     setIsFetchingGame(true);
     try {
       hasLoadedRef.current = true;
-      const fullGameData = await getGameFromDb(gameCode);
+      const fullGameData = await withVerification(
+        async () => {
+          const result = await getGameFromDb(gameCode);
+          if (!result) {
+            throw new Error('Game not found');
+          }
+          return result;
+        },
+        'Please verify your wallet to edit games'
+      );
 
       if (!fullGameData) {
         toast.error(t('Game not found'));
@@ -98,7 +109,7 @@ const AddUpdateGame: React.FC<AddUpdateGameProps> = ({
     } finally {
       setIsFetchingGame(false);
     }
-  }, [gameCode, isEditMode, t, formatAndUpdateGameData]);
+  }, [gameCode, isEditMode, t, formatAndUpdateGameData, withVerification]);
 
   // Effect to fetch game data when in edit mode
   useEffect(() => {

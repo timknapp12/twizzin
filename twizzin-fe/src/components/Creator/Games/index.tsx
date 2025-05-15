@@ -18,7 +18,8 @@ import {
 } from '@/components';
 import { FaSpinner } from 'react-icons/fa6';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { useAppContext } from '@/contexts';
+import { useAppContext, useWalletContext } from '@/contexts';
+import { useVerification } from '@/hooks/useVerification';
 import { supabase } from '@/utils';
 
 interface Game {
@@ -36,6 +37,7 @@ interface Game {
 export const CreatorGamesComponent = () => {
   const router = useRouter();
   const { publicKey } = useWallet();
+  const { withVerification, isVerified } = useVerification();
   const { t } = useAppContext();
 
   const [games, setGames] = useState<Game[]>([]);
@@ -53,17 +55,26 @@ export const CreatorGamesComponent = () => {
       setError('');
 
       try {
-        const { data, error } = await supabase
-          .from('games')
-          .select(
-            'id, game_code, name, created_at, status, image_url, entry_fee, token_mint, admin_wallet'
-          )
-          .eq('admin_wallet', publicKey.toBase58())
-          .order('created_at', { ascending: false });
+        const result = await withVerification(
+          async () => {
+            const { data, error } = await supabase
+              .from('games')
+              .select(
+                'id, game_code, name, created_at, status, image_url, entry_fee, token_mint, admin_wallet'
+              )
+              .eq('admin_wallet', publicKey.toBase58())
+              .order('created_at', { ascending: false });
 
-        if (error) throw error;
+            if (error) throw error;
+            return data;
+          },
+          'Please verify your wallet to view your games',
+          isVerified
+        );
 
-        setGames(data || []);
+        if (result) {
+          setGames(result || []);
+        }
       } catch (err) {
         console.error('Error fetching creator games:', err);
         setError(
@@ -75,8 +86,7 @@ export const CreatorGamesComponent = () => {
     };
 
     fetchCreatorGames();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [publicKey]);
+  }, [publicKey, t, withVerification, isVerified]);
 
   const handleCreateNewGame = () => {
     router.push('/create');

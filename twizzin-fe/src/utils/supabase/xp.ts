@@ -16,6 +16,11 @@ export async function distributeGameXP(
   playerLength: number,
   config: XPDistributionConfig = DEFAULT_XP_CONFIG
 ): Promise<void> {
+  if (!gameId || !adminWallet || !Array.isArray(players) || players.length === 0) {
+    console.warn('distributeGameXP: Missing required parameters.');
+    return;
+  }
+
   const adminXp = playerLength * XP_PER_PLAYER;
   try {
     // Create admin record in player_games
@@ -187,7 +192,12 @@ export async function distributeGameXP(
   }
 }
 
-export async function getUserXPLevel(wallet: string): Promise<{
+type VerificationFunction = <T>(operation: () => Promise<T>, errorMessage?: string) => Promise<T | null>;
+
+export async function getUserXPLevel(
+  wallet: string,
+  withVerification: VerificationFunction
+): Promise<{
   currentXP: number;
   level: number;
   nextLevelXP: number;
@@ -202,16 +212,114 @@ export async function getUserXPLevel(wallet: string): Promise<{
     finalRank: number | null;
     isAdmin: boolean;
   }>;
-}> {
-  try {
-    // First, get total XP and game history
-    const { data: playerData, error: playerError } = await supabase
-      .from('players')
-      .select('total_xp')
-      .eq('wallet_address', wallet)
-      .single();
+} | null> {
+  return withVerification(async () => {
+    if (!wallet) {
+      throw new Error('Wallet address is required');
+    }
 
-    if (playerError || !playerData) {
+    try {
+      // Get total XP from players table
+      const { data: playerData, error: playerError } = await supabase
+        .from('players')
+        .select('total_xp')
+        .eq('wallet_address', wallet)
+        .single();
+
+      if (playerError) {
+        if (playerError.code === 'PGRST116') {
+          console.log('No XP data found for player - returning default values');
+          return {
+            currentXP: 0,
+            level: 0,
+            nextLevelXP: 300,
+            progress: 0,
+            gameHistory: [],
+          };
+        }
+        console.error('Error fetching player XP:', playerError);
+        console.log('Full error details:', {
+          code: playerError.code,
+          message: playerError.message,
+          details: playerError.details,
+          hint: playerError.hint
+        });
+        return {
+          currentXP: 0,
+          level: 0,
+          nextLevelXP: 300,
+          progress: 0,
+          gameHistory: [],
+        };
+      }
+
+      const totalXP = playerData?.total_xp || 0;
+
+      // Calculate level and progress
+      const level = Math.floor(totalXP / 300) + 1;
+      const nextLevelXP = level * 300;
+      const progress = (totalXP % 300) / 3;
+
+      // Get game history with details using end_time, including finalRank
+      const { data: gameData, error: gameError } = await supabase
+        .from('player_games')
+        .select(
+          `
+          num_correct,
+          xp_earned,
+          final_rank,
+          is_admin,
+          game:games (
+            id,
+            name,
+            end_time
+          )
+        `
+        )
+        .eq('player_wallet', wallet)
+        .order('game(end_time)', { ascending: false });
+
+      if (gameError) {
+        console.error('Error fetching game history:', gameError);
+        return {
+          currentXP: totalXP,
+          level,
+          nextLevelXP,
+          progress,
+          gameHistory: [],
+        };
+      }
+
+      // For each game, get total questions
+      const gameHistory = await Promise.all(
+        (gameData || []).map(async (game: any) => {
+          const { count } = await supabase
+            .from('questions')
+            .select('*', { count: 'exact', head: true })
+            .eq('game_id', game.game.id);
+
+          return {
+            gameId: game.game.id as string,
+            gameName: game.game.name as string,
+            gameDate: game.game.end_time || 'Not Finished',
+            questionsCorrect: game.num_correct || 0,
+            totalQuestions: count || 0,
+            xpEarned: game.xp_earned || 0,
+            finalRank: game.final_rank || null,
+            isAdmin: game.is_admin || false,
+          };
+        })
+      );
+
+      return {
+        currentXP: totalXP,
+        level,
+        nextLevelXP,
+        progress,
+        gameHistory,
+      };
+    } catch (error) {
+      console.error('Error getting user XP level:', error);
       return {
         currentXP: 0,
         level: 0,
@@ -220,94 +328,5 @@ export async function getUserXPLevel(wallet: string): Promise<{
         gameHistory: [],
       };
     }
-
-    const totalXP = playerData.total_xp || 0;
-
-    // Dynamic level calculation with quadratic growth
-    // Level 0: 0 XP
-    // Level 1: 1-299 XP (requires 300 XP for next level)
-    // Subsequent levels: 300 * (level ^ 2)
-    let level = 0;
-    let currentLevelXP = 0;
-    let nextLevelXP = 300; // Base requirement for level 1
-    let progress = 0;
-
-    if (totalXP > 0) {
-      // Calculate level using inverse of quadratic formula
-      // totalXP = 300 * (level ^ 2) => level = sqrt(totalXP / 300)
-      level = Math.floor(Math.sqrt(totalXP / 300)) + 1;
-      currentLevelXP =
-        level === 1 ? 0 : Math.round(300 * Math.pow(level - 1, 2));
-      nextLevelXP = Math.round(300 * Math.pow(level, 2));
-      progress = (totalXP - currentLevelXP) / (nextLevelXP - currentLevelXP);
-    }
-
-    // Get game history with details using end_time, including finalRank
-    const { data: gameData, error: gameError } = await supabase
-      .from('player_games')
-      .select(
-        `
-        num_correct,
-        xp_earned,
-        final_rank,
-        is_admin,
-        game:games (
-          id,
-          name,
-          end_time
-        )
-      `
-      )
-      .eq('player_wallet', wallet)
-      .order('game(end_time)', { ascending: false });
-
-    if (gameError) {
-      console.error('Error fetching game history:', gameError);
-      return {
-        currentXP: totalXP,
-        level,
-        nextLevelXP,
-        progress,
-        gameHistory: [],
-      };
-    }
-
-    // For each game, get total questions
-    const gameHistory = await Promise.all(
-      (gameData || []).map(async (game: any) => {
-        const { count } = await supabase
-          .from('questions')
-          .select('*', { count: 'exact', head: true })
-          .eq('game_id', game.game.id);
-
-        return {
-          gameId: game.game.id,
-          gameName: game.game.name,
-          gameDate: game.game.end_time || 'Not Finished',
-          questionsCorrect: game.num_correct || 0,
-          totalQuestions: count || 0,
-          xpEarned: game.xp_earned || 0,
-          finalRank: game.final_rank || null,
-          isAdmin: game.is_admin || false,
-        };
-      })
-    );
-
-    return {
-      currentXP: totalXP,
-      level,
-      nextLevelXP,
-      progress,
-      gameHistory,
-    };
-  } catch (error) {
-    console.error('Error getting user XP level:', error);
-    return {
-      currentXP: 0,
-      level: 0,
-      nextLevelXP: 300,
-      progress: 0,
-      gameHistory: [],
-    };
-  }
+  }, 'Please verify your wallet to view XP level');
 }

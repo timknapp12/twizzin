@@ -2,12 +2,14 @@ import { Program } from '@coral-xyz/anchor';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { NATIVE_MINT } from '@solana/spl-token';
 import { initializeGame } from '../program/initGame';
-import { createGameWithQuestions } from '../supabase/createGame';
+import { createGameInDb } from '../supabase/createGame';
 import { CreateGameCombinedParams } from '@/types';
 import { TwizzinIdl } from '@/types/idl';
 import { generateMerkleRoot } from '../merkle/generateMerkleRoot';
 import { supabase } from '../supabase/supabaseClient';
 import { getAnchorTimestamp, getSupabaseTimestamp } from '../helpers';
+
+type VerificationFunction = <T>(operation: () => Promise<T>, errorMessage?: string) => Promise<T | null>;
 
 export const createGameCombined = async (
   program: Program<TwizzinIdl>,
@@ -19,7 +21,8 @@ export const createGameCombined = async (
     // eslint-disable-next-line no-unused-vars
     connection: Connection
   ) => Promise<string>,
-  params: CreateGameCombinedParams
+  params: CreateGameCombinedParams,
+  withVerification: VerificationFunction
 ) => {
   if (!publicKey) throw new Error('Wallet not connected');
   console.log('Starting game creation process...');
@@ -29,7 +32,7 @@ export const createGameCombined = async (
   try {
     // 1. First create database entries
     console.log('Step 1: Creating database entries...');
-    const dbResult = await createGameWithQuestions(
+    const dbResult = await createGameInDb(
       {
         gamePubkey: '',
         adminWallet: publicKey.toString(),
@@ -49,12 +52,20 @@ export const createGameCombined = async (
         username: params.username,
       },
       params.questions,
-      params.imageFile
+      withVerification
     );
     console.log('✅ Database entries created successfully');
 
     // 2. Generate merkle root
     console.log('Step 2: Generating merkle root...');
+    if (!dbResult) {
+      throw new Error('Database result is null');
+    }
+
+    if (!dbResult.questions || dbResult.questions.length === 0) {
+      throw new Error('No questions found for the game');
+    }
+
     const answerHash = await generateMerkleRoot(dbResult.questions);
     console.log('✅ Merkle root generated successfully');
 

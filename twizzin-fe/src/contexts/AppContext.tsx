@@ -23,6 +23,8 @@ import { localeMap, getPlayerDataWithRewards, getUserXPLevel } from '@/utils';
 import { processPlayerRewardsResponse } from '@/types/dbTypes';
 import { CreateGameProvider } from './CreateGameContext';
 import { GameContextProvider } from './GameContext';
+import { useVerification } from '@/hooks/useVerification';
+import { useWalletContext } from './WalletContext';
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -36,6 +38,8 @@ export const useAppContext = () => {
 
 export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const { t } = useTranslation();
+  const { withVerification } = useVerification();
+  const { isVerified } = useWalletContext();
 
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [admin, setAdmin] = useState(null);
@@ -139,14 +143,26 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
     try {
       // Fetch detailed XP data including level and game history
-      const xpData: XPLevelData = await getUserXPLevel(publicKey.toString());
+      const xpData: XPLevelData | null = await getUserXPLevel(
+        publicKey.toString(), 
+        (op) => withVerification(op, 'Wallet verification required', isVerified)
+      );
 
-      // Update state with the new XP data
-      setUserXP(xpData.currentXP);
-      setLevel(xpData.level);
-      setNextLevelXP(xpData.nextLevelXP);
-      setProgress(xpData.progress);
-      setGameHistory(xpData.gameHistory);
+      if (xpData) {
+        // Update state with the new XP data
+        setUserXP(xpData.currentXP);
+        setLevel(xpData.level);
+        setNextLevelXP(xpData.nextLevelXP);
+        setProgress(xpData.progress);
+        setGameHistory(xpData.gameHistory);
+      } else {
+        // Reset to default values if no XP data
+        setUserXP(0);
+        setLevel(0);
+        setNextLevelXP(300);
+        setProgress(0);
+        setGameHistory([]);
+      }
 
       // Fetch basic player data and rewards
       const playerData = await getPlayerDataWithRewards(publicKey.toString());
@@ -157,17 +173,28 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         setUserProfile(userProfile);
         setUserRewards(gameRewards);
       } else {
+        // Reset to default values if no player data
+        setUserProfile(null);
+        setUserRewards([]);
         console.log('No player data found for wallet:', publicKey.toString());
       }
     } catch (error) {
       console.error('Failed to fetch user data:', error);
+      // Reset all state to default values on error
+      setUserXP(0);
+      setLevel(0);
+      setNextLevelXP(300);
+      setProgress(0);
+      setGameHistory([]);
+      setUserProfile(null);
+      setUserRewards([]);
     }
-  }, [publicKey, connection]);
+  }, [publicKey, connection, withVerification, isVerified]);
 
   useEffect(() => {
-    if (!publicKey || !connection) return;
+    if (!publicKey || !connection || !isVerified) return;
     fetchUserXPAndRewards();
-  }, [publicKey, connection, fetchUserXPAndRewards]);
+  }, [publicKey, connection, fetchUserXPAndRewards, isVerified]);
 
   useEffect(() => {
     const unclaimedRewards = userRewards.filter(
