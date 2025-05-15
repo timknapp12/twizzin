@@ -40,7 +40,7 @@ export const Landing = () => {
           rel='noopener noreferrer'
           className='underline'
         >
-          https://twizzin.vercel.app
+          devnet.twizzin.xyz
         </a>
       </H3>
     </Column>
