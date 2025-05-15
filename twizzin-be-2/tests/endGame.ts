@@ -34,9 +34,9 @@ export async function endGame(
   const gameCode1 = getUniqueGameCode('END1');
   const entryFee = new anchor.BN(0.1 * LAMPORTS_PER_SOL);
   const commission = 500;
-  const now = Math.floor(Date.now() / 1000);
+  const now = Date.now(); // Get current time in milliseconds (instead of seconds)
   const startTime = new anchor.BN(now);
-  const endTime = new anchor.BN(now + 3600);
+  const endTime = new anchor.BN(now + 3600 * 1000); // Convert hours to milliseconds
   const maxWinners = 3;
   const totalPlayers = 4;
   const answerHash = Array(32).fill(1);
@@ -100,38 +100,11 @@ export async function endGame(
     )[0];
   };
 
-  // Create config
-  async function createConfig() {
-    const { configPda } = findPDAs('', provider.wallet.publicKey);
-    try {
-      await program.methods
-        .initConfig(
-          provider.wallet.publicKey,
-          provider.wallet.publicKey,
-          1000 // 10% fee
-        )
-        .accounts({
-          admin: provider.wallet.publicKey,
-          config: configPda,
-          systemProgram: SystemProgram.programId,
-        })
-        .rpc();
-    } catch (error) {
-      console.log(
-        'Config creation failed (might already exist):',
-        error.message
-      );
-    }
-    return configPda;
-  }
-
   // Initialize game
   const { gamePda, vaultPda, configPda } = findPDAs(
     gameCode1,
     provider.wallet.publicKey
   );
-
-  await createConfig();
 
   const initTx = await program.methods
     .initGame(
@@ -442,7 +415,7 @@ export async function endGame(
   const players3 = Array(2)
     .fill(0)
     .map(() => Keypair.generate());
-  const futureEndTime = new anchor.BN(now + 7200); // 2 hours in the future
+  const futureEndTime = new anchor.BN(now + 7200 * 1000);
 
   // Get rent exemption for calculations
   const rentExemption3 = await connection.getMinimumBalanceForRentExemption(
@@ -547,9 +520,8 @@ export async function endGame(
     MARGIN
   );
   // Verify that end time was updated to current time
-  expect(gameAccountAfter.endTime.toNumber()).to.be.lessThan(
-    gameAccountBefore.endTime.toNumber()
-  );
+  const timeDiff = Math.abs(gameAccountAfter.endTime.toNumber() - Date.now());
+  expect(timeDiff).to.be.lessThan(5000); // Allow 5 seconds difference in milliseconds
 
   // Test 4: SPL Token game
   console.log('\nTest 4: SPL Token Game');

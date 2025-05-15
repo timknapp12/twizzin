@@ -1,7 +1,6 @@
 'use client';
 
 import React, { ReactNode } from 'react';
-import { Header } from './Header';
 
 interface ScreenContainerProps {
   children: ReactNode;
@@ -10,33 +9,13 @@ interface ScreenContainerProps {
 
 export const ScreenContainer = ({ children }: ScreenContainerProps) => {
   return (
-    <main className='flex min-h-screen flex-col items-center justify-start'>
-      <Header />
-      <div className='flex-grow w-full p-6 sm:pl-8 sm:pr-16 sm:pb-16'>
-        <BorderedContainer>{children}</BorderedContainer>
+    <main className='bg-background flex min-h-screen flex-col items-center'>
+      <div className='flex flex-col justify-between w-full h-full min-h-screen p-4'>
+        {children}
       </div>
     </main>
   );
 };
-
-// This container is used to wrap the content of the screen with 2 borders, which is hidden on mobile
-export const BorderedContainer = ({
-  children,
-  className,
-}: ScreenContainerProps & { className?: string }) => (
-  <div
-    className={`flex-grow w-full sm:p-4 rounded-tl-2xl rounded-br-2xl bg-gradient-to-br from-lightPurple to-darkPurple flex ${
-      className || ''
-    }`}
-  >
-    <div className='relative w-full'>
-      <div className='absolute sm:-top-12 sm:-right-12 sm:w-[calc(100%+24px)] sm:h-[calc(100%+24px)] sm:border border-dark-background dark:border-light-background rounded-tl-2xl rounded-br-2xl pointer-events-none'></div>
-      <div className='bg-light-background dark:bg-dark-background w-full h-full rounded-tl-2xl rounded-br-2xl p-6 sm:pt-6 sm:pr-6 sm:pb-12 sm:pl-14 flex flex-col'>
-        <Column>{children}</Column>
-      </div>
-    </div>
-  </div>
-);
 
 // use tailwind props to set the justify and align of Column and Row Components
 const justifyClassMap = {
@@ -106,19 +85,6 @@ export const Row = ({
   </div>
 );
 
-export const GradientContainer = ({
-  children,
-  className,
-}: ScreenContainerProps) => (
-  <div
-    className={`w-full p-4 rounded-tl-2xl rounded-br-2xl bg-gradient-to-br from-lightPurple to-darkPurple text-white ${
-      className || ''
-    }`}
-  >
-    <Column>{children}</Column>
-  </div>
-);
-
 // Grid
 interface GridProps {
   gapSize?: string;
@@ -142,6 +108,45 @@ export const Grid: React.FC<GridProps> = ({
         gridTemplateColumns: `repeat(auto-fit, minmax(${min}, 1fr))`,
       }}
       {...props}
+    >
+      {children}
+    </div>
+  );
+};
+
+export const Gap = ({ size = '1rem' }: { size?: string }) => (
+  <div style={{ height: size }} />
+);
+
+// this has the max width for centering content in the middle of the screen
+interface InnerScreenContainerProps extends ColumnProps {
+  children: ReactNode;
+  className?: string;
+}
+
+export const InnerScreenContainer = ({
+  children,
+  className,
+  ...props
+}: InnerScreenContainerProps) => (
+  <Column
+    className={`gap-4 w-full lg:w-1/2 mx-auto max-w-med mb-4 flex-grow flex flex-col ${className}`}
+    {...props}
+  >
+    {children}
+  </Column>
+);
+
+interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
+  children: ReactNode;
+  onClick?: () => void;
+}
+
+export const Card = ({ children, onClick }: CardProps) => {
+  return (
+    <div
+      onClick={onClick}
+      className='flex h-[70px] w-full p-[14px] justify-between items-center flex-1 rounded-[14px] cursor-pointer border border-disabled shadow-md'
     >
       {children}
     </div>

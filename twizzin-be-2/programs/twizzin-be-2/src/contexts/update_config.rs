@@ -1,17 +1,20 @@
+use crate::constants::PROGRAM_AUTHORITY;
 use crate::errors::ErrorCode;
 use crate::state::config::ProgramConfig;
 use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
 pub struct UpdateConfig<'info> {
-    #[account(mut)]
+    #[account(
+        mut,
+        constraint = authority.key() == PROGRAM_AUTHORITY @ ErrorCode::InvalidAuthority
+    )]
     pub authority: Signer<'info>,
 
     #[account(
         mut,
         seeds = [b"config"],
-        bump,
-        constraint = authority.key() == config.authority_pubkey @ ErrorCode::InvalidAuthority
+        bump
     )]
     pub config: Account<'info, ProgramConfig>,
 }

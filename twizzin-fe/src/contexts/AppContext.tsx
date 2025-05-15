@@ -6,29 +6,52 @@ import React, {
   useState,
   useEffect,
   ReactNode,
+  useCallback,
 } from 'react';
-import { AppContextType, QuestionForDb, GameData } from '@/types';
+import { useConnection, useWallet } from '@solana/wallet-adapter-react';
+import {
+  AppContextType,
+  GameReward,
+  UserProfile,
+  GameHistory,
+  XPLevelData,
+} from '@/types';
 import { usePathname, useRouter } from 'next/navigation';
 import i18n from '@/i18n';
 import { useTranslation } from 'react-i18next';
-import { localeMap } from '@/utils/locales';
+import { localeMap, getPlayerDataWithRewards, getUserXPLevel } from '@/utils';
+import { processPlayerRewardsResponse } from '@/types/dbTypes';
+import { CreateGameProvider } from './CreateGameContext';
+import { GameContextProvider } from './GameContext';
+import { BetaModal } from '@/components/modals';
+
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const useAppContext = () => {
   const context = useContext(AppContext);
   if (!context) {
-    throw new Error('useAppContext must be used within an AppProvider');
+    throw new Error('useAppContext must be used within an AppContextProvider');
   }
   return context;
 };
 
-const AppProvider = ({ children }: { children: ReactNode }) => {
+export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const { t } = useTranslation();
 
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [admin, setAdmin] = useState(null);
+  const [userXP, setUserXP] = useState<number>(0);
+  const [userRewards, setUserRewards] = useState<GameReward[]>([]);
+  const [unclaimedRewards, setUnclaimedRewards] = useState(0);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [level, setLevel] = useState<number>(0);
+  const [nextLevelXP, setNextLevelXP] = useState<number>(300);
+  const [progress, setProgress] = useState<number>(0);
+  const [gameHistory, setGameHistory] = useState<GameHistory[]>([]);
   const router = useRouter();
   const pathname = usePathname();
+
+  const [isBetaModalOpen, setIsBetaModalOpen] = useState(false);
 
   // Initialize language from localStorage or default to 'en'
   const [language, setLanguage] = useState(() => {
@@ -96,74 +119,6 @@ const AppProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [language, pathname, router]);
 
-  const initialGameData: GameData = {
-    gameCode: '',
-    gameName: '',
-    entryFee: 0,
-    startTime: new Date(),
-    commission: 0,
-    donation: 0,
-    maxWinners: 1,
-    answers: [],
-  };
-
-  const [gameData, setGameData] = useState<GameData>(initialGameData);
-
-  const handleGameData = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setGameData((prevData) => ({
-      ...prevData,
-      [name]: name === 'startTime' ? new Date(value) : value,
-    }));
-  };
-
-  const blankQuestion = {
-    displayOrder: 0,
-    question: '',
-    answers: [{ displayOrder: 0, answerText: '', isCorrect: false }],
-    correctAnswer: '',
-    timeLimit: 10,
-  };
-
-  const [questions, setQuestions] = useState<QuestionForDb[]>([blankQuestion]);
-
-  const handleUpdateQuestionData = (updatedQuestion: QuestionForDb) => {
-    setQuestions((prevQuestions) =>
-      prevQuestions.map((q) =>
-        q.displayOrder === updatedQuestion.displayOrder ? updatedQuestion : q
-      )
-    );
-  };
-
-  const handleAddBlankQuestion = () => {
-    setQuestions((prevQuestions) => [
-      ...prevQuestions,
-      {
-        ...blankQuestion,
-        displayOrder: prevQuestions.length,
-      },
-    ]);
-  };
-
-  const handleDeleteQuestion = (displayOrder: number) => {
-    if (questions.length > 1) {
-      setQuestions((prevQuestions) => {
-        const newQuestions = prevQuestions.filter(
-          (q) => q.displayOrder !== displayOrder
-        );
-        return newQuestions.map((q, index) => ({ ...q, displayOrder: index }));
-      });
-    }
-  };
-
-  const [gameCode, setGameCode] = useState('');
-
-  const changeLanguage = (newLang: string) => {
-    if (i18n.isInitialized) {
-      i18n.changeLanguage(newLang);
-    }
-  };
-
   // CURRENCY
   const [currency, setCurrency] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -178,6 +133,52 @@ const AppProvider = ({ children }: { children: ReactNode }) => {
     // TODO - add logic here to convert prices
   };
 
+  const { connection } = useConnection();
+  const { publicKey } = useWallet();
+
+  // Fetch user data (profile, XP, and rewards) in a single function
+  const fetchUserXPAndRewards = useCallback(async () => {
+    if (!publicKey || !connection) return;
+
+    try {
+      // Fetch detailed XP data including level and game history
+      const xpData: XPLevelData = await getUserXPLevel(publicKey.toString());
+
+      // Update state with the new XP data
+      setUserXP(xpData.currentXP);
+      setLevel(xpData.level);
+      setNextLevelXP(xpData.nextLevelXP);
+      setProgress(xpData.progress);
+      setGameHistory(xpData.gameHistory);
+
+      // Fetch basic player data and rewards
+      const playerData = await getPlayerDataWithRewards(publicKey.toString());
+
+      if (playerData) {
+        const { userProfile, gameRewards } =
+          processPlayerRewardsResponse(playerData);
+        setUserProfile(userProfile);
+        setUserRewards(gameRewards);
+      } else {
+        console.log('No player data found for wallet:', publicKey.toString());
+      }
+    } catch (error) {
+      console.error('Failed to fetch user data:', error);
+    }
+  }, [publicKey, connection]);
+
+  useEffect(() => {
+    if (!publicKey || !connection) return;
+    fetchUserXPAndRewards();
+  }, [publicKey, connection, fetchUserXPAndRewards]);
+
+  useEffect(() => {
+    const unclaimedRewards = userRewards.filter(
+      (reward) => !reward.claimed
+    ).length;
+    setUnclaimedRewards(unclaimedRewards);
+  }, [userRewards]);
+
   return (
     <AppContext.Provider
       value={{
@@ -185,24 +186,36 @@ const AppProvider = ({ children }: { children: ReactNode }) => {
         setIsSignedIn,
         admin,
         setAdmin,
-        gameData,
-        handleGameData,
-        questions,
-        handleUpdateQuestionData,
-        handleDeleteQuestion,
-        handleAddBlankQuestion,
-        gameCode,
-        setGameCode,
         language,
-        changeLanguage,
+        changeLanguage: (newLang: string) => {
+          if (i18n.isInitialized) {
+            i18n.changeLanguage(newLang);
+          }
+        },
         t,
         currency,
         changeCurrency,
+        userXP,
+        userRewards,
+        fetchUserXPAndRewards,
+        userProfile,
+        level,
+        nextLevelXP,
+        progress,
+        gameHistory,
+        unclaimedRewards,
+        setIsBetaModalOpen,
       }}
     >
-      {children}
+      <CreateGameProvider>
+        <GameContextProvider>{children}</GameContextProvider>
+      </CreateGameProvider>
+      {isBetaModalOpen && (
+        <BetaModal
+          isOpen={isBetaModalOpen}
+          onClose={() => setIsBetaModalOpen(false)}
+        />
+      )}
     </AppContext.Provider>
   );
 };
-
-export default AppProvider;

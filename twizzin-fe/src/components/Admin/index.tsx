@@ -1,85 +1,191 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Column, Row } from '../containers';
+import {
+  Column,
+  InnerScreenContainer,
+  Row,
+  ScreenContainer,
+} from '../containers';
 import { Input } from '../inputs';
 import { Button } from '../buttons/Button';
-import { supabase } from '../../utils/supabaseClient';
-import AddUpdateGame from '../Create/AddUpdateGame';
-import { useAppContext } from '@/contexts/AppContext';
+import { PrimaryText } from '../texts';
+import { useProgram } from '@/contexts/ProgramContext';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import { initializeConfig } from '@/utils';
+import { useAppContext } from '@/contexts';
+import { Header } from '../Header';
+import { getCurrentConfig } from '@/utils';
+
+const { network } = getCurrentConfig();
 
 export const AdminComponent = () => {
-  const { t, isSignedIn, setIsSignedIn, setAdmin } = useAppContext();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const { t } = useAppContext();
+  const { program, isWalletConnected } = useProgram();
+  const wallet = useWallet();
+
+  const [treasuryAddress, setTreasuryAddress] = useState('');
+  const [treasuryFee, setTreasuryFee] = useState('');
   const [isClient, setIsClient] = useState(false);
+  const [isTwizzinAdmin, setIsTwizzinAdmin] = useState(false);
+  const [status, setStatus] = useState<{
+    loading: boolean;
+    error: string | null;
+    signature: string | null;
+  }>({
+    loading: false,
+    error: null,
+    signature: null,
+  });
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  const handleSignIn = async () => {
+  useEffect(() => {
+    const isTwizzinAdmin =
+      wallet.publicKey?.toBase58() ===
+      process.env.NEXT_PUBLIC_PROGRAM_AUTHORITY;
+    setIsTwizzinAdmin(isTwizzinAdmin);
+  }, [wallet.publicKey]);
+
+  const handleInitConfig = async () => {
+    if (!program || !isWalletConnected) {
+      setStatus((prev) => ({
+        ...prev,
+        error: t('Please connect your wallet'),
+      }));
+      return;
+    }
+
+    setStatus({ loading: true, error: null, signature: null });
+
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (error) {
-        alert(
-          t(
-            'You either entered the wrong email or password or you are not an admin'
-          )
-        );
-        return;
+      const response = await initializeConfig(
+        program,
+        wallet,
+        treasuryAddress,
+        treasuryFee
+      );
+
+      if (!response.success) {
+        throw new Error(response.error || t('Failed to initialize config'));
       }
-      setIsSignedIn(true);
-      setAdmin(data.user);
+
+      setStatus({
+        loading: false,
+        error: null,
+        signature: response.signature,
+      });
+
+      // Clear form on success
+      setTreasuryAddress('');
+      setTreasuryFee('');
     } catch (error) {
-      console.error('Unexpected error during sign in:', error);
-      alert(t('An unexpected error occurred. Please try again.'));
+      setStatus({
+        loading: false,
+        error: error instanceof Error ? error.message : t('An error occurred'),
+        signature: null,
+      });
     }
   };
 
   if (!isClient) {
-    // TODO: Add loading indicator
     return null;
   }
 
+  if (!isTwizzinAdmin) {
+    return (
+      <ScreenContainer>
+        <Header />
+        <InnerScreenContainer justify='start' className='mt-[7vh]'>
+          <PrimaryText className='text-center'>
+            {t(
+              'You are not authorized to access this page. You must connect your wallet as the Twizzin Admin'
+            )}
+          </PrimaryText>
+        </InnerScreenContainer>
+      </ScreenContainer>
+    );
+  }
+
   return (
-    <main className='flex min-h-screen flex-col items-center p-12 '>
-      {isSignedIn ? (
-        <AddUpdateGame />
-      ) : (
-        <Column className='w-full gap-8 max-w-[600px] mx-auto'>
-          <p className='text-2xl font-bold'>{t('Twizzin admin sign in')}</p>
-          <Row className='w-full gap-4'>
-            <Input
-              className='flex-grow'
-              type='email'
-              id='email'
-              name='email'
-              placeholder={t('Enter your email')}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              aria-label='Email'
-              required
-            />
-            <Input
-              className='flex-grow'
-              type='password'
-              id='password'
-              name='password'
-              placeholder={t('Enter your password')}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              aria-label='Password'
-              required
-            />
-          </Row>
-          <Column className='w-1/2'>
-            <Button onClick={handleSignIn}>{t('Sign in')}</Button>
+    <ScreenContainer>
+      <Header />
+      <InnerScreenContainer justify='start' className='mt-[7vh]'>
+        <PrimaryText>{t('Initialize Program Config')}</PrimaryText>
+
+        {!isWalletConnected ? (
+          <Column className='items-center gap-4'>
+            <p className='text-amber-600'>
+              {t('Please connect your wallet first')}
+            </p>
+            <WalletMultiButton />
           </Column>
-        </Column>
-      )}
-    </main>
+        ) : (
+          <>
+            <Row className='w-full gap-4'>
+              <Input
+                className='flex-grow'
+                type='text'
+                id='treasuryAddress'
+                name='treasuryAddress'
+                placeholder={t('Enter treasury address')}
+                value={treasuryAddress}
+                onChange={(e) => setTreasuryAddress(e.target.value)}
+                aria-label='Treasury Address'
+                required
+                disabled={status.loading}
+              />
+              <Input
+                className='flex-grow'
+                type='number'
+                id='treasuryFee'
+                name='treasuryFee'
+                placeholder={t('Enter treasury fee (0-10)')}
+                value={treasuryFee}
+                onChange={(e) => setTreasuryFee(e.target.value)}
+                aria-label='Treasury Fee'
+                required
+                min='0'
+                max='10'
+                step='0.1'
+                disabled={status.loading}
+              />
+            </Row>
+            <Column className='w-1/2'>
+              <Button
+                onClick={handleInitConfig}
+                disabled={status.loading || !treasuryAddress || !treasuryFee}
+              >
+                {status.loading ? t('Initializing...') : t('Initialize Config')}
+              </Button>
+            </Column>
+          </>
+        )}
+
+        {status.error && (
+          <div className='p-4 bg-red-100 border border-red-400 rounded text-red-700'>
+            {status.error}
+          </div>
+        )}
+
+        {status.signature && (
+          <div className='p-4 bg-green-100 border border-green-400 rounded'>
+            <p className='text-green-700'>
+              {t('Config initialized successfully!')}
+            </p>
+            <a
+              href={`https://explorer.solana.com/tx/${status.signature}?cluster=${network}`}
+              target='_blank'
+              rel='noopener noreferrer'
+              className='text-sm text-blue-500 hover:underline'
+            >
+              {t('View transaction')}
+            </a>
+          </div>
+        )}
+      </InnerScreenContainer>
+    </ScreenContainer>
   );
 };

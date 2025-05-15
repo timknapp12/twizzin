@@ -17,7 +17,7 @@ pub struct CloseGame<'info> {
         seeds = [b"game", admin.key().as_ref(), game.game_code.as_bytes()],
         bump = game.bump,
         constraint = game.admin == admin.key() @ ErrorCode::InvalidAdmin,
-        constraint = Clock::get()?.unix_timestamp >= game.end_time @ ErrorCode::GameNotEnded,
+        constraint = Clock::get()?.unix_timestamp * 1000 >= game.end_time @ ErrorCode::GameNotEnded,
         close = admin
     )]
     pub game: Account<'info, Game>,

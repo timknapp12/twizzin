@@ -1,10 +1,9 @@
 import React from 'react';
-import { atma } from '@/app/fonts';
 
 interface TextProps {
   children: React.ReactNode;
   className?: string;
-  [key: string]: any; // To allow additional props
+  [key: string]: any;
 }
 
 export const H1 = ({ children, className, ...props }: TextProps) => (
@@ -13,26 +12,8 @@ export const H1 = ({ children, className, ...props }: TextProps) => (
   </span>
 );
 
-export const H1Brand = ({ children, className, ...props }: TextProps) => (
-  <span
-    className={`text-2xl sm:text-3xl md:text-5xl ${atma.className} ${className}`}
-    {...props}
-  >
-    {children}
-  </span>
-);
-
 export const H2 = ({ children, className, ...props }: TextProps) => (
   <span className={`text-xl sm:text-2xl md:text-3xl ${className}`} {...props}>
-    {children}
-  </span>
-);
-
-export const H2Brand = ({ children, className, ...props }: TextProps) => (
-  <span
-    className={`text-xl sm:text-2xl md:text-4xl ${atma.className} ${className}`}
-    {...props}
-  >
     {children}
   </span>
 );
@@ -52,54 +33,50 @@ export const H3Secondary = ({ children, className, ...props }: TextProps) => (
   </span>
 );
 
-export const H3Brand = ({ children, className, ...props }: TextProps) => (
-  <span
-    className={`text-xl sm:text-2xl md:text-4xl ${atma.className} ${className}`}
-    {...props}
-  >
-    {children}
-  </span>
-);
-
 export const H5 = ({ children, className, ...props }: TextProps) => (
   <span className={`text-sm sm:text-base md:text-lg ${className}`} {...props}>
     {children}
   </span>
 );
 
-export const H5Brand = ({ children, className, ...props }: TextProps) => (
-  <span
-    className={`text-sm sm:text-base md:text-xl ${atma.className} ${className}`}
-    {...props}
-  >
-    {children}
-  </span>
-);
-
-export const ButtonText = ({ children, className, ...props }: TextProps) => (
-  <span className={`text-sm sm:text-base md:text-xl ${className}`} {...props}>
+export const H6 = ({ children, className, ...props }: TextProps) => (
+  <span className={`text-xs sm:text-sm md:text-base ${className}`} {...props}>
     {children}
   </span>
 );
 
 export const Label = ({ children, className, ...props }: TextProps) => (
   <label
-    className={`block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300 ${className}`}
+    className={`block mb-1 text-sm font-medium text-secondaryText ${className}`}
     {...props}
   >
     {children}
   </label>
 );
 
-export const LabelSecondary = ({
-  children,
-  className,
-  ...props
-}: TextProps) => (
-  <label
-    className={`block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300 opacity-70 ${className}`}
+export const PrimaryText = ({ children, className, ...props }: TextProps) => (
+  <span
+    className={`text-primaryText text-[16px] md:text-[20px] font-semibold ${className}`}
     {...props}
   >
     {children}
-  </label>
+  </span>
+);
+
+export const SecondaryText = ({ children, className, ...props }: TextProps) => (
+  <span
+    className={`text-secondaryText font-[500] text-[12px] md:text-[14px]  ${className}`}
+    {...props}
+  >
+    {children}
+  </span>
+);
+
+export const DisabledText = ({ children, className, ...props }: TextProps) => (
+  <span
+    className={`text-disabledText font-[500] text-xs  ${className}`}
+    {...props}
+  >
+    {children}
+  </span>
 );

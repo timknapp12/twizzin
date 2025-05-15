@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { LanguageModal } from './modals';
 import { CurrencyModal } from './modals';
-import { useAppContext } from '@/contexts/AppContext';
+import { useAppContext } from '@/contexts';
 
 interface MenuDropdownProps {
   anchorEl: React.RefObject<HTMLElement>;
@@ -63,7 +63,7 @@ export const MenuDropdown: React.FC<MenuDropdownProps> = ({
     <>
       <div
         ref={dropdownRef}
-        className='absolute bg-offWhite dark:bg-lightBlack shadow-lg rounded-md p-4 min-w-[200px]'
+        className='absolute bg-surface dark:bg-lightBlack shadow-lg rounded-md p-4 min-w-[200px]'
         style={{ position: 'absolute' }}
       >
         <ul>

@@ -1,10 +1,14 @@
+use crate::constants::PROGRAM_AUTHORITY;
 use crate::errors::ErrorCode;
 use crate::state::config::ProgramConfig;
 use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
 pub struct InitConfig<'info> {
-    #[account(mut)]
+    #[account(
+        mut,
+        constraint = admin.key() == PROGRAM_AUTHORITY @ ErrorCode::UnauthorizedProgramAuthority
+    )]
     pub admin: Signer<'info>,
 
     #[account(
@@ -20,31 +24,17 @@ pub struct InitConfig<'info> {
 }
 
 impl<'info> InitConfig<'info> {
-    pub fn init_config(
-        &mut self,
-        treasury_pubkey: Pubkey,
-        authority_pubkey: Pubkey,
-        treasury_fee: u16,
-    ) -> Result<()> {
-        // Verify the admin is the expected authority
-        require!(
-            self.admin.key() == authority_pubkey,
-            ErrorCode::InvalidAuthority
-        );
-
+    pub fn init_config(&mut self, treasury_pubkey: Pubkey, treasury_fee: u16) -> Result<()> {
         // 1000 = 10%
         require!(treasury_fee <= 1000, ErrorCode::TreasuryFeeTooHigh);
         require!(
             !treasury_pubkey.eq(&Pubkey::default()),
             ErrorCode::TreasuryAddressBlank
         );
-        require!(
-            !authority_pubkey.eq(&Pubkey::default()),
-            ErrorCode::AuthorityAddressBlank
-        );
+
         self.config.set_inner(ProgramConfig {
             treasury_pubkey,
-            authority_pubkey,
+            authority_pubkey: PROGRAM_AUTHORITY,
             treasury_fee,
         });
         Ok(())

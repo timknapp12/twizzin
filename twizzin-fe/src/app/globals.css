@@ -2,27 +2,56 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Default light theme */
 :root {
-  --foreground-color: theme('colors.light.foreground');
-  --background-color: theme('colors.light.background');
+  --color-primary: theme('themes.light.primary');
+  --color-secondary: theme('themes.light.secondary');
+  --color-background: theme('themes.light.background');
+  --color-primaryText: theme('themes.light.primaryText');
+  --color-surface: theme('themes.light.surface');
+  --color-languageIcon: theme('themes.light.languageIcon');
+  --color-languageIconHover: theme('themes.light.languageIconHover');
+  --color-secondaryText: theme('themes.light.secondaryText');
+  --color-disabledText: theme('themes.light.disabledText');
+  --color-tertiary: theme('themes.light.tertiary');
+  --color-error: theme('themes.light.error');
+  --color-success: theme('themes.light.success');
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-color: theme('colors.dark.foreground');
-    --background-color: theme('colors.dark.background');
+/* System preference dark mode */
+/* @media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --color-primary: theme('themes.dark.primary');
+    --color-secondary: theme('themes.dark.secondary');
+    --color-background: theme('themes.dark.background');
+    --color-primaryText: theme('themes.dark.primaryText');
+    --color-surface: theme('themes.dark.surface');
+    --color-languageIcon: theme('themes.dark.languageIcon');
+    --color-languageIconHover: theme('themes.dark.languageIconHover');
+    --color-secondaryText: theme('themes.dark.secondaryText');
+    --color-disabledText: theme('themes.dark.disabledText');
+    --color-tertiary: theme('themes.dark.tertiary');
   }
+} */
+
+/* Manual dark mode */
+[data-theme='dark'] {
+  --color-primary: theme('themes.dark.primary');
+  --color-secondary: theme('themes.dark.secondary');
+  --color-background: theme('themes.dark.background');
+  --color-primaryText: theme('themes.dark.primaryText');
+  --color-surface: theme('themes.dark.surface');
+  --color-languageIcon: theme('themes.dark.languageIcon');
+  --color-languageIconHover: theme('themes.dark.languageIconHover');
+  --color-secondaryText: theme('themes.dark.secondaryText');
+  --color-disabledText: theme('themes.dark.disabledText');
+  --color-tertiary: theme('themes.dark.tertiary');
 }
 
 body {
-  color: var(--foreground-color);
-  background-color: var(--background-color);
-}
-
-.atma {
-  font-family: 'Atma', system-ui;
-  font-weight: 400;
-  font-style: normal;
+  color: var(--color-primaryText);
+  background-color: var(--color-background);
+  font-family: var(--font-open-runde);
 }
 
 @layer utilities {

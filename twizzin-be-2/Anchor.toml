@@ -4,15 +4,23 @@
 resolution = true
 skip-lint = false
 
+[programs.devnet]
+twizzin_be_2 = "2DH2XB8vip28nv9VmFH6hLJEGk1165xDpDbWkwfWjARB"
+
 [programs.localnet]
-twizzin_be_2 = "35V3AqBVBuUVczUxULiZ7eoXbCwVZcNZAN4otDeD4K2F"
+twizzin_be_2 = "2DH2XB8vip28nv9VmFH6hLJEGk1165xDpDbWkwfWjARB"
+
+[programs.mainnet]
+twizzin_be_2 = "2DH2XB8vip28nv9VmFH6hLJEGk1165xDpDbWkwfWjARB"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "Localnet"
+cluster = "devnet"  # Change to "mainnet-beta" when deploying to mainnet
 wallet = "~/.config/solana/id.json"
 
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+
+# solana balance --url https://api.mainnet-beta.solana.com

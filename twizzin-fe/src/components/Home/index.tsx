@@ -1,32 +1,35 @@
 'use client';
 
+import { useState } from 'react';
 import {
   ScreenContainer,
-  TwizzinLogo,
-  GradientContainer,
-  Column,
-  H3,
-  H3Brand,
+  InnerScreenContainer,
+  Footer,
+  Header,
 } from '@/components';
-import MoreInfo from './MoreInfo';
-import { Landing } from './Landing';
-import { useAppContext } from '@/contexts/AppContext';
-
+import HomeView from './HomeView';
+import RewardsView from './RewardsView';
+import XpView from './XpView';
 export const HomeComponent = () => {
-  const { t } = useAppContext();
+  const [view, setView] = useState<'home' | 'rewards' | 'xp'>('home');
+
+  const onSetView = (view: string) =>
+    setView(view as 'home' | 'rewards' | 'xp');
 
   return (
     <ScreenContainer>
-      <Column className='gap-4 w-full lg:w-1/2 mx-auto'>
-        <GradientContainer>
-          <H3Brand>TWIZZIN</H3Brand>
-          <TwizzinLogo />
-          <H3>Proof of Learn</H3>
-          <H3>{t('The Web3 trivia game built on Solana')}</H3>
-          <Landing />
-        </GradientContainer>
-        <MoreInfo />
-      </Column>
+      <Header />
+      <InnerScreenContainer>
+        <div
+          className='flex-grow flex flex-col items-center w-full'
+          style={{ marginTop: '7vh' }}
+        >
+          {view === 'home' && <HomeView onSetView={onSetView} />}
+          {view === 'rewards' && <RewardsView onSetView={onSetView} />}
+          {view === 'xp' && <XpView onSetView={onSetView} />}
+        </div>
+      </InnerScreenContainer>
+      <Footer />
     </ScreenContainer>
   );
 };

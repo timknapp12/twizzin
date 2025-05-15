@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-declare_id!("35V3AqBVBuUVczUxULiZ7eoXbCwVZcNZAN4otDeD4K2F");
+declare_id!("2DH2XB8vip28nv9VmFH6hLJEGk1165xDpDbWkwfWjARB");
 
 pub mod contexts;
 pub use contexts::*;
@@ -19,11 +19,9 @@ pub mod twizzin_be_2 {
     pub fn init_config(
         ctx: Context<InitConfig>,
         treasury_pubkey: Pubkey,
-        authority_pubkey: Pubkey,
         treasury_fee: u16,
     ) -> Result<()> {
-        ctx.accounts
-            .init_config(treasury_pubkey, authority_pubkey, treasury_fee)
+        ctx.accounts.init_config(treasury_pubkey, treasury_fee)
     }
 
     pub fn update_config(
@@ -95,8 +93,8 @@ pub mod twizzin_be_2 {
         ctx.accounts.join_game(&ctx.bumps)
     }
 
-    pub fn start_game(ctx: Context<StartGame>) -> Result<()> {
-        ctx.accounts.start_game()
+    pub fn start_game(ctx: Context<StartGame>, total_time: i64) -> Result<()> {
+        ctx.accounts.start_game(total_time)
     }
 
     pub fn submit_answers(

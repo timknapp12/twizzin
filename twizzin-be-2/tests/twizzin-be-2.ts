@@ -1,6 +1,7 @@
 import * as anchor from '@coral-xyz/anchor';
 import { Program } from '@coral-xyz/anchor';
 import { TwizzinBe2 } from '../target/types/twizzin_be_2';
+import devWalletJson from '../../twizzin-wallet.json';
 import { initializeProgramConfig } from './initConfig';
 import { updateProgramConfig } from './updateConfig';
 import { initializeGame } from './initGame';
@@ -13,12 +14,18 @@ import { declareWinners } from './declareWinners';
 import { claim } from './claim';
 import { closeGame } from './closeGame';
 import { closePlayerAccount } from './closePlayerAccount';
-import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
+import { LAMPORTS_PER_SOL, PublicKey, Keypair } from '@solana/web3.js';
 
 let configPubkey: PublicKey;
 let treasuryPubkey: PublicKey;
 let authorityPubkey: PublicKey;
 let treasuryFee: number;
+
+const devWalletSecretKey = Uint8Array.from(devWalletJson);
+authorityPubkey = Keypair.fromSecretKey(devWalletSecretKey).publicKey;
+
+// Create authority keypair from wallet JSON
+const authorityKeypair = Keypair.fromSecretKey(Uint8Array.from(devWalletJson));
 
 describe('twizzin-be-2', () => {
   anchor.setProvider(anchor.AnchorProvider.env());
@@ -56,7 +63,12 @@ describe('twizzin-be-2', () => {
   });
 
   it('Initializes the program config', async () => {
-    const result = await initializeProgramConfig(program, provider, confirm);
+    const result = await initializeProgramConfig(
+      program,
+      provider,
+      confirm,
+      authorityKeypair
+    );
     configPubkey = result.configPubkey;
     treasuryPubkey = result.treasuryPubkey;
     authorityPubkey = result.authorityPubkey;
@@ -69,36 +81,45 @@ describe('twizzin-be-2', () => {
       provider,
       confirm,
       configPubkey,
-      treasuryPubkey
+      authorityKeypair
     );
   });
   it('Initializes a game', async () => {
     await initializeGame(program, provider, confirm);
   });
+
   it('Updates a game', async () => {
     await updateGame(program, provider, confirm);
   });
+
   it('Joins a game', async () => {
     await joinGame(program, provider, confirm);
   });
+
   it('Starts a game', async () => {
     await startGame(program, provider, confirm);
   });
+
   it('Submits answers', async () => {
     await submitAnswers(program, provider, confirm);
   });
+
   it('Ends a game', async () => {
     await endGame(program, provider, confirm);
   });
+
   it('Declares winners', async () => {
     await declareWinners(program, provider, confirm);
   });
+
   it('Claims a prize', async () => {
     await claim(program, provider, confirm);
   });
+
   it('Closes a game', async () => {
     await closeGame(program, provider, confirm);
   });
+
   it('Closes a player account', async () => {
     await closePlayerAccount(program, provider, confirm);
   });

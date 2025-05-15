@@ -1,4 +1,4 @@
-import { QuestionForDb, displayOrderMap, GameData } from '@/types';
+import { QuestionForDb, displayOrderMap, CreateGameData } from '@/types';
 import i18next from 'i18next';
 
 const validateQuestions = (questions: QuestionForDb[]): string | null => {
@@ -6,7 +6,7 @@ const validateQuestions = (questions: QuestionForDb[]): string | null => {
     question: QuestionForDb,
     index: number
   ): string | null => {
-    if (!question.question.trim()) {
+    if (!question.questionText.trim()) {
       return i18next.t('Question {{number}} is blank', { number: index + 1 });
     }
     if (!question.answers.some((answer) => answer.isCorrect)) {
@@ -47,7 +47,12 @@ const validateQuestions = (questions: QuestionForDb[]): string | null => {
   return errors.find((error) => error !== null) || null;
 };
 
-const validateGameData = (gameData: GameData): string | null => {
+const validateGameData = (gameData: CreateGameData): string | null => {
+  console.log('username in validateGameData', gameData?.username);
+  if (!gameData.username || gameData.username.trim() === '') {
+    return i18next.t('Username is required');
+  }
+
   if (!gameData.gameName || gameData.gameName.trim() === '') {
     return i18next.t('Game title is required');
   }
@@ -71,7 +76,7 @@ const validateGameData = (gameData: GameData): string | null => {
 };
 
 export const validateGame = (
-  gameData: GameData,
+  gameData: CreateGameData,
   questions: QuestionForDb[]
 ): string | null => {
   // Check game data

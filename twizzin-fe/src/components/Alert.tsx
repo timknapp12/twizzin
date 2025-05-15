@@ -1,4 +1,5 @@
-import React from 'react';
+'use client';
+import React, { useState } from 'react';
 import {
   FaCircleInfo,
   FaTriangleExclamation,
@@ -23,6 +24,9 @@ export const Alert: React.FC<AlertProps> = ({
   onClose,
   className = '',
 }) => {
+  const [isVisible, setIsVisible] = useState(true);
+  const [shouldRender, setShouldRender] = useState(true);
+
   const variantClasses = {
     info: 'bg-blue/10 border-blue text-blue',
     warning: 'bg-yellow/10 border-yellow text-yellow',
@@ -39,27 +43,46 @@ export const Alert: React.FC<AlertProps> = ({
 
   const Icon = variantIcons[variant];
 
+  // animation for closing the alert
+  const handleClose = () => {
+    setIsVisible(false);
+    setTimeout(() => {
+      setShouldRender(false);
+      onClose?.();
+    }, 300);
+  };
+
+  if (!shouldRender) return null;
+
   return (
     <Column
-      className={`w-full border-l-4 p-4 mb-4 ${variantClasses[variant]} ${className}`} // Update this line
+      className={`w-full border-l-8 p-2 mb-2 ${
+        variantClasses[variant]
+      } ${className}
+        transition-all duration-300 ease-in-out
+        ${
+          isVisible ? 'opacity-100' : 'opacity-0 transform translate-y-[-10px]'
+        }`}
       role='alert'
       align='space-between'
     >
       <div className='flex flex-col'>
-        {onClose && (
-          <Row justify='end'>
-            <FaCircleXmark
-              className='h-5 w-5 cursor-pointer'
-              onClick={onClose}
-            />
+        <Row justify='between' className='gap-1'>
+          <Row justify='start' className='gap-1'>
+            <Icon className='h-4 w-4' />
+            {title && <p className='font-semibold'>{title}</p>}
           </Row>
-        )}
-        <Row justify='start' className='gap-2'>
-          <Icon className='h-5 w-5' />
-          {title && <p className='font-semibold'>{title}</p>}
+          {onClose && (
+            <Row justify='end'>
+              <FaCircleXmark
+                className='h-4 w-4 cursor-pointer'
+                onClick={handleClose}
+              />
+            </Row>
+          )}
         </Row>
 
-        <div className='flex-grow mt-2'>
+        <div className='flex-grow mt-1'>
           <div className='text-sm'>{description}</div>
         </div>
       </div>

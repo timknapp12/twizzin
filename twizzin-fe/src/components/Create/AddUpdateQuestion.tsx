@@ -6,15 +6,15 @@ import {
   Input,
   Grid,
   IconButton,
-  H3,
+  PrimaryText,
+  SecondaryText,
 } from '@/components';
 import { QuestionForDb, displayOrderMap } from '@/types';
 import { FaTrashCan, FaPlus } from 'react-icons/fa6';
-import { useAppContext } from '@/contexts/AppContext';
+import { useAppContext, useCreateGameContext } from '@/contexts';
 
 interface AddUpdateQuestionProps {
   questionFromParent: QuestionForDb;
-  setError: (error: string | null) => void;
 }
 
 const getAnswerLetter = (displayOrder: number): string => {
@@ -23,21 +23,19 @@ const getAnswerLetter = (displayOrder: number): string => {
 
 const AddUpdateQuestion: React.FC<AddUpdateQuestionProps> = ({
   questionFromParent,
-  setError,
 }) => {
-  const { t, handleUpdateQuestionData, handleDeleteQuestion, questions } =
-    useAppContext();
+  const { t } = useAppContext();
+  const { handleUpdateQuestionData, handleDeleteQuestion, questions } =
+    useCreateGameContext();
 
   const handleQuestionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setError(null);
     handleUpdateQuestionData({
       ...questionFromParent,
-      question: e.target.value,
+      questionText: e.target.value,
     });
   };
 
   const handleAnswerChange = (displayOrder: number, value: string) => {
-    setError(null);
     handleUpdateQuestionData({
       ...questionFromParent,
       answers: questionFromParent.answers.map((a) =>
@@ -47,7 +45,6 @@ const AddUpdateQuestion: React.FC<AddUpdateQuestionProps> = ({
   };
 
   const handleCorrectAnswerChange = (selectedDisplayOrder: number) => {
-    setError(null);
     handleUpdateQuestionData({
       ...questionFromParent,
       answers: questionFromParent.answers.map((a) => ({
@@ -66,6 +63,7 @@ const AddUpdateQuestion: React.FC<AddUpdateQuestionProps> = ({
         {
           displayOrder: questionFromParent.answers.length,
           answerText: '',
+          displayLetter: getAnswerLetter(questionFromParent.answers.length),
           isCorrect: false,
         },
       ],
@@ -84,7 +82,6 @@ const AddUpdateQuestion: React.FC<AddUpdateQuestionProps> = ({
   };
 
   const handleTimeLimitChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setError(null);
     const value = e.target.value;
     const parsedValue = parseInt(value);
     handleUpdateQuestionData({
@@ -95,19 +92,21 @@ const AddUpdateQuestion: React.FC<AddUpdateQuestionProps> = ({
 
   return (
     <Column
-      className='w-full gap-4 bg-offWhite dark:bg-lightBlack p-4 rounded-lg relative'
+      className='w-full gap-4 bg-surface p-4 rounded-lg relative'
       align='start'
     >
-      <H3>{`${t('Question')}: ${questionFromParent.displayOrder + 1}`}</H3>
+      <PrimaryText>{`${t('Question')}: ${
+        questionFromParent.displayOrder + 1
+      }`}</PrimaryText>
       <TextArea
         label={t('Enter question')}
-        value={questionFromParent.question}
+        value={questionFromParent.questionText}
         onChange={handleQuestionChange}
         placeholder={t('Enter question')}
       />
-      <H3 className='-mb-4 mt-2'>
+      <SecondaryText className='-mb-4 mt-2'>
         {t('Add answers and select the correct one')}
-      </H3>
+      </SecondaryText>
       <Grid min='200px' gapSize='1rem' className='w-full'>
         {questionFromParent.answers.map((answer) => (
           <div key={answer.displayOrder} className='flex items-center'>
@@ -115,7 +114,7 @@ const AddUpdateQuestion: React.FC<AddUpdateQuestionProps> = ({
               type='radio'
               name={`correctAnswer-${questionFromParent.displayOrder}`}
               value={answer.displayOrder}
-              className='flex-shrink-0 mr-2'
+              className='flex-shrink-0 mr-2 accent-primary'
               checked={answer.isCorrect}
               onChange={() => handleCorrectAnswerChange(answer.displayOrder)}
             />
@@ -135,7 +134,7 @@ const AddUpdateQuestion: React.FC<AddUpdateQuestionProps> = ({
                   Icon={FaPlus}
                   onClick={handleAddAnswer}
                   title={t('Add answer')}
-                  className='cursor-pointer text-black dark:text-white'
+                  className='cursor-pointer text-foreground'
                   size={16}
                   disabled={questionFromParent.answers.length >= 10}
                 />

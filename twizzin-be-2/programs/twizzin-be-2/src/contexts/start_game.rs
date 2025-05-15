@@ -18,18 +18,25 @@ pub struct StartGame<'info> {
 }
 
 impl<'info> StartGame<'info> {
-    pub fn start_game(&mut self) -> Result<()> {
+    pub fn start_game(&mut self, total_time: i64) -> Result<()> {
+        // Store the keys before mutating game
+        let game_key = self.game.key();
+        let admin_key = self.admin.key();
+
         let game = &mut self.game;
-        let current_time = Clock::get()?.unix_timestamp;
+        let current_time = Clock::get()?.unix_timestamp * 1000;
 
         // Update the start time to current time
         game.start_time = current_time;
+        // Calculate end time based on total_time
+        game.end_time = current_time + total_time;
 
-        // Emit the game started event
+        // Use the stored keys in the event
         emit!(GameStarted {
-            admin: self.admin.key(),
-            game: self.game.key(),
+            admin: admin_key,
+            game: game_key,
             start_time: current_time,
+            end_time: game.end_time,
         });
 
         Ok(())

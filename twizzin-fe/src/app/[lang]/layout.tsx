@@ -1,25 +1,15 @@
-'use client';
-import React, { useEffect } from 'react';
-import { I18nextProvider } from 'react-i18next';
-import i18n from '../../i18n';
-import WalletContextProvider from '../../contexts/WalletContext';
+import LayoutClient from './LayoutClient';
+import { use } from 'react';
 
-export default function Layout({
-  children,
-  params,
-}: {
+type LayoutProps = {
   children: React.ReactNode;
-  params: Promise<{ lang: string }>;
-}) {
-  const { lang } = React.use(params);
+  params: Promise<{
+    lang: string;
+  }>;
+};
 
-  useEffect(() => {
-    i18n.changeLanguage(lang);
-  }, [lang]);
+export default function Layout({ children, params }: LayoutProps) {
+  const { lang } = use(params);
 
-  return (
-    <I18nextProvider i18n={i18n} defaultNS='common'>
-      <WalletContextProvider>{children}</WalletContextProvider>
-    </I18nextProvider>
-  );
+  return <LayoutClient lang={lang}>{children}</LayoutClient>;
 }

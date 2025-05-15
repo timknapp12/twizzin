@@ -77,7 +77,7 @@ pub struct EndGame<'info> {
 
 impl<'info> EndGame<'info> {
     pub fn end_game(&mut self) -> Result<()> {
-        let current_time = Clock::get()?.unix_timestamp;
+        let current_time = Clock::get()?.unix_timestamp * 1000;
 
         // If ending early, update the end_time to current_time
         if current_time < self.game.end_time {

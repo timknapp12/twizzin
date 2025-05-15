@@ -71,6 +71,7 @@ pub struct GameStarted {
     pub admin: Pubkey,
     pub game: Pubkey,
     pub start_time: i64,
+    pub end_time: i64,
 }
 
 #[event]

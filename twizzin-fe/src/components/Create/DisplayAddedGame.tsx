@@ -1,34 +1,21 @@
 import React from 'react';
-import {
-  Column,
-  Row,
-  Grid,
-  Label,
-  LabelSecondary,
-  H3,
-  Alert,
-  H5,
-  IconButton,
-} from '@/components';
-import { useAppContext } from '@/contexts/AppContext';
-import { GameData, QuestionForDb } from '@/types';
+import { Column, Row, Grid, Label, PrimaryText, H5 } from '@/components';
+import { TbListDetails } from 'react-icons/tb';
+import { FaCircleCheck, FaRegCopy } from 'react-icons/fa6';
+import { useAppContext } from '@/contexts';
+import { CreateGameData, QuestionForDb } from '@/types';
 import { displayOrderMap } from '@/types';
-import { FaPencil, FaCircleCheck } from 'react-icons/fa6';
+import { toast } from 'react-toastify';
 
 interface DisplayAddedGameProps {
-  gameData: GameData;
+  gameData: CreateGameData;
   questions: QuestionForDb[];
-  showGameCode: boolean;
-  setShowGameCode: React.Dispatch<React.SetStateAction<boolean>>;
   setIsEdit: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const DisplayAddedGame: React.FC<DisplayAddedGameProps> = ({
   gameData,
   questions,
-  showGameCode,
-  setShowGameCode,
-  setIsEdit,
 }) => {
   const { t } = useAppContext();
 
@@ -45,96 +32,120 @@ const DisplayAddedGame: React.FC<DisplayAddedGameProps> = ({
     return displayOrderMap[displayOrder as keyof typeof displayOrderMap] || '';
   };
 
-  const onEdit = () => {
-    setShowGameCode(false);
-    setIsEdit(true);
-  };
+  const primaryColor = 'var(--color-primaryText)';
+  const secondaryColor = 'var(--color-secondaryText)';
 
   return (
-    <Column className='w-full h-full flex-grow gap-8' justify='between'>
-      <Column className='w-full gap-2'>
-        <Column className='w-full gap-0'>
-          {showGameCode && (
-            <Alert
-              className='max-w-[500px]'
-              variant='success'
-              title={t('Your game is saved!')}
-              description={`${t('Game Code')}: ${gameData.gameCode} `}
-              onClose={() => setShowGameCode(false)}
-            />
-          )}
-          <Row className='w-full' justify='end'>
-            <IconButton
-              Icon={FaPencil}
-              onClick={onEdit}
-              title={t('Edit')}
-              className='cursor-pointer'
-              size={20}
-            />
-          </Row>
-          <H3>{t('Game Details')}</H3>
-          <Row>
-            <Label className='mr-2 mb-0'>{t('Game Code')}:</Label>
-            <LabelSecondary className='mb-0'>
-              {gameData.gameCode}
-            </LabelSecondary>
-          </Row>
+    <Column className='w-full h-full flex-grow' justify='between'>
+      <Column className='w-full gap-4'>
+        <Column className='w-full'>
+          <Column className='w-full'>
+            <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg  bg-[#FBF9E9] gap-4 w-full max-w-small mx-auto md:text-[14px] active:opacity-80'>
+              <Row className='gap-2'>
+                <TbListDetails size={20} color='var(--color-tertiary)' />
+                <Label style={{ marginBottom: '-2px' }}>
+                  {t('Game Code')}:
+                </Label>
+                <Label style={{ color: primaryColor, marginBottom: '-2px' }}>
+                  {gameData.gameCode}
+                </Label>
+                <FaRegCopy
+                  size={14}
+                  className='cursor-pointer hover:opacity-80 text-secondaryText'
+                  // color='var(--color-tertiary)'
+                  onClick={() => {
+                    navigator.clipboard
+                      .writeText(gameData.gameCode!)
+                      .then(() =>
+                        toast.success(t('Game code copied to clipboard'))
+                      )
+                      .catch(() => toast.error(t('Failed to copy game code')));
+                  }}
+                />
+              </Row>
+            </div>
+          </Column>
         </Column>
         <Grid
           min='400px'
           gapSize='1rem'
-          className='w-full p-4 bg-offWhite dark:bg-lightBlack rounded-lg'
+          className='w-full p-4 bg-surface rounded-lg'
         >
           <Row>
             <Label className='mr-2'>{t('Game Title')}:</Label>
-            <LabelSecondary>{gameData.gameName}</LabelSecondary>
+            <Label style={{ color: primaryColor }}>{gameData.gameName}</Label>
           </Row>
           <Row>
             <Label className='mr-2'>{t('Entry Fee')}:</Label>
-            <LabelSecondary>{gameData.entryFee} SOL</LabelSecondary>
+            <Label style={{ color: primaryColor }}>
+              {gameData.entryFee} SOL
+            </Label>
           </Row>
           <Row>
             <Label className='mr-2'>{t('Commission')}:</Label>
-            <LabelSecondary>{gameData.commission}%</LabelSecondary>
+            <Label style={{ color: primaryColor }}>
+              {gameData.commission}%
+            </Label>
           </Row>
           <Row>
-            <Label className='mr-2'>{t('Admin donation to the pool')}:</Label>
-            <LabelSecondary>{gameData.donation} SOL</LabelSecondary>
+            <Label className='mr-2'>
+              {t('Donation to the pool by game creator')}:
+            </Label>
+            <Label style={{ color: primaryColor }}>
+              {gameData.donation} SOL
+            </Label>
           </Row>
           <Row>
             <Label className='mr-2'>{t('Number of Max Winners')}:</Label>
-            <LabelSecondary>{gameData.maxWinners}</LabelSecondary>
+            <Label style={{ color: primaryColor }}>{gameData.maxWinners}</Label>
           </Row>
           <Row>
             <Label className='mr-2'>{t('Game start time')}:</Label>
-            <LabelSecondary>{formatDate(gameData.startTime)}</LabelSecondary>
+            <Label style={{ color: primaryColor }}>
+              {formatDate(gameData.startTime)}
+            </Label>
+          </Row>
+          <Row className='gap-2'>
+            <Label>{t('Number of questions')}:</Label>
+            <Label style={{ color: primaryColor }}>{questions.length}</Label>
+          </Row>
+          <Row className='gap-2'>
+            <Label>{t('Split')}:</Label>
+            <Label style={{ color: primaryColor }}>
+              {gameData.evenSplit ? 'Evenly split among all winners' : 'Tiered'}
+            </Label>
           </Row>
         </Grid>
-
         <Row justify='end' className='w-full pr-4'>
           <Label className='mr-2'>{t('Total game time in seconds')}:</Label>
-          <LabelSecondary>{totalTime}</LabelSecondary>
+          <Label style={{ color: primaryColor }}>{totalTime}</Label>
         </Row>
 
-        <H3>{t('Questions')}</H3>
+        <PrimaryText>{t('Questions')}</PrimaryText>
         <Column className='w-full gap-6'>
           {questions
             .sort((a, b) => a.displayOrder - b.displayOrder)
             .map((question, index) => (
               <Column
                 key={index}
-                className='w-full gap-4 bg-offWhite dark:bg-lightBlack p-4 rounded-lg'
+                className='w-full gap-4 bg-surface p-4 rounded-lg'
               >
-                <H5>{`${t('Question')} ${question.displayOrder + 1}`}</H5>
-                <LabelSecondary>{question.question}</LabelSecondary>
+                <H5 style={{ color: secondaryColor }}>{`${t('Question')} ${
+                  question.displayOrder + 1
+                }`}</H5>
+                <Label style={{ color: primaryColor }}>
+                  {question.questionText}
+                </Label>
                 <div className='w-11/12 h-[1px] bg-lightPurple my-3 mx-auto' />
-                <H5>{t('Answers')}:</H5>
+                <H5 style={{ color: secondaryColor }}>{t('Answers')}:</H5>
                 {question.answers.map((answer, answerIndex) => (
                   <Row key={answerIndex} className='pl-4 items-center'>
                     <Label className='mr-2'>{`${getAnswerLetter(
                       answer.displayOrder
                     )}:`}</Label>
-                    <LabelSecondary>{answer.answerText}</LabelSecondary>
+                    <Label style={{ color: primaryColor }}>
+                      {answer.answerText}
+                    </Label>
                     {answer.isCorrect && (
                       <FaCircleCheck
                         className='ml-2 mb-1 text-green'
@@ -145,10 +156,10 @@ const DisplayAddedGame: React.FC<DisplayAddedGameProps> = ({
                 ))}
                 <div className='w-11/12 h-[1px] bg-lightPurple my-3 mx-auto' />
                 <Row>
-                  <H5 className='mr-2'>{t('Time Limit')}:</H5>
-                  <LabelSecondary style={{ marginBottom: '0px' }}>
+                  <Label className='mr-2'>{t('Time Limit')}:</Label>
+                  <Label style={{ color: primaryColor }}>
                     {question.timeLimit} {t('seconds')}
-                  </LabelSecondary>
+                  </Label>
                 </Row>
               </Column>
             ))}
