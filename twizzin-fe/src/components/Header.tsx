@@ -2,14 +2,14 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { LanguageIconButton } from './buttons/LanguageIconButton';
-import { WalletButton } from './buttons/WalletButton';
+// import { WalletButton } from './buttons/WalletButton';
 import sol from '../assets/svgs/sol.svg';
 import ukFlag from '../assets/svgs/uk-flag.svg';
 import twizzin from '../assets/svgs/twizzin.svg';
 import twizzinIcon from '../assets/svgs/twizzin-icon.svg';
 import { FaCircleInfo } from 'react-icons/fa6';
 import { useAppContext } from '@/contexts';
-
+import { ParaButton } from './modals';
 export const Header: React.FC = () => {
   const { language, setIsBetaModalOpen } = useAppContext();
 
@@ -45,7 +45,8 @@ export const Header: React.FC = () => {
             disabled
             className='scale-90 md:scale-100'
           />
-          <WalletButton />
+          {/* <WalletButton /> */}
+          <ParaButton />
         </div>
       </header>
       <div
