@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useVerification } from '@/hooks/useVerification';
@@ -70,7 +70,6 @@ export const CreatorGameComponent = () => {
   };
 
   const [activeTab, setActiveTab] = useState(TABS.DETAILS);
-  const [isMounted, setIsMounted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState('');
@@ -80,11 +79,33 @@ export const CreatorGameComponent = () => {
   const [countdown, setCountdown] = useState<string>(
     getRemainingTime(gameData?.start_time || '')
   );
+  const hasLoadedRef = useRef(false);
 
+  // Single effect to handle all game data loading
   useEffect(() => {
     const loadGameData = async () => {
+      console.log('Loading game data', publicKey, isAdmin, contextGameData, gameCode);
       if (!publicKey) {
-        console.log('No public key, skipping game data load');
+        console.log('Skipping game data load - missing public key');
+        setIsLoading(false);
+        return;
+      }
+
+      // If we're not admin, we don't need to load full game data
+      if (!isAdmin) {
+        console.log('Skipping game data load - not admin');
+        setIsLoading(false);
+        return;
+      }
+
+      // If we already have the correct game data, don't reload
+      if (contextGameData?.game_code === gameCode && hasLoadedRef.current) {
+        console.log('Using existing context game data');
+        setGameData(contextGameData);
+        if (contextGameData.questions) {
+          const formattedQuestions = contextGameData.questions.map(transformQuestionFromDbToForDb);
+          setQuestions(formattedQuestions);
+        }
         setIsLoading(false);
         return;
       }
@@ -96,14 +117,20 @@ export const CreatorGameComponent = () => {
           'Please verify your wallet to load game data',
           isVerified
         );
+        
         if (contextGameData) {
           console.log('Received context game data:', contextGameData);
           setGameData(contextGameData);
-          const formattedQuestions = contextGameData.questions.map(transformQuestionFromDbToForDb);
-          console.log('Formatted questions:', formattedQuestions);
-          setQuestions(formattedQuestions);
+          if (contextGameData.questions) {
+            const formattedQuestions = contextGameData.questions.map(transformQuestionFromDbToForDb);
+            setQuestions(formattedQuestions);
+          } else {
+            setQuestions([]);
+          }
+          hasLoadedRef.current = true;
         } else {
           console.log('No context game data received');
+          setQuestions([]);
         }
       } catch (err) {
         console.error('Error loading game:', err);
@@ -114,7 +141,12 @@ export const CreatorGameComponent = () => {
     };
 
     loadGameData();
-  }, [gameCode, publicKey, getGameByCode, t, withVerification, isVerified, contextGameData]);
+  }, [gameCode, publicKey, isAdmin, contextGameData, getGameByCode, t, withVerification, isVerified]);
+
+  // Reset the loaded ref when game code changes
+  useEffect(() => {
+    hasLoadedRef.current = false;
+  }, [gameCode]);
 
   useEffect(() => {
     if (!gameData?.start_time) return;
@@ -123,10 +155,6 @@ export const CreatorGameComponent = () => {
     }, 1000);
     return () => clearInterval(timer);
   }, [gameData?.start_time]);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   const formatGameDataForForm = useCallback((dbGameData: JoinFullGame) => {
     return {
@@ -192,36 +220,6 @@ export const CreatorGameComponent = () => {
     setActiveTab(TABS.DETAILS);
   }, [fetchFreshGameData, TABS.DETAILS]);
 
-  useEffect(() => {
-    if (!gameCode || !isMounted || !isAdmin) {
-      console.log('Skipping game data fetch - conditions not met:', { gameCode, isMounted, isAdmin });
-      return;
-    }
-    console.log('Fetching game data on mount');
-    const fetchGameData = async () => {
-      try {
-        if (contextGameData && contextGameData.game_code === gameCode) {
-          console.log('Using existing context game data');
-          setGameData(contextGameData);
-          const formattedQuestions = contextGameData.questions.map(transformQuestionFromDbToForDb);
-          console.log('Formatted questions from context:', formattedQuestions);
-          setQuestions(formattedQuestions);
-        } else {
-          console.log('Fetching fresh game data');
-          await fetchFreshGameData();
-        }
-      } catch (err) {
-        console.error('Error fetching game data:', err);
-        setError(
-          err instanceof Error ? err.message : t('Failed to load game data')
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchGameData();
-  }, [gameCode, isMounted, isAdmin, contextGameData, fetchFreshGameData, t]);
-
   const getVisibleTabs = () => {
     const tabs = [TABS.DETAILS];
     if (gameState !== GameState.ENDED && gameData?.status !== 'ended') {
@@ -280,7 +278,7 @@ export const CreatorGameComponent = () => {
     return <CreatorOnly gameCode={gameCode} />;
   }
 
-  if (!isMounted || isLoading || !gameData) return <MainSkeleton />;
+  if (!isLoading || !gameData) return <MainSkeleton />;
   if (error) return <ErrorDisplay message={error} />;
 
   return (
