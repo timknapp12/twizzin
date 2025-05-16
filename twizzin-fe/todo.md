@@ -37,6 +37,7 @@ Before DEMO:
   // TODO - The event listener for starting a game didn't work
   // TODO - game code doesn't reset
   // TODO - submitting answers failed for all of us on Aileen's game - index out of range - screen shot
+  // TODO - show game image for admin screen
 
 - update join time for player game
 - handle page reloads during game
