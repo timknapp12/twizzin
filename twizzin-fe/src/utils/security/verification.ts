@@ -8,6 +8,18 @@ export const generateSecureToken = () => {
     .join('');
 };
 
+export const generateVerificationMessage = (publicKey: string, nonce: string) => {
+  const domain = 'twizzin.app';
+  const version = '1';
+  const timestamp = Date.now();
+  const randomBytes = crypto.getRandomValues(new Uint8Array(16));
+  const entropy = Array.from(randomBytes)
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+    
+  return `${domain}\nVersion: ${version}\nWallet: ${publicKey}\nNonce: ${nonce}\nTimestamp: ${timestamp}\nEntropy: ${entropy}`;
+};
+
 export const getDeviceFingerprint = () => {
   const fingerprint = {
     userAgent: navigator.userAgent,
@@ -18,8 +30,89 @@ export const getDeviceFingerprint = () => {
     deviceMemory: (navigator as any).deviceMemory,
     hardwareConcurrency: navigator.hardwareConcurrency,
     platform: navigator.platform,
+    // Add more entropy
+    canvas: getCanvasFingerprint(),
+    audio: getAudioFingerprint(),
+    fonts: getFontFingerprint(),
   };
   return btoa(JSON.stringify(fingerprint));
+};
+
+// Add canvas fingerprinting for additional entropy
+const getCanvasFingerprint = () => {
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return '';
+  
+  canvas.width = 200;
+  canvas.height = 200;
+  
+  // Draw some shapes
+  ctx.fillStyle = 'rgb(255, 255, 255)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = 'rgb(0, 0, 0)';
+  ctx.font = '18px Arial';
+  ctx.fillText('Twizzin', 10, 50);
+  
+  return canvas.toDataURL();
+};
+
+// Add audio fingerprinting
+const getAudioFingerprint = () => {
+  try {
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const analyser = audioContext.createAnalyser();
+    return analyser.fftSize.toString();
+  } catch {
+    return '';
+  }
+};
+
+// Add font fingerprinting
+const getFontFingerprint = () => {
+  const baseFonts = ['monospace', 'sans-serif', 'serif'];
+  const fontList = [
+    'Arial', 'Verdana', 'Times New Roman', 'Courier New',
+    'Georgia', 'Palatino', 'Garamond', 'Bookman', 'Comic Sans MS',
+    'Trebuchet MS', 'Arial Black', 'Impact'
+  ];
+  
+  const testString = 'mmmmmmmmmmlli';
+  const testSize = '72px';
+  const h = document.getElementsByTagName('body')[0];
+  
+  const s = document.createElement('span');
+  s.style.fontSize = testSize;
+  s.innerHTML = testString;
+  const defaultWidth: { [key: string]: number } = {};
+  const defaultHeight: { [key: string]: number } = {};
+  
+  for (const baseFont of baseFonts) {
+    s.style.fontFamily = baseFont;
+    h.appendChild(s);
+    defaultWidth[baseFont] = s.offsetWidth;
+    defaultHeight[baseFont] = s.offsetHeight;
+    h.removeChild(s);
+  }
+  
+  const detected: string[] = [];
+  for (const font of fontList) {
+    let match = false;
+    for (const baseFont of baseFonts) {
+      s.style.fontFamily = `${font},${baseFont}`;
+      h.appendChild(s);
+      const matched = (s.offsetWidth !== defaultWidth[baseFont] ||
+                      s.offsetHeight !== defaultHeight[baseFont]);
+      h.removeChild(s);
+      if (matched) {
+        match = true;
+        break;
+      }
+    }
+    if (match) detected.push(font);
+  }
+  
+  return detected.join(',');
 };
 
 export const checkIPRateLimit = async (ip: string) => {
@@ -31,18 +124,14 @@ export const checkIPRateLimit = async (ip: string) => {
       .gte('attempt_time', new Date(Date.now() - 3600000).toISOString());
 
     if (error) {
-      console.warn('Rate limit check failed:', error);
-      return true;
+      console.error('Rate limit check failed:', error);
+      return false; // Fail closed on error
     }
     
-    if (!data) {
-      return true;
-    }
-    
-    return data.length < 20; 
+    return data.length < 20;
   } catch (error) {
     console.error('Error checking IP rate limit:', error);
-    return true; 
+    return false; // Fail closed on error
   }
 };
 
@@ -68,7 +157,7 @@ export const checkSuspiciousLocation = async (walletAddress: string, newLocation
   try {
     const { data: previousLocations } = await supabase
       .from('wallet_verifications')
-      .select('geolocation')
+      .select('geolocation, verified_at')
       .eq('wallet_address', walletAddress)
       .order('verified_at', { ascending: false })
       .limit(1)
@@ -77,6 +166,7 @@ export const checkSuspiciousLocation = async (walletAddress: string, newLocation
     if (!previousLocations?.geolocation) return false;
 
     const prev = previousLocations.geolocation;
+    const timeDiff = Date.now() - new Date(previousLocations.verified_at).getTime();
     const distance = calculateDistance(
       prev.latitude,
       prev.longitude,
@@ -84,8 +174,13 @@ export const checkSuspiciousLocation = async (walletAddress: string, newLocation
       newLocation.longitude
     );
 
-    // If distance is more than 1000km and time difference is less than 24 hours
-    return distance > 1000;
+    // Calculate velocity in km/h
+    const velocity = (distance / (timeDiff / (1000 * 60 * 60)));
+    
+    // Suspicious if:
+    // 1. Distance > 1000km AND time < 24h
+    // 2. Velocity > 1000 km/h (typical commercial aircraft speed)
+    return (distance > 1000 && timeDiff < 24 * 60 * 60 * 1000) || velocity > 1000;
   } catch (error) {
     console.error('Error checking suspicious location:', error);
     return true; // Err on the side of caution

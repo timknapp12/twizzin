@@ -220,6 +220,8 @@ export interface PartialGame {
   img_url: string | null;
   question_count: number;
   username: string | null;
+  game_pubkey: string;
+  status: string;
 }
 
 export interface GameContextType {
@@ -283,6 +285,7 @@ export interface JoinFullGame {
   questions: QuestionFromDb[];
   status: string | 'not_started';
   username: string | null;
+  game_pubkey: string;
 }
 
 export interface QuestionFromDb {

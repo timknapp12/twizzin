@@ -171,10 +171,22 @@ export const getGameSession = (gameCode: string): StoredGameSession | null => {
 
   try {
     const data = localStorage.getItem(GAME_SESSION_KEY);
+    console.log('Getting game session:', {
+      gameCode,
+      hasData: !!data,
+      data: data ? JSON.parse(data) : null
+    });
     if (!data) return null;
 
     const session: StoredGameSession = JSON.parse(data);
-    return session.gameCode === gameCode ? session : null;
+    const result = session.gameCode === gameCode ? session : null;
+    console.log('Session result:', {
+      hasSession: !!result,
+      gameCode: result?.gameCode,
+      hasAnswers: result ? Object.keys(result.answers).length : 0,
+      submitted: result?.submitted
+    });
+    return result;
   } catch (error) {
     console.error('Error getting game session:', error);
     return null;
@@ -191,6 +203,12 @@ export const initializeGameSession = (
   }
 
   try {
+    console.log('Initializing game session:', {
+      gameCode,
+      gamePubkey,
+      hasExistingSession: !!getGameSession(gameCode)
+    });
+
     const existingSession = getGameSession(gameCode);
     const session: StoredGameSession = existingSession || {
       gameCode,
@@ -207,6 +225,12 @@ export const initializeGameSession = (
     }
 
     localStorage.setItem(GAME_SESSION_KEY, JSON.stringify(session));
+    console.log('Session initialized:', {
+      gameCode: session.gameCode,
+      gamePubkey: session.gamePubkey,
+      hasAnswers: Object.keys(session.answers).length,
+      submitted: session.submitted
+    });
     return session;
   } catch (error) {
     console.error('Error initializing game session:', error);

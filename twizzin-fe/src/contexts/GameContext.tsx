@@ -7,6 +7,7 @@ import React, {
   ReactNode,
   useEffect,
   useCallback,
+  useRef,
 } from 'react';
 import {
   GameContextType,
@@ -64,7 +65,7 @@ export const useGameContext = () => {
 
 export const GameContextProvider = ({ children }: { children: ReactNode }) => {
   const { t, fetchUserXPAndRewards, userProfile } = useAppContext();
-  const { withVerification } = useVerification();
+  const { withVerification, isVerified } = useVerification();
   const [username, setUsername] = useState('');
   const [gameCode, setGameCode] = useState('');
   const [partialGameData, setPartialGameData] = useState<PartialGame | null>(
@@ -79,6 +80,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
   const [canEndGame, setCanEndGame] = useState(false);
   const [isLoadingResults, setIsLoadingResults] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const loadingRef = useRef(false);
   // New state for game state management
   const [gameState, setGameStateInternal] = useState<GameState>(
     GameState.BROWSING
@@ -97,26 +99,78 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
 
   // Load game session when game code changes
   useEffect(() => {
-    if (gameCode) {
-      const session = getGameSession(gameCode);
-      setGameSession(session);
+    console.log('Game code changed, checking session:', {
+      gameCode,
+      hasPublicKey: !!publicKey,
+      isAdmin,
+      hasPartialData: !!partialGameData
+    });
 
-      // Restore game state from localStorage if available
+    if (gameCode) {
+      // First check if we have a saved state
       const savedState = getGameState(gameCode);
+      console.log('Retrieved game state:', {
+        hasSavedState: !!savedState,
+        state: savedState?.state,
+        timestamp: savedState?.timestamp
+      });
+
+      // Then check for a saved session
+      const session = getGameSession(gameCode);
+      console.log('Retrieved game session:', {
+        hasSession: !!session,
+        gameCode: session?.gameCode,
+        hasAnswers: session ? Object.keys(session.answers).length : 0,
+        submitted: session?.submitted
+      });
+
+      // If we have a saved state, restore it first
       if (savedState) {
         setGameStateInternal(savedState.state);
+      }
+
+      // If we have a session, restore it
+      if (session) {
+        setGameSession(session);
+      }
+
+      // If we have partial game data, we can proceed with loading
+      if (partialGameData) {
+        // If the game is active and we have a saved state, we're good
+        if (partialGameData.status === 'active' && savedState?.state === GameState.ACTIVE) {
+          return;
+        }
+
+        // If we're an admin and have a saved state, we're good
+        if (isAdmin && savedState?.state === GameState.JOINED) {
+          return;
+        }
+
+        // Otherwise, we need to load the game data
+        getGameByCode(gameCode).catch(error => {
+          console.error('Error loading game data:', error);
+          setLoadError('Failed to load game data. Please try refreshing the page.');
+        });
       } else {
-        // If no saved state but there's a game code, we're at least in JOINING state
-        setGameStateInternal(GameState.JOINING);
+        // If we don't have partial data, we need to load it
+        getGameByCode(gameCode).catch(error => {
+          console.error('Error loading game data:', error);
+          setLoadError('Failed to load game data. Please try refreshing the page.');
+        });
       }
     } else {
+      console.log('No game code, setting to BROWSING');
       setGameStateInternal(GameState.BROWSING);
+      setGameSession(null);
     }
-  }, [gameCode]);
+  }, [gameCode, partialGameData, isAdmin, publicKey]);
 
   // State transition validation
   const canTransitionTo = useCallback(
     (targetState: GameState): boolean => {
+      // Allow same-state transitions
+      if (targetState === gameState) return true;
+
       // Define valid state transitions
       const validTransitions: Record<GameState, GameState[]> = {
         [GameState.BROWSING]: [GameState.JOINING],
@@ -153,67 +207,263 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
 
   // useEffect handles isAdmin state based on wallet changes
   useEffect(() => {
+    console.log('Admin state effect triggered:', {
+      hasPublicKey: !!publicKey,
+      hasPartialData: !!partialGameData,
+      currentAdminState: isAdmin
+    });
+
     if (publicKey && partialGameData) {
       const isGameAdmin = Boolean(
         publicKey.toBase58() === partialGameData.admin_wallet
       );
+      console.log('Setting admin state:', {
+        isGameAdmin,
+        adminWallet: partialGameData.admin_wallet,
+        currentWallet: publicKey.toBase58(),
+        hasPartialData: true,
+        previousAdminState: isAdmin
+      });
       setIsAdmin(isGameAdmin);
     } else {
+      console.log('Resetting admin state:', {
+        hasPublicKey: !!publicKey,
+        hasPartialData: !!partialGameData,
+        previousAdminState: isAdmin
+      });
       setIsAdmin(false);
     }
   }, [publicKey, partialGameData]);
 
   const getGameByCode = async (code: string): Promise<Boolean> => {
+    console.log('getGameByCode called:', {
+      code,
+      isVerified,
+      hasPublicKey: !!publicKey,
+      hasPartialData: !!partialGameData,
+      currentAdminState: isAdmin
+    });
+
+    // Prevent multiple simultaneous loads
+    if (loadingRef.current) {
+      console.log('Game data loading already in progress, skipping...');
+      return false;
+    }
+
+    loadingRef.current = true;
     try {
+      // First, ensure we have a verified wallet
+      if (!isVerified) {
+        console.log('Wallet not verified, attempting to verify...');
+        const game = await getPartialGameFromDb(code, withVerification);
+        if (!game) {
+          console.error('Failed to verify wallet');
+          loadingRef.current = false;
+          return false;
+        }
+        console.log('Setting partial game data from verification:', {
+          gameCode: game.game_code,
+          adminWallet: game.admin_wallet
+        });
+        setPartialGameData(game);
+      }
+
+      // Now get the game data with verification
       const game = await withVerification(
         () => getPartialGameFromDb(code, withVerification),
         'Please verify your wallet to view game details'
       );
       
-      if (!game) return false;
+      if (!game) {
+        console.error('No game data returned');
+        loadingRef.current = false;
+        return false;
+      }
       
+      console.log('Game data loaded:', {
+        gameCode: game.game_code,
+        adminWallet: game.admin_wallet,
+        currentWallet: publicKey?.toBase58(),
+        hasPublicKey: !!publicKey,
+        gamePubkey: game.game_pubkey,
+        status: game.status
+      });
+      
+      // Set partial game data immediately
+      console.log('Setting partial game data:', {
+        gameCode: game.game_code,
+        adminWallet: game.admin_wallet
+      });
       setPartialGameData(game);
       setGameCode(game.game_code);
+      
+      // Verify on-chain state if we have a game pubkey
+      if (game.game_pubkey && program) {
+        try {
+          // Validate the game_pubkey format - Solana public keys are base58 encoded and can be up to 88 characters
+          if (!game.game_pubkey.match(/^[1-9A-HJ-NP-Za-km-z]{32,88}$/)) {
+            console.error('Invalid game_pubkey format:', game.game_pubkey);
+            loadingRef.current = false;
+            return false;
+          }
+
+          const gamePda = new PublicKey(game.game_pubkey);
+          // @ts-ignore
+          const gameAccount = await program.account.game.fetch(gamePda);
+          console.log('On-chain game state:', {
+            gamePubkey: game.game_pubkey,
+            status: gameAccount.status,
+            admin: gameAccount.admin.toString(),
+            gameCode: gameAccount.gameCode
+          });
+
+          // Verify the on-chain state matches our database state
+          if (gameAccount.admin.toString() !== game.admin_wallet) {
+            console.error('On-chain admin does not match database admin');
+            loadingRef.current = false;
+            return false;
+          }
+        } catch (err) {
+          console.error('Error fetching on-chain game state:', err);
+          // Don't fail the entire load if on-chain fetch fails
+          console.log('Continuing without on-chain verification');
+        }
+      }
 
       // Check if current user is admin for this game
-      const isGameAdmin = Boolean(
-        publicKey && publicKey.toBase58() === game.admin_wallet
-      );
+      if (!publicKey) {
+        console.log('No public key available for admin check');
+        setIsAdmin(false);
+        loadingRef.current = false;
+        return false;
+      }
+
+      const isGameAdmin = publicKey.toBase58() === game.admin_wallet;
+      console.log('Admin check result:', {
+        isGameAdmin,
+        adminWallet: game.admin_wallet,
+        currentWallet: publicKey.toBase58(),
+        gamePubkey: game.game_pubkey,
+        previousAdminState: isAdmin
+      });
       setIsAdmin(isGameAdmin);
 
       // If admin, get the full game data right away
       if (isGameAdmin) {
+        console.log('Loading full game data for admin');
         const fullGame = await withVerification(
           () => getGameFromDb(game.game_code, withVerification),
           'Please verify your wallet to view full game details'
         );
         if (fullGame) {
+          console.log('Setting full game data:', {
+            gameCode: fullGame.game_code,
+            adminWallet: fullGame.admin_wallet,
+            hasQuestions: !!fullGame.questions,
+            status: fullGame.status
+          });
+          
+          // Set the full game data first
           setGameData(fullGame);
-          setGameStateInternal(GameState.JOINED);
+          
+          // Initialize game session if it doesn't exist and we have a program
+          if (!gameSession && program) {
+            const { gamePda } = deriveGamePDAs(
+              program,
+              new PublicKey(game.admin_wallet),
+              game.game_code
+            );
+            const newSession = initializeGameSession(
+              game.game_code,
+              gamePda.toString()
+            );
+            setGameSession(newSession);
+          }
+
+          // Check current state before transitioning
+          const currentState = getGameState(fullGame.game_code);
+          const targetState = fullGame.status === 'active' ? GameState.ACTIVE : GameState.JOINED;
+
+          // Only update state if it's different from current state
+          if (!currentState || currentState.state !== targetState) {
+            if (targetState === GameState.ACTIVE) {
+              setGameStateWithMetadata(GameState.ACTIVE, {
+                gameId: fullGame.id,
+                startTime: new Date(fullGame.start_time).getTime(),
+                endTime: new Date(fullGame.end_time).getTime(),
+                isAdmin: true,
+                joinedAt: Date.now()
+              });
+            } else {
+              setGameStateWithMetadata(GameState.JOINED, {
+                gameId: fullGame.id,
+                isAdmin: true,
+                joinedAt: Date.now()
+              });
+            }
+            setGameStateInternal(targetState);
+          }
+          loadingRef.current = false;
           return true;
         }
       }
 
       // For regular players, check if game is already active
       if (game.status === 'active') {
-        // If game is active, set state to ACTIVE instead of JOINING
-        setGameStateWithMetadata(GameState.ACTIVE, { gameId: game.id });
-        return false;
+        // If game is active, get the full game data first
+        const fullGame = await withVerification(
+          () => getGameFromDb(game.game_code, withVerification),
+          'Please verify your wallet to view game details'
+        );
+
+        if (fullGame) {
+          // Set the full game data
+          setGameData(fullGame);
+
+          // Initialize game session if it doesn't exist and we have a program
+          if (!gameSession && program) {
+            const { gamePda } = deriveGamePDAs(
+              program,
+              new PublicKey(game.admin_wallet),
+              game.game_code
+            );
+            const newSession = initializeGameSession(
+              game.game_code,
+              gamePda.toString()
+            );
+            setGameSession(newSession);
+          }
+
+          // Check current state before transitioning
+          const currentState = getGameState(fullGame.game_code);
+          if (!currentState || currentState.state !== GameState.ACTIVE) {
+            // Set state to ACTIVE with proper metadata
+            setGameStateWithMetadata(GameState.ACTIVE, {
+              gameId: game.id,
+              startTime: new Date(fullGame.start_time).getTime(),
+              endTime: new Date(fullGame.end_time).getTime(),
+              joinedActiveGame: true,
+              joinedAt: Date.now()
+            });
+            setGameStateInternal(GameState.ACTIVE);
+          }
+        }
+        loadingRef.current = false;
+        return true;
       }
 
       // For regular players joining a non-active game
       const savedState = getGameState(game.game_code);
       if (savedState && savedState.state === GameState.JOINED) {
-        setGameStateWithMetadata(GameState.JOINED, {
-          gameId: game.id,
-          ...savedState.metadata,
-        });
+        setGameStateWithMetadata(GameState.JOINED, { gameId: game.id, ...savedState.metadata });
       } else {
         setGameStateWithMetadata(GameState.JOINING, { gameId: game.id });
       }
-      return false;
+      loadingRef.current = false;
+      return true;
     } catch (error) {
       console.error('Error fetching game:', error);
+      loadingRef.current = false;
       throw error;
     }
   };
@@ -250,6 +500,8 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
                   partialGameData.game_code,
                   withVerification
                 );
+
+                // Update game data first
                 setGameData({
                   ...fullGameData,
                   start_time: new Date(actualStartTime).toISOString(),
@@ -257,12 +509,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
                   status: 'active',
                 });
 
-                setGameStateInternal(GameState.ACTIVE);
-                setGameStateWithMetadata(GameState.ACTIVE, {
-                  startTime: actualStartTime,
-                  endTime: actualEndTime,
-                });
-
+                // Initialize game session if it doesn't exist
                 if (!gameSession) {
                   const newSession = initializeGameSession(
                     partialGameData.game_code,
@@ -270,6 +517,17 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
                   );
                   setGameSession(newSession);
                 }
+
+                // Update game state last to ensure all data is ready
+                setGameStateWithMetadata(GameState.ACTIVE, {
+                  startTime: actualStartTime,
+                  endTime: actualEndTime,
+                  startedByEvent: true,
+                  startedAt: Date.now(),
+                });
+
+                // Force a re-render by updating a state
+                setGameStateInternal(GameState.ACTIVE);
               } catch (error) {
                 console.error('Error fetching full game data:', error);
               }
@@ -295,17 +553,13 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
   }, [program, connection, partialGameData]);
 
   const handleJoinGame = async (): Promise<string | null> => {
-    if (!program) throw new Error(t('Please connect your wallet'));
+    if (!program) throw new Error(t('Program not initialized'));
+    if (!partialGameData) throw new Error('Game data not found');
     if (!publicKey) throw new Error(t('Please connect your wallet'));
     if (!sendTransaction)
       throw new Error(t('Wallet adapter not properly initialized'));
     if (!username) throw new Error(t('Username is required'));
-    // Fetch partialGameData if not already set
-    if (!partialGameData && gameCode) {
-      await getGameByCode(gameCode);
-    }
 
-    if (!partialGameData) throw new Error('Game data not found');
     try {
       const { gamePda } = deriveGamePDAs(
         program,
@@ -365,7 +619,8 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
         connection,
         publicKey,
         sendTransaction,
-        params
+        params,
+        withVerification
       );
 
       // Update game state to JOINED after successful join
@@ -413,19 +668,43 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
       );
 
       if (result.success) {
+        // Update game data first
         setGameData((prevGameData) => {
           if (prevGameData) {
-            return { ...prevGameData, status: 'active' };
+            return { 
+              ...prevGameData, 
+              status: 'active',
+              start_time: new Date().toISOString(),
+              end_time: new Date(Date.now() + totalTimeMs).toISOString()
+            };
           }
           return prevGameData;
         });
-        // Update game state to ACTIVE
+
+        // Initialize game session if it doesn't exist
+        if (!gameSession) {
+          const { gamePda } = deriveGamePDAs(
+            program,
+            new PublicKey(partialGameData.admin_wallet),
+            partialGameData.game_code
+          );
+          const newSession = initializeGameSession(
+            partialGameData.game_code,
+            gamePda.toString()
+          );
+          setGameSession(newSession);
+        }
+
+        // Update game state last to ensure all data is ready
         setGameStateWithMetadata(GameState.ACTIVE, {
-          startTime: new Date(gameData.start_time).getTime(),
-          endTime: new Date(gameData.end_time).getTime(),
+          startTime: Date.now(),
+          endTime: Date.now() + totalTimeMs,
           startedByAdmin: true,
           startedAt: Date.now(),
         });
+
+        // Force a re-render by updating a state
+        setGameStateInternal(GameState.ACTIVE);
       } else {
         console.error('Failed to start game:', result.error);
         throw new Error(t('Failed to start game'));

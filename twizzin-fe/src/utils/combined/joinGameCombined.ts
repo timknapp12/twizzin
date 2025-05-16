@@ -6,6 +6,8 @@ import { getGameFromDb } from '../supabase/getGameFromDb';
 import { recordPlayerJoinGame } from '../supabase/playerJoinGame';
 import { JoinGameParams } from '@/types';
 
+type VerificationFunction = <T>(operation: () => Promise<T>, errorMessage?: string) => Promise<T | null>;
+
 export const joinGameCombined = async (
   program: Program<TwizzinIdl>,
   connection: Connection,
@@ -16,7 +18,8 @@ export const joinGameCombined = async (
     // eslint-disable-next-line no-unused-vars
     connection: Connection
   ) => Promise<string>,
-  params: JoinGameParams
+  params: JoinGameParams,
+  withVerification: VerificationFunction
 ) => {
   try {
     // First join the game on-chain
@@ -34,7 +37,7 @@ export const joinGameCombined = async (
 
     if (success) {
       // Get the game from the database
-      const game = await getGameFromDb(params.gameCode);
+      const game = await getGameFromDb(params.gameCode, withVerification);
 
       if (!game) {
         throw new Error('Game not found in database');
@@ -44,6 +47,7 @@ export const joinGameCombined = async (
       await recordPlayerJoinGame(
         game.id,
         publicKey.toString(),
+        withVerification,
         params.username
       );
 

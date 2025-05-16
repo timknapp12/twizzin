@@ -8,6 +8,7 @@ import { TwizzinIdl } from '@/types/idl';
 import { generateMerkleRoot } from '../merkle/generateMerkleRoot';
 import { supabase } from '../supabase/supabaseClient';
 import { getAnchorTimestamp, getSupabaseTimestamp } from '../helpers';
+import { deriveGamePDAs } from '../program/pdas';
 
 type VerificationFunction = <T>(operation: () => Promise<T>, errorMessage?: string) => Promise<T | null>;
 
@@ -105,10 +106,11 @@ export const createGameCombined = async (
 
     // 5. Update database with on-chain info
     console.log('Step 5: Updating database with on-chain information...');
+    const { gamePda } = deriveGamePDAs(program, publicKey, gameCode);
     await supabase
       .from('games')
       .update({
-        game_pubkey: onChainResult.signature,
+        game_pubkey: gamePda.toString(),
         answer_merkle_root: answerHash,
       })
       .eq('id', dbResult.game.id);

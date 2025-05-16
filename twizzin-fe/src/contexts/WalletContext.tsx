@@ -38,6 +38,7 @@ interface WalletContextType {
   sessionToken: string | null;
   isLoading: boolean;
   error: string | null;
+  refreshSession: () => Promise<void>;
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
@@ -59,6 +60,7 @@ const WalletConnectionHandler: FC<{ children: React.ReactNode }> = ({ children }
   const [error, setError] = useState<string | null>(null);
   const MAX_ATTEMPTS = 10;
   const VERIFICATION_TIMEOUT = 30000;
+  const SESSION_REFRESH_INTERVAL = 1000 * 60 * 30; // 30 minutes
 
   const withVerification = useCallback(function withVerification<T>(
     operation: () => Promise<T>,
@@ -71,6 +73,53 @@ const WalletConnectionHandler: FC<{ children: React.ReactNode }> = ({ children }
     }
     return operation();
   }, [isVerified]);
+
+  const refreshSession = useCallback(async () => {
+    if (!publicKey || !sessionToken) return;
+
+    try {
+      const { data: session, error: sessionError } = await supabase
+        .from('sessions')
+        .select('*')
+        .eq('session_token', sessionToken)
+        .single();
+
+      if (sessionError || !session) {
+        throw new Error('Session not found');
+      }
+
+      const now = new Date();
+      const expiresAt = new Date(session.expires_at);
+      
+      if (expiresAt.getTime() - now.getTime() < 5 * 60 * 1000) {
+        const newSessionToken = await createSession(publicKey.toString());
+        setSessionToken(newSessionToken);
+      }
+    } catch (error) {
+      console.error('Failed to refresh session:', error);
+      setIsVerified(false);
+      setSessionToken(null);
+    }
+  }, [publicKey, sessionToken]);
+
+  useEffect(() => {
+    if (!isVerified || !sessionToken) return;
+
+    const intervalId = setInterval(refreshSession, SESSION_REFRESH_INTERVAL);
+    return () => clearInterval(intervalId);
+  }, [isVerified, sessionToken, refreshSession]);
+
+  const handleError = useCallback((error: unknown, context: string) => {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error(`Error in ${context}:`, error);
+    setError(`${context}: ${errorMessage}`);
+    
+    if (errorMessage.includes('Invalid signature') || 
+        errorMessage.includes('Session not found')) {
+      setIsVerified(false);
+      setSessionToken(null);
+    }
+  }, []);
 
   useEffect(() => {
     setIsVerified(false);
@@ -88,16 +137,21 @@ const WalletConnectionHandler: FC<{ children: React.ReactNode }> = ({ children }
       if (!publicKey) return;
 
       try {
+        setIsLoading(true);
+        setError(null);
+
         timeoutId = setTimeout(() => {
-          if (isMounted) {
-            setError('Verification timeout');
-            setIsLoading(false);
-          }
-          throw new Error('Verification timeout');
+          handleError(new Error('Verification timeout'), 'Verification');
+          setIsLoading(false);
         }, VERIFICATION_TIMEOUT);
 
         const ipResponse = await fetch('https://api.ipify.org?format=json');
         const { ip } = await ipResponse.json();
+
+        const isRateLimited = await checkIPRateLimit(ip);
+        if (!isRateLimited) {
+          throw new Error('Too many verification attempts. Please try again later.');
+        }
 
         const { data: attemptData, error: attemptError } = await supabase
           .from('verification_attempts')
@@ -115,11 +169,6 @@ const WalletConnectionHandler: FC<{ children: React.ReactNode }> = ({ children }
         }
         const attemptId = attemptData?.id;
 
-        const isRateLimited = await checkIPRateLimit(ip);
-        if (!isRateLimited) {
-          throw new Error('Too many verification attempts. Please try again later.');
-        }
-
         const recentlyVerified = await checkRecentVerification(publicKey.toString());
         if (recentlyVerified) {
           setIsVerified(true);
@@ -134,112 +183,65 @@ const WalletConnectionHandler: FC<{ children: React.ReactNode }> = ({ children }
           const isSuspicious = await checkSuspiciousLocation(publicKey.toString(), geolocation);
           if (isSuspicious) {
             console.warn('Suspicious location change detected:', geolocation);
+            await supabase.from('suspicious_activities').insert({
+              wallet_address: publicKey.toString(),
+              activity_type: 'suspicious_location',
+              details: geolocation,
+              ip_address: ip
+            });
           }
         }
 
         const nonce = generateNonce();
-        const timestamp = new Date().toISOString();
-        const message = `Verify wallet ownership for Twizzin:\nWallet: ${publicKey.toString()}\nNonce: ${nonce}\nTimestamp: ${timestamp}`;
-        
+        const message = generateVerificationMessage(publicKey.toString(), nonce);
         const encodedMessage = new TextEncoder().encode(message);
         const signature = await signMessage?.(encodedMessage);
         
-        if (signature) {
-          const isValid = await verifySignature(message, signature, publicKey.toString());
-          if (!isValid) {
-            throw new Error('Invalid signature');
-          }
-
-          setIsVerified(true);
-          await new Promise(resolve => setTimeout(resolve, 0));
-
-          try {
-            const { error: storeError } = await supabase
-              .from('wallet_verifications')
-              .insert({
-                wallet_address: publicKey.toString(),
-                nonce,
-                signature: Buffer.from(signature).toString('base64'),
-                verified_at: new Date().toISOString(),
-                ip_address: await fetch('https://api.ipify.org?format=json').then(r => r.json()).then(data => data.ip),
-                geolocation,
-                device_fingerprint: getDeviceFingerprint(),
-              });
-
-            if (storeError) {
-              throw storeError;
-            }
-          } catch (error) {
-            throw error;
-          }
-          
-          try {
-            const newSessionToken = await createSession(publicKey.toString());
-            setSessionToken(newSessionToken);
-          } catch (error) {
-            throw error;
-          }
-          
-          try {
-            const player = await ensurePlayerExists(
-              publicKey.toBase58(),
-              withVerification,
-              undefined,
-              true
-            );
-            if (!player) {
-              throw new Error('Failed to create player');
-            }
-          } catch (error) {
-            throw error;
-          }
-          
-          let retries = 0;
-          const maxRetries = 5;
-          while (retries < maxRetries) {
-            try {
-              const { data: playerData, error: playerError } = await supabase
-                .from('players')
-                .select('*')
-                .eq('wallet_address', publicKey.toBase58())
-                .single();
-              
-              if (playerData) {
-                break;
-              }
-              
-              await new Promise(resolve => setTimeout(resolve, 1000));
-              retries++;
-            } catch (error) {
-              retries++;
-            }
-          }
-
-          if (retries === maxRetries) {
-            throw new Error('Player creation verification failed');
-          }
-
-          try {
-            await supabase
-              .from('verification_attempts')
-              .update({ success: true })
-              .eq('id', attemptId);
-          } catch (error) {
-            // Ignore error updating attempt status
-          }
-
-          return true;
+        if (!signature) {
+          throw new Error('Failed to get signature');
         }
+
+        const isValid = await verifySignature(message, signature, publicKey.toString());
+        if (!isValid) {
+          throw new Error('Invalid signature');
+        }
+
+        await supabase.from('wallet_verifications').insert({
+          wallet_address: publicKey.toString(),
+          nonce,
+          signature: Buffer.from(signature).toString('base64'),
+          verified_at: new Date().toISOString(),
+          ip_address: ip,
+          geolocation,
+          device_fingerprint: getDeviceFingerprint(),
+        });
+
+        const newSessionToken = await createSession(publicKey.toString());
+        setSessionToken(newSessionToken);
+        setIsVerified(true);
+
+        if (attemptId) {
+          await supabase.from('verification_attempts').update({ success: true }).eq('id', attemptId);
+        }
+
+        const player = await ensurePlayerExists(
+          publicKey.toBase58(),
+          withVerification,
+          undefined,
+          true
+        );
+        
+        if (!player) {
+          throw new Error('Failed to create player');
+        }
+
+        clearTimeout(timeoutId);
       } catch (error) {
-        if (isMounted) {
-          setError(error instanceof Error ? error.message : 'Verification failed');
-          setVerificationAttempts(prev => prev + 1);
-        }
+        handleError(error, 'Verification');
+        setVerificationAttempts(prev => prev + 1);
       } finally {
-        if (isMounted) {
-          clearTimeout(timeoutId);
-          setIsLoading(false);
-        }
+        clearTimeout(timeoutId);
+        setIsLoading(false);
       }
     };
 
@@ -249,7 +251,6 @@ const WalletConnectionHandler: FC<{ children: React.ReactNode }> = ({ children }
 
     return () => {
       isMounted = false;
-      clearTimeout(timeoutId);
     };
   }, [
     publicKey,
@@ -258,12 +259,18 @@ const WalletConnectionHandler: FC<{ children: React.ReactNode }> = ({ children }
     MAX_ATTEMPTS,
     VERIFICATION_TIMEOUT,
     signMessage,
-    withVerification
+    withVerification,
+    handleError
   ]);
 
   const generateNonce = () => {
     return Math.random().toString(36).substring(2, 15) + 
            Math.random().toString(36).substring(2, 15);
+  };
+
+  const generateVerificationMessage = (walletAddress: string, nonce: string) => {
+    const timestamp = new Date().toISOString();
+    return `Verify wallet ownership for Twizzin:\nWallet: ${walletAddress}\nNonce: ${nonce}\nTimestamp: ${timestamp}`;
   };
 
   const checkRecentVerification = async (walletAddress: string) => {
@@ -300,6 +307,7 @@ const WalletConnectionHandler: FC<{ children: React.ReactNode }> = ({ children }
         sessionToken,
         isLoading,
         error,
+        refreshSession
       }}
     >
       {children}

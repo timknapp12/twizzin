@@ -50,7 +50,6 @@ export const recordPlayerJoinGame = async (
             player_wallet: playerWallet,
             game_id: gameId,
             join_time: joinTime,
-            username: username,
             // Initialize other fields with defaults
             num_correct: 0,
             rewards_earned: 0,
@@ -98,7 +97,7 @@ const ensurePlayerExists = async (
       const { data: existingPlayer } = await supabase
         .from('players')
         .select()
-        .eq('player_wallet', playerWallet)
+        .eq('wallet_address', playerWallet)
         .single();
 
       if (existingPlayer) {
@@ -108,7 +107,7 @@ const ensurePlayerExists = async (
           const { data: updatedPlayer, error: updateError } = await supabase
             .from('players')
             .update({ username })
-            .eq('player_wallet', playerWallet)
+            .eq('wallet_address', playerWallet)
             .select()
             .single();
 
@@ -120,8 +119,8 @@ const ensurePlayerExists = async (
       }
 
       // If player doesn't exist, create them with the username if provided
-      const playerData: { player_wallet: string; username?: string } = {
-        player_wallet: playerWallet,
+      const playerData: { wallet_address: string; username?: string } = {
+        wallet_address: playerWallet,
       };
 
       // Add username to player data if provided

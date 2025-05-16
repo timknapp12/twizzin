@@ -80,46 +80,162 @@ export const CreatorGameComponent = () => {
     getRemainingTime(gameData?.start_time || '')
   );
   const hasLoadedRef = useRef(false);
+  const loadingRef = useRef(false);
 
   // Single effect to handle all game data loading
   useEffect(() => {
+    let isMounted = true;
+    let debounceTimer: NodeJS.Timeout | undefined;
+
     const loadGameData = async () => {
-      console.log('Loading game data', publicKey, isAdmin, contextGameData, gameCode);
-      if (!publicKey) {
-        console.log('Skipping game data load - missing public key');
-        setIsLoading(false);
+      if (!isMounted) return;
+
+      console.log('loadGameData called:', {
+        hasPublicKey: !!publicKey,
+        isAdmin,
+        hasGameData: !!contextGameData,
+        gameCode,
+        isVerified,
+        hasPartialData: !!partialGameData,
+        hasLoadedRef: hasLoadedRef.current,
+        isLoading: loadingRef.current
+      });
+
+      // Prevent multiple simultaneous loads
+      if (loadingRef.current) {
+        console.log('Loading already in progress, skipping...');
         return;
       }
 
-      // If we're not admin, we don't need to load full game data
-      if (!isAdmin) {
-        console.log('Skipping game data load - not admin');
-        setIsLoading(false);
-        return;
-      }
-
-      // If we already have the correct game data, don't reload
-      if (contextGameData?.game_code === gameCode && hasLoadedRef.current) {
-        console.log('Using existing context game data');
-        setGameData(contextGameData);
-        if (contextGameData.questions) {
-          const formattedQuestions = contextGameData.questions.map(transformQuestionFromDbToForDb);
-          setQuestions(formattedQuestions);
-        }
-        setIsLoading(false);
-        return;
-      }
+      loadingRef.current = true;
+      console.log('Loading game data', {
+        publicKey: publicKey?.toBase58(),
+        isAdmin,
+        hasGameData: !!contextGameData,
+        gameCode,
+        isVerified,
+        hasPartialData: !!partialGameData
+      });
 
       try {
+        if (!publicKey) {
+          console.log('Skipping game data load - missing public key');
+          setIsLoading(false);
+          loadingRef.current = false;
+          return;
+        }
+
+        if (!isVerified) {
+          console.log('Waiting for wallet verification...');
+          loadingRef.current = false;
+          return;
+        }
+
+        // If we already have the correct game data, don't reload
+        if (contextGameData?.game_code === gameCode && hasLoadedRef.current) {
+          console.log('Using existing context game data:', {
+            gameCode: contextGameData.game_code,
+            adminWallet: contextGameData.admin_wallet,
+            hasQuestions: !!contextGameData.questions
+          });
+          setGameData(contextGameData);
+          if (contextGameData.questions) {
+            const formattedQuestions = contextGameData.questions.map(transformQuestionFromDbToForDb);
+            setQuestions(formattedQuestions);
+          }
+          setIsLoading(false);
+          loadingRef.current = false;
+          return;
+        }
+
+        // Always load partial game data first
+        if (!partialGameData) {
+          console.log('Loading partial game data...');
+          try {
+            const success = await getGameByCode(gameCode);
+            console.log('getGameByCode result:', {
+              success,
+              hasPartialData: !!partialGameData,
+              isAdmin
+            });
+            if (!success) {
+              console.error('Failed to load game data');
+              setError(t('Failed to load game data'));
+              setIsLoading(false);
+              loadingRef.current = false;
+              return;
+            }
+            // Wait for partialGameData to be set
+            await new Promise(resolve => setTimeout(resolve, 100));
+          } catch (err) {
+            console.error('Error loading partialGameData:', err);
+            setError(err instanceof Error ? err.message : t('Failed to load game data'));
+            setIsLoading(false);
+            loadingRef.current = false;
+            return;
+          }
+        }
+
+        // Wait for partialGameData to be set
+        if (!partialGameData) {
+          console.log('Still waiting for partialGameData to be set:', {
+            hasPublicKey: !!publicKey,
+            isAdmin,
+            hasGameData: !!contextGameData,
+            gameCode,
+            isVerified
+          });
+          loadingRef.current = false;
+          return;
+        }
+
+        // Verify admin status with loaded partialGameData
+        const isGameAdmin = Boolean(
+          publicKey.toBase58() === partialGameData.admin_wallet
+        );
+        console.log('Admin check:', {
+          publicKey: publicKey.toBase58(),
+          adminWallet: partialGameData.admin_wallet,
+          isGameAdmin,
+          hasPartialData: true,
+          gamePubkey: partialGameData.game_pubkey,
+          contextIsAdmin: isAdmin
+        });
+
+        // If we're not admin, we don't need to load full game data
+        if (!isGameAdmin) {
+          console.log('Skipping game data load - not admin');
+          setIsLoading(false);
+          loadingRef.current = false;
+          return;
+        }
+
         console.log('Fetching game data for code:', gameCode);
-        await withVerification(
+        const success = await withVerification(
           () => getGameByCode(gameCode),
           'Please verify your wallet to load game data',
           isVerified
         );
         
+        if (!success) {
+          console.error('Failed to load game data with verification');
+          setError(t('Failed to load game data'));
+          setIsLoading(false);
+          loadingRef.current = false;
+          return;
+        }
+        
+        // Wait for contextGameData to be set
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
         if (contextGameData) {
-          console.log('Received context game data:', contextGameData);
+          console.log('Received context game data:', {
+            ...contextGameData,
+            gamePubkey: contextGameData.game_pubkey,
+            adminWallet: contextGameData.admin_wallet,
+            status: contextGameData.status,
+            hasQuestions: !!contextGameData.questions
+          });
           setGameData(contextGameData);
           if (contextGameData.questions) {
             const formattedQuestions = contextGameData.questions.map(transformQuestionFromDbToForDb);
@@ -136,16 +252,36 @@ export const CreatorGameComponent = () => {
         console.error('Error loading game:', err);
         setError(err instanceof Error ? err.message : t('Failed to load game'));
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+          loadingRef.current = false;
+        }
       }
     };
 
-    loadGameData();
-  }, [gameCode, publicKey, isAdmin, contextGameData, getGameByCode, t, withVerification, isVerified]);
+    // Clear any existing timer
+    if (debounceTimer) {
+      clearTimeout(debounceTimer);
+    }
+
+    // Set a new timer with a longer debounce
+    debounceTimer = setTimeout(() => {
+      loadGameData();
+    }, 300);
+
+    return () => {
+      isMounted = false;
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+      }
+    };
+  }, [gameCode, publicKey, isAdmin, contextGameData, getGameByCode, t, withVerification, isVerified, partialGameData]);
 
   // Reset the loaded ref when game code changes
   useEffect(() => {
     hasLoadedRef.current = false;
+    setIsLoading(true);
+    loadingRef.current = false;
   }, [gameCode]);
 
   useEffect(() => {
