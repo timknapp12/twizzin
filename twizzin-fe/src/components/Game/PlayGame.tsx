@@ -95,7 +95,7 @@ const PlayGame = ({ goToResults = () => {} }: PlayGameProps) => {
         t('Time has expired. Please review and submit your answers.')
       );
     }
-  }, [isTimeExpired, isAdmin, t, gameState]);
+  }, [isTimeExpired, isAdmin, t, gameState, bufferTimeRemaining]);
 
   // Timer effect - only handles checking time and setting isTimeExpired
   useEffect(() => {
