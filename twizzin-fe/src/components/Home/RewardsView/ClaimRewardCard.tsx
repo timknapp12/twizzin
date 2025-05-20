@@ -18,7 +18,6 @@ const ClaimRewardCard = ({ reward }: { reward: GameReward }) => {
   const { program } = useProgram();
   const { connection } = useConnection();
   const { publicKey, sendTransaction } = useWallet();
-  console.log('reward', reward);
 
   const [loading, setLoading] = useState(false);
 
