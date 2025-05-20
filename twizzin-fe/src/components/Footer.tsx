@@ -28,7 +28,7 @@ export const Footer = () => {
         </a>
       </Row>
       <Row className='gap-1'>
-        <DisabledText>© {t('2024 Twizzin. All rights reserved.')}</DisabledText>
+        <DisabledText>© {t('2025 Twizzin. All rights reserved.')}</DisabledText>
         <Link
           href='/privacy-policy'
           className='underline decoration-secondaryText flex items-center'
