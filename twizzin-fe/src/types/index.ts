@@ -1,6 +1,7 @@
 import { GameState } from '@/utils';
 import { PublicKey } from '@solana/web3.js';
 import { TFunction } from 'i18next';
+import { BN } from '@coral-xyz/anchor';
 
 export * from './dbTypes';
 
@@ -358,7 +359,7 @@ export interface SubmitAnswersParams {
   admin: PublicKey;
   gameCode: string;
   answers: AnswerInput[];
-  clientFinishTime: number;
+  clientFinishTime: BN;
 }
 
 export interface GameSession {
