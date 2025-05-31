@@ -6,3 +6,4 @@ export * from './xp';
 export * from './getUserProfile';
 export * from './getGameResults';
 export * from './addClaimedToDb';
+export * from './fetchGamePlayers';

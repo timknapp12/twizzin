@@ -1,5 +1,3 @@
-Before DEMO:
-
 // TODO - getGameByCode on game results after game has ended - doesn't get the full game - loadCompleteResults in gameContext should be called in PlayerGameResults or its parent
 // TODO going to a new game still has old game results - it didn't refresh
 refactor after MVP:
@@ -16,6 +14,8 @@ refactor after MVP:
 // TODO - display all games for users so they can find their games again
 
 // TODO send link (not just game code)
+
+// TODO - create privacy policy and cookie policy
 
 - update join time for player game
 - handle page reloads during game

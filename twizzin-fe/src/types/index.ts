@@ -2,6 +2,7 @@ import { GameState } from '@/utils';
 import { PublicKey } from '@solana/web3.js';
 import { TFunction } from 'i18next';
 import { BN } from '@coral-xyz/anchor';
+import { GamePlayer } from '@/utils/supabase/fetchGamePlayers';
 
 export * from './dbTypes';
 
@@ -253,6 +254,7 @@ export interface GameContextType {
   canTransitionTo: (targetState: GameState) => boolean;
   gameSession: StoredGameSession | null;
   setGameSession: (session: StoredGameSession | null) => void;
+  currentPlayers: GamePlayer[];
 }
 
 export interface JoinGameParams {
