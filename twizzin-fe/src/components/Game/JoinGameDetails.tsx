@@ -17,6 +17,8 @@ import {
   GameState,
 } from '@/utils';
 import { toast } from 'react-toastify';
+import { FaUsers } from 'react-icons/fa6';
+import { JoinedPlayersModal } from '@/components/modals';
 
 const { network } = getCurrentConfig();
 
@@ -33,6 +35,7 @@ const JoinGameDetails = ({
     isAdmin,
     handleStartGame,
     gameState,
+    currentPlayers,
   } = useGameContext();
 
   const {
@@ -60,6 +63,8 @@ const JoinGameDetails = ({
   const [countdown, setCountdown] = useState<string>(
     getRemainingTime(start_time)
   );
+  const [isJoinedPlayersModalOpen, setIsJoinedPlayersModalOpen] =
+    useState(false);
 
   // Check if user has joined the game
   const hasJoinedGame = gameState === GameState.JOINED;
@@ -141,8 +146,14 @@ const JoinGameDetails = ({
   const shortAdminWallet =
     admin_wallet?.slice(0, 4) + '...' + admin_wallet?.slice(-4);
 
+  const getBadgeSize = (count: number) => {
+    if (count >= 100) return 'min-w-[24px] min-h-[24px] w-6 h-6';
+    if (count >= 10) return 'min-w-[20px] min-h-[20px] w-5 h-5';
+    return 'min-w-[16px] min-h-[16px] w-4 h-4';
+  };
+
   return (
-    <Column className='gap-4 w-full h-full flex-1 mt-2' justify='between'>
+    <Column className='w-full h-full flex-1 mt-2' justify='between'>
       <Column className='gap-4 w-full'>
         {hasJoinedGame ? (
           <div className='flex px-[10px] py-[6px] md:px-[14px] md:py-[10px] justify-center items-center self-stretch rounded-lg  bg-[#af9aec] gap-4 w-full max-w-small mx-auto  text-[14px] active:opacity-80'>
@@ -182,7 +193,7 @@ const JoinGameDetails = ({
             />
           </div>
         )}
-        <Column className='gap-2 w-full p-4 rounded-lg shadow-xl bg-surface'>
+        <Column className='gap-2 w-full p-4 rounded-lg shadow-sm bg-surface'>
           <Row className='gap-2'>
             <Label>{t('Game Title')}:</Label>
             <Label style={{ color: primaryColor }}>{game_name}</Label>
@@ -240,6 +251,27 @@ const JoinGameDetails = ({
           </Row>
         </Column>
       </Column>
+
+      <div className='flex justify-start w-full py-4'>
+        <div
+          className='relative inline-block cursor-pointer'
+          onClick={() => setIsJoinedPlayersModalOpen(true)}
+        >
+          <FaUsers
+            size={20}
+            title={t('View players')}
+            className='cursor-pointer opacity-60 hover:opacity-80'
+          />
+          <div
+            className={`absolute -top-2 -right-2 bg-primary text-white text-xs rounded-full flex items-center justify-center font-semibold ${getBadgeSize(
+              currentPlayers.length
+            )}`}
+          >
+            {currentPlayers.length}
+          </div>
+        </div>
+      </div>
+
       <Column className='gap-4 w-full'>
         {!isAdmin && !hasJoinedGame && (
           <Input
@@ -266,6 +298,11 @@ const JoinGameDetails = ({
           </Button>
         )}
       </Column>
+
+      <JoinedPlayersModal
+        isOpen={isJoinedPlayersModalOpen}
+        onClose={() => setIsJoinedPlayersModalOpen(false)}
+      />
     </Column>
   );
 };

@@ -275,7 +275,7 @@ const AddUpdateGame: React.FC<AddUpdateGameProps> = ({
             value={gameData.username}
             onChange={handleInputChange}
             placeholder={t('Your username')}
-            label={t('Your username')}
+            label={`${t('Your username')}*`}
           />
           <Input
             type='text'
@@ -283,7 +283,7 @@ const AddUpdateGame: React.FC<AddUpdateGameProps> = ({
             value={gameData.gameName}
             onChange={handleInputChange}
             placeholder={t('Game Title')}
-            label={t('Game Title')}
+            label={`${t('Game Title')}*`}
           />
           <Input
             type='number'
@@ -343,7 +343,7 @@ const AddUpdateGame: React.FC<AddUpdateGameProps> = ({
             value={gameData.maxWinners}
             onChange={handleInputChange}
             placeholder={t('Number of Max Winners')}
-            label={t('Number of Max Winners')}
+            label={`${t('Number of Max Winners')}*`}
             min={1}
             callout={
               <Callout
@@ -356,7 +356,7 @@ const AddUpdateGame: React.FC<AddUpdateGameProps> = ({
           />
           <Column className='w-full' align='start'>
             <Row className='gap-2 items-center w-full justify-between'>
-              <Label>{t('Game start time')}</Label>
+              <Label>{`${t('Game start time')}*`}</Label>
               <Callout
                 content={t(
                   `This will help players know when to join the game but it won't start until you manually start it`

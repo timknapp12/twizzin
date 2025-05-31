@@ -92,6 +92,20 @@ export const submitAnswersCombined = async ({
     const { answers: verifiedAnswers, numCorrect } =
       await verifyAndPrepareAnswers(formattedSession, questions);
 
+    // Verify answers because of the out of index error
+    console.log(
+      'Verified answers being sent to Solana:',
+      JSON.stringify(verifiedAnswers, null, 2)
+    );
+    // Verify answers because of the out of index error
+    verifiedAnswers.forEach((a, i) => {
+      if (!Array.isArray(a.proof)) {
+        throw new Error(
+          `Answer at index ${i} has invalid proof: ${JSON.stringify(a.proof)}`
+        );
+      }
+    });
+
     // Mark the session as submitted
     const submittedSession = markSessionSubmitted(gameData.game_code);
     if (submittedSession) {

@@ -30,6 +30,7 @@ import PlayGame from '@/components/Game/PlayGame';
 import PlayerGameResults from '@/components/Game/PlayerGameResults';
 import Link from 'next/link';
 import { MainSkeleton } from '@/components/MainSkeleton';
+import PlayersList from './PlayersList';
 
 export const CreatorGameComponent = () => {
   const params = useParams();
@@ -459,16 +460,5 @@ const ErrorDisplay = ({ message }: { message: string }) => {
         </div>
       </InnerScreenContainer>
     </ScreenContainer>
-  );
-};
-
-const PlayersList = ({ gameCode }: { gameCode: string }) => {
-  console.log('gameCode', gameCode);
-  // This would fetch and display players who have joined the game
-  return (
-    <Column className='w-full p-4'>
-      <h2 className='text-xl mb-4'>Players</h2>
-      <div className='text-center'>Player management coming soon</div>
-    </Column>
   );
 };
