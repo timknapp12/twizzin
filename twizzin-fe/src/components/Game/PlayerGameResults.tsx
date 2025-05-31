@@ -343,7 +343,7 @@ const PlayerGameResults = () => {
                           )}...${winner.wallet.slice(-4)})`}
                           {winner.wallet === publicKey?.toString() && (
                             <span className='ml-2 text-primary'>
-                              {t('(You)')}
+                              {`(${t('You')})`}
                             </span>
                           )}
                         </Label>
@@ -395,7 +395,7 @@ const PlayerGameResults = () => {
                             )}...${player.wallet.slice(-4)})`}
                             {player.wallet === publicKey?.toString() && (
                               <span className='ml-2 text-primary'>
-                                {t('(You)')}
+                                {`(${t('You')})`}
                               </span>
                             )}
                           </Label>
