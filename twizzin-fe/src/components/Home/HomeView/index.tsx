@@ -19,7 +19,7 @@ import { useGameContext } from '@/contexts';
 const items: CarouselItem[] = [
   {
     title: 'Welcome to Twizzin',
-    description: `Twizzin lets you create interactive trivia games that embrace the 'Learn to Earn' model, making learning in Web3 fun and rewarding..`,
+    description: `Twizzin lets you create interactive trivia games that embrace the 'Learn to Earn' model, making learning in Web3 fun and rewarding.`,
     image: art1.src,
     order: 0,
   },
