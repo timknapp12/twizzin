@@ -42,6 +42,9 @@ import {
   GameState,
   getGameState,
   setGameState,
+  fetchGamePlayers,
+  fetchPlayerData,
+  GamePlayer,
 } from '@/utils';
 import { useAppContext, useProgram } from '.';
 import { PublicKey } from '@solana/web3.js';
@@ -81,6 +84,11 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
   const [gameState, setGameStateInternal] = useState<GameState>(
     GameState.BROWSING
   );
+  const [currentPlayers, setCurrentPlayers] = useState<GamePlayer[]>([]);
+
+  if (currentPlayers.length > 0) {
+    console.log('currentPlayers', currentPlayers);
+  }
 
   const { program } = useProgram();
   const { connection } = useConnection();
@@ -110,6 +118,22 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
     } else {
       setGameStateInternal(GameState.BROWSING);
     }
+  }, [gameCode]);
+
+  // Add useEffect for fetching players when game code changes
+  useEffect(() => {
+    if (!gameCode) return;
+
+    const loadPlayers = async () => {
+      try {
+        const players = await fetchGamePlayers(gameCode);
+        setCurrentPlayers(players);
+      } catch (error) {
+        console.error('Error loading game players:', error);
+      }
+    };
+
+    loadPlayers();
   }, [gameCode]);
 
   // State transition validation
@@ -200,6 +224,9 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
 
   // Add event listener cleanup ref
   const eventListenerRef = React.useRef<number | null>(null);
+  const winnersDeclaredEventListenerRef = React.useRef<number | null>(null);
+  const playerJoinedEventListenerRef = React.useRef<number | null>(null);
+  const subscriptionRef = React.useRef(null);
 
   // Setup game start event listener for all users
   useEffect(() => {
@@ -271,6 +298,65 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [program, connection, partialGameData]);
+
+  // Setup player joined event listener
+  useEffect(() => {
+    if (!program || !connection || !partialGameData) return;
+
+    const setupPlayerJoinedListener = async () => {
+      try {
+        const { gamePda } = deriveGamePDAs(
+          program,
+          new PublicKey(partialGameData.admin_wallet),
+          partialGameData.game_code
+        );
+
+        // Remove existing listener if it exists
+        if (playerJoinedEventListenerRef.current !== null) {
+          await program.removeEventListener(
+            playerJoinedEventListenerRef.current
+          );
+        }
+
+        const listener = program.addEventListener(
+          'playerJoined',
+          async (event: {
+            game: PublicKey;
+            player: PublicKey;
+            joinTime: BN;
+          }) => {
+            if (event.game.toString() === gamePda.toString()) {
+              try {
+                const playerData = await fetchPlayerData(
+                  partialGameData.id,
+                  event.player.toString()
+                );
+
+                if (playerData) {
+                  setCurrentPlayers((prev) => [...prev, playerData]);
+                }
+              } catch (error) {
+                console.error('Error handling player joined event:', error);
+              }
+            }
+          }
+        );
+
+        playerJoinedEventListenerRef.current = listener;
+      } catch (error) {
+        console.error('Error setting up player joined listener:', error);
+      }
+    };
+
+    setupPlayerJoinedListener();
+
+    return () => {
+      if (playerJoinedEventListenerRef.current !== null && program) {
+        program.removeEventListener(playerJoinedEventListenerRef.current);
+        playerJoinedEventListenerRef.current = null;
+      }
+    };
   }, [program, connection, partialGameData]);
 
   const handleJoinGame = async (): Promise<string | null> => {
@@ -680,8 +766,6 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // Event Listener for game end
-  const winnersDeclaredEventListenerRef = React.useRef<number | null>(null);
-  const subscriptionRef = React.useRef(null);
   useEffect(() => {
     // Validate all required dependencies are properly initialized
     if (
@@ -950,6 +1034,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
         canTransitionTo,
         gameSession,
         setGameSession,
+        currentPlayers,
       }}
     >
       {children}
