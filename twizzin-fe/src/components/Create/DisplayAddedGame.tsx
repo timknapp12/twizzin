@@ -1,11 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Column, Row, Grid, Label, PrimaryText, H5 } from '@/components';
 import { TbListDetails } from 'react-icons/tb';
-import { FaCircleCheck, FaRegCopy } from 'react-icons/fa6';
+import { FaCircleCheck, FaRegCopy, FaUsers } from 'react-icons/fa6';
 import { useAppContext } from '@/contexts';
 import { CreateGameData, QuestionForDb } from '@/types';
 import { displayOrderMap } from '@/types';
 import { toast } from 'react-toastify';
+import { JoinedPlayersModal } from '@/components/modals';
+import { useGameContext } from '../../contexts/GameContext';
 
 interface DisplayAddedGameProps {
   gameData: CreateGameData;
@@ -18,6 +20,9 @@ const DisplayAddedGame: React.FC<DisplayAddedGameProps> = ({
   questions,
 }) => {
   const { t } = useAppContext();
+  const [isJoinedPlayersModalOpen, setIsJoinedPlayersModalOpen] =
+    useState(false);
+  const { currentPlayers } = useGameContext();
 
   const totalTime = questions.reduce(
     (acc, question) => acc + question.timeLimit,
@@ -34,6 +39,12 @@ const DisplayAddedGame: React.FC<DisplayAddedGameProps> = ({
 
   const primaryColor = 'var(--color-primaryText)';
   const secondaryColor = 'var(--color-secondaryText)';
+
+  const getBadgeSize = (count: number) => {
+    if (count >= 100) return 'min-w-[24px] min-h-[24px] w-6 h-6';
+    if (count >= 10) return 'min-w-[20px] min-h-[20px] w-5 h-5';
+    return 'min-w-[16px] min-h-[16px] w-4 h-4';
+  };
 
   return (
     <Column className='w-full h-full flex-grow' justify='between'>
@@ -116,9 +127,28 @@ const DisplayAddedGame: React.FC<DisplayAddedGameProps> = ({
             </Label>
           </Row>
         </Grid>
-        <Row justify='end' className='w-full pr-4'>
-          <Label className='mr-2'>{t('Total game time in seconds')}:</Label>
-          <Label style={{ color: primaryColor }}>{totalTime}</Label>
+        <Row justify='between' className='w-full'>
+          <div
+            className='relative inline-block cursor-pointer'
+            onClick={() => setIsJoinedPlayersModalOpen(true)}
+          >
+            <FaUsers
+              size={20}
+              title={t('View players')}
+              className='cursor-pointer opacity-60 hover:opacity-80'
+            />
+            <div
+              className={`absolute -top-2 -right-2 bg-primary text-white text-xs rounded-full flex items-center justify-center font-semibold ${getBadgeSize(
+                currentPlayers.length
+              )}`}
+            >
+              {currentPlayers.length}
+            </div>
+          </div>
+          <Row justify='end' className='pr-4'>
+            <Label className='mr-2'>{t('Total game time in seconds')}:</Label>
+            <Label style={{ color: primaryColor }}>{totalTime}</Label>
+          </Row>
         </Row>
 
         <PrimaryText>{t('Questions')}</PrimaryText>
@@ -165,6 +195,11 @@ const DisplayAddedGame: React.FC<DisplayAddedGameProps> = ({
             ))}
         </Column>
       </Column>
+
+      <JoinedPlayersModal
+        isOpen={isJoinedPlayersModalOpen}
+        onClose={() => setIsJoinedPlayersModalOpen(false)}
+      />
     </Column>
   );
 };

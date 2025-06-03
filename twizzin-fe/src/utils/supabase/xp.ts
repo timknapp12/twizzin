@@ -223,22 +223,26 @@ export async function getUserXPLevel(wallet: string): Promise<{
 
     const totalXP = playerData.total_xp || 0;
 
-    // Dynamic level calculation with quadratic growth
+    // Level calculation:
     // Level 0: 0 XP
     // Level 1: 1-299 XP (requires 300 XP for next level)
-    // Subsequent levels: 300 * (level ^ 2)
+    // Level 2: 300-899 XP (requires 900 XP for next level)
+    // Level 3: 900-1799 XP (requires 1800 XP for next level)
+    // And so on...
     let level = 0;
     let currentLevelXP = 0;
     let nextLevelXP = 300; // Base requirement for level 1
     let progress = 0;
 
-    if (totalXP > 0) {
-      // Calculate level using inverse of quadratic formula
-      // totalXP = 300 * (level ^ 2) => level = sqrt(totalXP / 300)
-      level = Math.floor(Math.sqrt(totalXP / 300)) + 1;
-      currentLevelXP =
-        level === 1 ? 0 : Math.round(300 * Math.pow(level - 1, 2));
-      nextLevelXP = Math.round(300 * Math.pow(level, 2));
+    if (totalXP === 0) {
+      level = 0;
+      currentLevelXP = 0;
+      nextLevelXP = 300;
+      progress = 0;
+    } else {
+      level = 1 + Math.floor(Math.sqrt(totalXP / 300));
+      currentLevelXP = 300 * Math.pow(level - 1, 2);
+      nextLevelXP = 300 * Math.pow(level, 2);
       progress = (totalXP - currentLevelXP) / (nextLevelXP - currentLevelXP);
     }
 

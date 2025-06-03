@@ -95,7 +95,7 @@ const PlayGame = ({ goToResults = () => {} }: PlayGameProps) => {
         t('Time has expired. Please review and submit your answers.')
       );
     }
-  }, [isTimeExpired, isAdmin, t, gameState]);
+  }, [isTimeExpired, isAdmin, t, gameState, bufferTimeRemaining]);
 
   // Timer effect - only handles checking time and setting isTimeExpired
   useEffect(() => {
@@ -348,23 +348,23 @@ const PlayGame = ({ goToResults = () => {} }: PlayGameProps) => {
           </Button>
         </div>
         <div className='w-[48%]'>
-          <Button
-            type='submit'
-            disabled={
-              (!selectedAnswer && !isAdmin) || (isAdmin && isLastQuestion)
-            }
-            className='flex items-center gap-2'
-            isLoading={isSubmitting}
-          >
-            {isLastQuestion ? (
-              t('Submit')
-            ) : (
-              <>
-                {t('Next')}
-                <FaArrowRight size={16} />
-              </>
-            )}
-          </Button>
+          {!(isAdmin && isLastQuestion) && (
+            <Button
+              type='submit'
+              disabled={!selectedAnswer && !isAdmin}
+              className='flex items-center gap-2'
+              isLoading={isSubmitting}
+            >
+              {isLastQuestion ? (
+                t('Submit')
+              ) : (
+                <>
+                  {t('Next')}
+                  <FaArrowRight size={16} />
+                </>
+              )}
+            </Button>
+          )}
         </div>
       </Row>
       {isAdmin && (

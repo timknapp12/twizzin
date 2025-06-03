@@ -6,7 +6,7 @@ import {
   SendOptions,
   ComputeBudgetProgram,
 } from '@solana/web3.js';
-import { Program } from '@coral-xyz/anchor';
+import { Program, BN } from '@coral-xyz/anchor';
 import { TwizzinIdl } from '@/types/idl';
 import { deriveGamePDAs, derivePlayerPDA } from './pdas';
 import { SubmitAnswersParams } from '@/types';
@@ -82,7 +82,7 @@ export const submitAnswers = async (
           questionId: a.questionId,
           proof: a.proof,
         })),
-        params.clientFinishTime
+        new BN(params.clientFinishTime)
       )
       .accounts(accounts)
       .instruction();

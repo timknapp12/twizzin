@@ -9,6 +9,7 @@
 /twizzin-fe/.pnp
 /twizzin-fe.pnp.js
 /twizzin-fe/.yarn/install-state.gz
+/twizzin-fe/install-state.gz
 
 # testing
 /twizzin-fe/coverage
