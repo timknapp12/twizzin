@@ -22,13 +22,11 @@ export const createGameCombined = async (
   params: CreateGameCombinedParams
 ) => {
   if (!publicKey) throw new Error('Wallet not connected');
-  console.log('Starting game creation process...');
 
   const isNative = params.tokenMint.equals(NATIVE_MINT);
 
   try {
     // 1. First create database entries
-    console.log('Step 1: Creating database entries...');
     const dbResult = await createGameWithQuestions(
       {
         gamePubkey: '',
@@ -51,15 +49,11 @@ export const createGameCombined = async (
       params.questions,
       params.imageFile
     );
-    console.log('✅ Database entries created successfully');
 
     // 2. Generate merkle root
-    console.log('Step 2: Generating merkle root...');
     const answerHash = await generateMerkleRoot(dbResult.questions);
-    console.log('✅ Merkle root generated successfully');
 
     // 3. Get game code and prepare timestamps
-    console.log('Step 3: Preparing on-chain parameters...');
     const gameCode = dbResult.game.game_code;
     // this is so players can join the game after the officical start time if the admin has not manually started the game. When admin starts the game, the start time will be updated as the current time.
     const addOneYear = 31536000000;
@@ -73,10 +67,8 @@ export const createGameCombined = async (
       startTime,
       endTime,
     };
-    console.log('✅ On-chain parameters prepared');
 
     // 4. Initialize on-chain
-    console.log('Step 4: Initializing game on-chain...');
     const onChainResult = await initializeGame(
       program,
       connection,
@@ -90,10 +82,8 @@ export const createGameCombined = async (
         `Failed to initialize game on-chain: ${onChainResult.error}`
       );
     }
-    console.log('✅ Game initialized on-chain successfully');
 
     // 5. Update database with on-chain info
-    console.log('Step 5: Updating database with on-chain information...');
     await supabase
       .from('games')
       .update({
@@ -101,9 +91,7 @@ export const createGameCombined = async (
         answer_merkle_root: answerHash,
       })
       .eq('id', dbResult.game.id);
-    console.log('✅ Database updated with on-chain information');
 
-    console.log('🎉 Game creation completed successfully!');
     return {
       onChain: onChainResult,
       database: dbResult,
