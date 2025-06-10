@@ -223,6 +223,7 @@ export interface PartialGame {
   img_url: string | null;
   question_count: number;
   username: string | null;
+  status: string;
 }
 
 export interface GameContextType {

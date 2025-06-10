@@ -1,3 +1,5 @@
+// check xp after game ends for the specific game for players
+
 // TODO - getGameByCode on game results after game has ended - doesn't get the full game - loadCompleteResults in gameContext should be called in PlayerGameResults or its parent
 // TODO going to a new game still has old game results - it didn't refresh
 refactor after MVP:
