@@ -11,7 +11,7 @@ interface PlayerWithDetails extends GamePlayer {
 }
 
 const PlayersList = ({ gameCode }: { gameCode: string }) => {
-  const { t, userProfile } = useAppContext();
+  const { t } = useAppContext();
   const { currentPlayers } = useGameContext();
   const [playersWithDetails, setPlayersWithDetails] = useState<
     PlayerWithDetails[]
@@ -19,13 +19,8 @@ const PlayersList = ({ gameCode }: { gameCode: string }) => {
 
   useEffect(() => {
     const fetchPlayerDetails = async () => {
-      // Filter out the current user from the players list
-      const filteredPlayers = currentPlayers.filter(
-        (player) => player.wallet_address !== userProfile?.walletAddress
-      );
-
       const players = await Promise.all(
-        filteredPlayers.map(async (player) => {
+        currentPlayers.map(async (player) => {
           const details = await fetchPlayerData(
             gameCode,
             player.wallet_address
@@ -43,7 +38,7 @@ const PlayersList = ({ gameCode }: { gameCode: string }) => {
     if (currentPlayers.length > 0) {
       fetchPlayerDetails();
     }
-  }, [currentPlayers, gameCode, userProfile]);
+  }, [currentPlayers, gameCode]);
 
   return (
     <Column className='w-full p-4'>

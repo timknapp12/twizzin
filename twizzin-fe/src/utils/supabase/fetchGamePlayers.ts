@@ -22,7 +22,7 @@ interface PlayerGameData {
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const fetchPlayerWithRetry = async (
+export const fetchPlayerWithRetry = async (
   gameId: string,
   walletAddress: string,
   retries = 3,
@@ -71,52 +71,49 @@ export const fetchGamePlayers = async (
   gameCode: string
 ): Promise<GamePlayer[]> => {
   try {
+    // First get the game data including admin wallet
     const { data: game, error: gameError } = await supabase
       .from('games')
-      .select('id')
+      .select('id, admin_wallet')
       .eq('game_code', gameCode)
       .single();
 
     if (gameError) throw gameError;
-    if (!game) return [];
+    if (!game) {
+      console.log('[PlayerLoad] No game found for code:', gameCode);
+      return [];
+    }
 
+    console.log('[PlayerLoad] Found game ID:', game.id);
     const { data: players, error: playersError } = await supabase
       .from('player_games')
-      .select(
-        `
-        id,
-        join_time,
-        player_wallet,
-        players:player_wallet (
-          username
-        )
-      `
-      )
-      .eq('game_id', game.id)
-      .order('join_time', { ascending: true });
+      .select('player_wallet')
+      .eq('game_id', game.id);
 
     if (playersError) throw playersError;
+    if (!players || players.length === 0) {
+      console.log('[PlayerLoad] No players found for game');
+      return [];
+    }
 
-    // For each player, try to fetch their data with retry
-    const playerPromises = (players || []).map(async (player: unknown) => {
-      const typedPlayer = player as PlayerGameData;
-      // If we already have the username, return it immediately
-      if (typedPlayer.players?.username) {
-        return {
-          id: typedPlayer.id,
-          username: typedPlayer.players.username,
-          wallet_address: typedPlayer.player_wallet,
-          joined_at: typedPlayer.join_time,
-        };
-      }
-      // Otherwise, try to fetch with retry
-      return fetchPlayerWithRetry(game.id, typedPlayer.player_wallet);
-    });
+    console.log('[PlayerLoad] Found player wallets:', players);
+    // Filter out the admin wallet before fetching player details
+    const nonAdminPlayers = players.filter(
+      (player) => player.player_wallet !== game.admin_wallet
+    );
+
+    // Use fetchPlayerWithRetry for each non-admin player
+    const playerPromises = nonAdminPlayers.map((player) =>
+      fetchPlayerWithRetry(game.id, player.player_wallet)
+    );
 
     const results = await Promise.all(playerPromises);
-    return results.filter((player): player is GamePlayer => player !== null);
+    const validPlayers = results.filter(
+      (player): player is GamePlayer => player !== null
+    );
+    return validPlayers;
   } catch (error) {
-    console.error('Error fetching game players:', error);
+    console.error('[PlayerLoad] Error fetching game players:', error);
     return [];
   }
 };
