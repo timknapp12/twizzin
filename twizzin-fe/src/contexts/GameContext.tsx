@@ -43,7 +43,7 @@ import {
   getGameState,
   setGameState,
   fetchGamePlayers,
-  fetchPlayerData,
+  fetchPlayerWithRetry,
   GamePlayer,
 } from '@/utils';
 import { useAppContext, useProgram } from '.';
@@ -67,7 +67,7 @@ export const useGameContext = () => {
 export const GameContextProvider = ({ children }: { children: ReactNode }) => {
   const { t, fetchUserXPAndRewards, userProfile } = useAppContext();
   const [username, setUsername] = useState('');
-  const [gameCode, setGameCode] = useState('');
+  const [gameCode, setGameCode] = useState('GBETT7');
   const [partialGameData, setPartialGameData] = useState<PartialGame | null>(
     null
   );
@@ -120,21 +120,19 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [gameCode]);
 
-  // Add useEffect for fetching players when game code changes
+  // Add useEffect for fetching players when game code or partialGameData changes
   useEffect(() => {
-    if (!gameCode) return;
+    if (!gameCode || !partialGameData) return;
 
     const loadPlayers = async () => {
       try {
         const players = await fetchGamePlayers(gameCode);
         setCurrentPlayers(players);
-      } catch (error) {
-        console.error('Error loading game players:', error);
-      }
+      } catch (error) {}
     };
 
     loadPlayers();
-  }, [gameCode]);
+  }, [gameCode, partialGameData]);
 
   // State transition validation
   const canTransitionTo = useCallback(
@@ -142,7 +140,11 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
       // Define valid state transitions
       const validTransitions: Record<GameState, GameState[]> = {
         [GameState.BROWSING]: [GameState.JOINING],
-        [GameState.JOINING]: [GameState.JOINED, GameState.BROWSING],
+        [GameState.JOINING]: [
+          GameState.JOINED,
+          GameState.BROWSING,
+          GameState.ACTIVE,
+        ],
         [GameState.JOINED]: [GameState.ACTIVE, GameState.BROWSING],
         [GameState.ACTIVE]: [GameState.SUBMITTED, GameState.ENDED],
         [GameState.SUBMITTED]: [GameState.ENDED],
@@ -227,24 +229,46 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
   const winnersDeclaredEventListenerRef = React.useRef<number | null>(null);
   const playerJoinedEventListenerRef = React.useRef<number | null>(null);
   const subscriptionRef = React.useRef(null);
+  const hasSetupListenerRef = React.useRef(false);
 
   // Setup game start event listener for all users
   useEffect(() => {
-    if (!program || !connection || !partialGameData) return;
+    if (!program || !gameCode) return;
 
     const setupEventListener = async () => {
       try {
+        // If we don't have partialGameData yet, we can't proceed
+        if (!partialGameData) {
+          console.log('[GameStart] Waiting for partialGameData...');
+          return;
+        }
+
         const { gamePda } = deriveGamePDAs(
           program,
           new PublicKey(partialGameData.admin_wallet),
           partialGameData.game_code
         );
+        // Check if game is already active
+        if (partialGameData.status === 'active') {
+          console.log('[GameStart] Game is already active, updating state...');
+          const fullGameData = await getGameFromDb(partialGameData.game_code);
+          setGameData({
+            ...fullGameData,
+            status: 'active',
+          });
+          setGameStateInternal(GameState.ACTIVE);
+          setGameStateWithMetadata(GameState.ACTIVE, {
+            startTime: new Date(partialGameData.start_time).getTime(),
+            endTime: new Date(partialGameData.end_time).getTime(),
+          });
+        }
 
         // Remove existing listener if it exists
         if (eventListenerRef.current !== null) {
           await program.removeEventListener(eventListenerRef.current);
         }
 
+        console.log('[GameStart] Adding new gameStarted event listener...');
         const listener = program.addEventListener(
           'gameStarted',
           async (event: { game: PublicKey; startTime: BN; endTime: BN }) => {
@@ -283,22 +307,32 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
           }
         );
 
+        console.log(
+          '[GameStart] Event listener setup complete, listener ID:',
+          listener
+        );
         eventListenerRef.current = listener;
+        hasSetupListenerRef.current = true;
       } catch (error) {
-        console.error('Error setting up game start listener:', error);
+        console.error(
+          '[GameStart] Error setting up game start listener:',
+          error
+        );
       }
     };
 
-    setupEventListener();
+    // If we haven't set up the listener yet, or if we have partialGameData now, try to set it up
+    if (!hasSetupListenerRef.current || partialGameData) setupEventListener();
 
     return () => {
       if (eventListenerRef.current !== null && program) {
         program.removeEventListener(eventListenerRef.current);
         eventListenerRef.current = null;
+        hasSetupListenerRef.current = false;
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [program, connection, partialGameData]);
+  }, [program, gameCode, partialGameData]); // Dependencies needed for PDA derivation and event listener setup
 
   // Setup player joined event listener
   useEffect(() => {
@@ -327,26 +361,43 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
             joinTime: BN;
           }) => {
             if (event.game.toString() === gamePda.toString()) {
+              // Wait 5 seconds before fetching player data
+              await new Promise((resolve) => setTimeout(resolve, 5000));
+
               try {
-                const playerData = await fetchPlayerData(
+                const playerData = await fetchPlayerWithRetry(
                   partialGameData.id,
                   event.player.toString()
                 );
 
                 if (playerData) {
-                  setCurrentPlayers((prev) => [...prev, playerData]);
+                  setCurrentPlayers((prev) => {
+                    // Check if player already exists in the array
+                    const playerExists = prev.some(
+                      (p) => p.wallet_address === playerData.wallet_address
+                    );
+                    if (playerExists) {
+                      console.log(
+                        '[PlayerJoin] Player already exists in currentPlayers'
+                      );
+                      return prev;
+                    }
+                    const newPlayers = [...prev, playerData];
+                    console.log('[PlayerJoin] New players array:', newPlayers);
+                    return newPlayers;
+                  });
+                } else {
+                  console.log(
+                    '[PlayerJoin] No player data found for:',
+                    event.player.toString()
+                  );
                 }
-              } catch (error) {
-                console.error('Error handling player joined event:', error);
-              }
+              } catch (error) {}
             }
           }
         );
-
         playerJoinedEventListenerRef.current = listener;
-      } catch (error) {
-        console.error('Error setting up player joined listener:', error);
-      }
+      } catch (error) {}
     };
 
     setupPlayerJoinedListener();
