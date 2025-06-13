@@ -67,7 +67,7 @@ export const useGameContext = () => {
 export const GameContextProvider = ({ children }: { children: ReactNode }) => {
   const { t, fetchUserXPAndRewards, userProfile } = useAppContext();
   const [username, setUsername] = useState('');
-  const [gameCode, setGameCode] = useState('GBETT7');
+  const [gameCode, setGameCode] = useState('');
   const [partialGameData, setPartialGameData] = useState<PartialGame | null>(
     null
   );
