@@ -43,7 +43,7 @@ const PlayersList = ({ gameCode }: { gameCode: string }) => {
   return (
     <Column className='w-full p-4'>
       <h2 className='text-xl font-semibold mb-4'>{t('Players')}</h2>
-      {currentPlayers.length === 0 ? (
+      {playersWithDetails.length === 0 ? (
         <div className='text-center text-gray-500'>
           {t('No players have joined yet')}
         </div>
