@@ -15,6 +15,7 @@ export enum GameState {
 
 // Game state with metadata
 export interface GameStateData {
+  gameCode: string;
   state: GameState;
   timestamp: number;
   metadata?: {
@@ -25,18 +26,16 @@ export interface GameStateData {
   };
 }
 
-// Keys for localStorage
-const GAME_STATE_PREFIX = 'game_state_';
+// Single key for current game state
+const GAME_STATE_KEY = 'current_game_state';
 const GAME_SESSION_KEY = 'game_session';
 
-// Get the complete game state
-export const getGameState = (gameCode: string): GameStateData | null => {
+// Get the current game state
+export const getGameState = (): GameStateData | null => {
   if (typeof window === 'undefined') return null;
-
   try {
-    const data = localStorage.getItem(`${GAME_STATE_PREFIX}${gameCode}`);
+    const data = localStorage.getItem(GAME_STATE_KEY);
     if (!data) return null;
-
     return JSON.parse(data);
   } catch (error) {
     console.error('Error getting game state:', error);
@@ -51,35 +50,30 @@ export const setGameState = (
   metadata?: any
 ): void => {
   if (typeof window === 'undefined') return;
-
   try {
     const gameStateData: GameStateData = {
+      gameCode,
       state,
       timestamp: Date.now(),
       metadata: metadata || {},
     };
-
-    localStorage.setItem(
-      `${GAME_STATE_PREFIX}${gameCode}`,
-      JSON.stringify(gameStateData)
-    );
+    localStorage.setItem(GAME_STATE_KEY, JSON.stringify(gameStateData));
   } catch (error) {
     console.error('Error setting game state:', error);
   }
 };
 
-// Check if a game is in a specific state
+// Check if the current game is in a specific state
 export const isGameInState = (gameCode: string, state: GameState): boolean => {
-  const gameState = getGameState(gameCode);
-  return gameState?.state === state;
+  const gameState = getGameState();
+  return gameState?.gameCode === gameCode && gameState?.state === state;
 };
 
 // Clear game state
-export const clearGameState = (gameCode: string): void => {
+export const clearGameState = (): void => {
   if (typeof window === 'undefined') return;
-
   try {
-    localStorage.removeItem(`${GAME_STATE_PREFIX}${gameCode}`);
+    localStorage.removeItem(GAME_STATE_KEY);
   } catch (error) {
     console.error('Error clearing game state:', error);
   }
@@ -126,17 +120,14 @@ export const saveGameAnswer = (
   if (typeof window === 'undefined') {
     return null;
   }
-
   try {
     const session = getGameSession(gameCode);
-
     // Convert GameAnswer to stored answer format
     const storedAnswer = {
       displayOrder: answer.displayOrder,
       answer: answer.answer,
       questionId: answer.questionId,
     };
-
     // If no session exists, create one with start time
     if (!session) {
       const newSession: StoredGameSession = {
@@ -152,7 +143,6 @@ export const saveGameAnswer = (
       localStorage.setItem(GAME_SESSION_KEY, JSON.stringify(newSession));
       return newSession;
     }
-
     // Add answer to existing session
     session.answers[answer.questionId] = storedAnswer;
     localStorage.setItem(GAME_SESSION_KEY, JSON.stringify(session));
@@ -168,11 +158,9 @@ export const getGameSession = (gameCode: string): StoredGameSession | null => {
   if (typeof window === 'undefined') {
     return null;
   }
-
   try {
     const data = localStorage.getItem(GAME_SESSION_KEY);
     if (!data) return null;
-
     const session: StoredGameSession = JSON.parse(data);
     return session.gameCode === gameCode ? session : null;
   } catch (error) {
@@ -189,7 +177,6 @@ export const initializeGameSession = (
   if (typeof window === 'undefined') {
     return null;
   }
-
   try {
     const existingSession = getGameSession(gameCode);
     const session: StoredGameSession = existingSession || {
@@ -200,12 +187,10 @@ export const initializeGameSession = (
       submitted: false,
       submittedTime: undefined,
     };
-
     // Update gamePubkey if it wasn't set
     if (!existingSession?.gamePubkey) {
       session.gamePubkey = gamePubkey;
     }
-
     localStorage.setItem(GAME_SESSION_KEY, JSON.stringify(session));
     return session;
   } catch (error) {
@@ -222,22 +207,17 @@ export const markSessionSubmitted = (
   if (typeof window === 'undefined') {
     return null;
   }
-
   try {
     const session = getGameSession(gameCode);
     if (!session) return null;
-
     // Only set submittedTime if it hasn't been set before
     if (!session.submittedTime) {
       session.submittedTime = finishTime || Date.now();
     }
-
     session.submitted = true;
     localStorage.setItem(GAME_SESSION_KEY, JSON.stringify(session));
-
     // Also update game state
     markGameAsSubmitted(gameCode, session.submittedTime);
-
     return session;
   } catch (error) {
     console.error('Error marking session as submitted:', error);
@@ -250,7 +230,6 @@ export const clearGameSession = (gameCode: string): void => {
   if (typeof window === 'undefined') {
     return;
   }
-
   try {
     const session = getGameSession(gameCode);
     if (session?.gameCode === gameCode) {
@@ -266,10 +245,8 @@ export const getSortedGameAnswers = (gameCode: string): GameAnswer[] => {
   if (typeof window === 'undefined') {
     return [];
   }
-
   const session = getGameSession(gameCode);
   if (!session) return [];
-
   return Object.values(session.answers)
     .map((storedAnswer) => ({
       questionId: storedAnswer.questionId,
@@ -290,10 +267,8 @@ export const areAllQuestionsAnswered = (
   if (typeof window === 'undefined') {
     return false;
   }
-
   const session = getGameSession(gameCode);
   if (!session) return false;
-
   const answeredQuestions = Object.keys(session.answers).length;
   return answeredQuestions === totalQuestions;
 };
@@ -314,7 +289,6 @@ export const getGameCompletionStatus = (
       remainingCount: totalQuestions,
     };
   }
-
   const session = getGameSession(gameCode);
   if (!session) {
     return {
@@ -323,7 +297,6 @@ export const getGameCompletionStatus = (
       remainingCount: totalQuestions,
     };
   }
-
   const answeredCount = Object.keys(session.answers).length;
   return {
     isComplete: answeredCount === totalQuestions,

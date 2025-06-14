@@ -45,6 +45,7 @@ import {
   fetchGamePlayers,
   fetchPlayerWithRetry,
   GamePlayer,
+  clearGameState,
 } from '@/utils';
 import { useAppContext, useProgram } from '.';
 import { PublicKey } from '@solana/web3.js';
@@ -108,8 +109,8 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
       setGameSession(session);
 
       // Restore game state from localStorage if available
-      const savedState = getGameState(gameCode);
-      if (savedState) {
+      const savedState = getGameState();
+      if (savedState && savedState.gameCode === gameCode) {
         setGameStateInternal(savedState.state);
       } else {
         // If no saved state but there's a game code, we're at least in JOINING state
@@ -117,6 +118,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
       }
     } else {
       setGameStateInternal(GameState.BROWSING);
+      clearGameState(); // Clear state when leaving a game
     }
   }, [gameCode]);
 
@@ -169,7 +171,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
       // Update local state
       setGameStateInternal(state);
 
-      // Persist to localStorage
+      // Persist to localStorage (single key)
       setGameState(gameCode, state, metadata);
     },
     [gameCode, gameState, canTransitionTo]
@@ -204,12 +206,17 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
         const fullGame = await getGameFromDb(game.game_code);
         setGameData(fullGame);
         setGameStateInternal(GameState.JOINED);
+        setGameState(game.game_code, GameState.JOINED, {}); // Overwrite state for new game
         return true;
       }
 
       // For regular players, set partial data and state only
-      const savedState = getGameState(game.game_code);
-      if (savedState && savedState.state === GameState.JOINED) {
+      const savedState = getGameState();
+      if (
+        savedState &&
+        savedState.gameCode === game.game_code &&
+        savedState.state === GameState.JOINED
+      ) {
         setGameStateWithMetadata(GameState.JOINED, {
           gameId: game.id,
           ...savedState.metadata,
@@ -929,8 +936,12 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
 
     // Check for stored state on mount or if status is undefined
     if (!gameData.status || gameData.status === '') {
-      const savedState = getGameState(gameData.game_code);
-      if (savedState && savedState.state === GameState.ENDED) {
+      const savedState = getGameState();
+      if (
+        savedState &&
+        savedState.gameCode === gameData.game_code &&
+        savedState.state === GameState.ENDED
+      ) {
         setGameData((prev) => ({
           ...prev,
           status: 'ended',
@@ -1054,6 +1065,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
   // Cleanup player result subscription on component unmount
   useEffect(() => {
     return () => {
+      clearGameState();
       cleanupPlayerResultSubscription(subscriptionRef);
     };
   }, []);
