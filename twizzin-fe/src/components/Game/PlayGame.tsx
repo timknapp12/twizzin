@@ -26,6 +26,7 @@ const PlayGame = ({ goToResults = () => {} }: PlayGameProps) => {
     gameState,
     gameSession,
     setGameSession,
+    rehydrationError,
   } = useGameContext();
 
   const [remainingTime, setRemainingTime] = useState('');
@@ -264,6 +265,17 @@ const PlayGame = ({ goToResults = () => {} }: PlayGameProps) => {
       t('Time is up')
     : // show player how much time they have left to submit
       `${t('Submit answers within')} ${bufferTimeRemaining}`;
+
+  if (rehydrationError) {
+    return (
+      <Column className='gap-4 w-full items-center justify-center'>
+        <H2>{t('Error')}</H2>
+        <Label style={{ color: 'var(--color-error)' }}>
+          {rehydrationError}
+        </Label>
+      </Column>
+    );
+  }
 
   if (!currentQuestion) return null;
 

@@ -256,6 +256,7 @@ export interface GameContextType {
   gameSession: StoredGameSession | null;
   setGameSession: (session: StoredGameSession | null) => void;
   currentPlayers: GamePlayer[];
+  rehydrationError?: string | null;
 }
 
 export interface JoinGameParams {

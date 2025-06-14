@@ -86,6 +86,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
     GameState.BROWSING
   );
   const [currentPlayers, setCurrentPlayers] = useState<GamePlayer[]>([]);
+  const [rehydrationError, setRehydrationError] = useState<string | null>(null);
 
   if (currentPlayers.length > 0) {
     console.log('currentPlayers', currentPlayers);
@@ -112,15 +113,24 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
       const savedState = getGameState();
       if (savedState && savedState.gameCode === gameCode) {
         setGameStateInternal(savedState.state);
+        // Defensive: If ACTIVE but no session, set error
+        if (savedState.state === GameState.ACTIVE && !session) {
+          setRehydrationError(
+            t('Game session could not be restored. Please rejoin.')
+          );
+        } else {
+          setRehydrationError(null);
+        }
       } else {
-        // If no saved state but there's a game code, we're at least in JOINING state
         setGameStateInternal(GameState.JOINING);
+        setRehydrationError(null);
       }
     } else {
       setGameStateInternal(GameState.BROWSING);
       clearGameState(); // Clear state when leaving a game
+      setRehydrationError(null);
     }
-  }, [gameCode]);
+  }, [gameCode, t]);
 
   // Add useEffect for fetching players when game code or partialGameData changes
   useEffect(() => {
@@ -1098,6 +1108,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
         gameSession,
         setGameSession,
         currentPlayers,
+        rehydrationError,
       }}
     >
       {children}
