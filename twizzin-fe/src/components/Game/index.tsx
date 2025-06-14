@@ -25,7 +25,13 @@ const Game = () => {
 
   // Route-level redirect logic
   useEffect(() => {
-    if (!gameCode || !publicKey || !partialGameData) return;
+    if (!gameCode || !publicKey || !partialGameData) {
+      if (!gameCode) console.log('[Game] No gameCode in params');
+      if (!publicKey) console.log('[Game] No publicKey (wallet not connected)');
+      if (!partialGameData)
+        console.log('[Game] No partialGameData (not loaded yet)');
+      return;
+    }
 
     const isGameAdmin = Boolean(
       publicKey.toBase58() === partialGameData.admin_wallet
@@ -39,8 +45,13 @@ const Game = () => {
 
   // Fetch partial game data
   useEffect(() => {
-    if (!gameCode || !isMounted) return;
+    if (!gameCode || !isMounted) {
+      if (!gameCode) console.log('[Game] No gameCode in params (fetch effect)');
+      if (!isMounted) console.log('[Game] Not mounted yet (fetch effect)');
+      return;
+    }
     if (!partialGameData) {
+      console.log('[Game] Fetching partialGameData for gameCode:', gameCode);
       getGameByCode(gameCode);
     }
   }, [gameCode, getGameByCode, partialGameData, isMounted]);
@@ -53,12 +64,20 @@ const Game = () => {
 
   const renderGameContent = () => {
     if (gameResult) return <PlayerGameResults />;
-    if (gameState === GameState.ACTIVE || gameData?.status === 'active')
+    if (gameState === GameState.ACTIVE || gameData?.status === 'active') {
+      if (!gameData)
+        console.log('[Game] gameData missing when trying to render PlayGame');
       return <PlayGame />;
+    }
     if (gameState === GameState.JOINING || gameState === GameState.JOINED) {
+      if (!partialGameData)
+        console.log(
+          '[Game] partialGameData missing when trying to render JoinGameDetails'
+        );
       if (partialGameData)
         return <JoinGameDetails partialGameData={partialGameData} />;
     }
+    console.log('[Game] Fallback to GameDetailsSkeleton');
     return <GameDetailsSkeleton />;
   };
 

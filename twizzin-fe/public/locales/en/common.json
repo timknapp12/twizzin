@@ -225,5 +225,6 @@
   "You can request devnet SOL from the Solana Faucet": "You can request devnet SOL from the Solana Faucet",
   "View players": "View players",
   "Joined Players": "Joined Players",
-  "No players have joined yet": "No players have joined yet"
+  "No players have joined yet": "No players have joined yet",
+  "Game session could not be restored. Please rejoin.": "Game session could not be restored. Please rejoin."
 }
