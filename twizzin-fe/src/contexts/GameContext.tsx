@@ -92,7 +92,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
     console.log('currentPlayers', currentPlayers);
   }
 
-  const { program } = useProgram();
+  const { program, provider } = useProgram();
   const { connection } = useConnection();
   const wallet = useWallet();
   const { publicKey, sendTransaction } = wallet;
@@ -428,7 +428,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
   }, [program, connection, partialGameData]);
 
   const handleJoinGame = async (): Promise<string | null> => {
-    if (!program) throw new Error(t('Please connect your wallet'));
+    if (!program || !provider) throw new Error(t('Please connect your wallet'));
     if (!publicKey) throw new Error(t('Please connect your wallet'));
     if (!sendTransaction)
       throw new Error(t('Wallet adapter not properly initialized'));
@@ -492,13 +492,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
         username: username,
       };
 
-      const result = await joinGameCombined(
-        program,
-        connection,
-        publicKey,
-        sendTransaction,
-        params
-      );
+      const result = await joinGameCombined(program, provider, params);
 
       // Update game state to JOINED after successful join
       setGameStateWithMetadata(GameState.JOINED, {
