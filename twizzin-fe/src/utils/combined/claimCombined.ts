@@ -1,5 +1,4 @@
-import { Connection, Transaction } from '@solana/web3.js';
-import { Program } from '@coral-xyz/anchor';
+import { Program, AnchorProvider } from '@coral-xyz/anchor';
 import { TwizzinIdl } from '@/types/idl';
 import { claim, ClaimParams } from '../program/claim';
 import { addClaimedToDb } from '../supabase/addClaimedToDb';
@@ -9,13 +8,7 @@ import { addClaimedToDb } from '../supabase/addClaimedToDb';
  */
 export interface ClaimCombinedParams extends ClaimParams {
   program: Program<TwizzinIdl>;
-  connection: Connection;
-  sendTransaction: (
-    // eslint-disable-next-line no-unused-vars
-    transaction: Transaction,
-    // eslint-disable-next-line no-unused-vars
-    connection: Connection
-  ) => Promise<string>;
+  provider: AnchorProvider;
   gameId: string;
 }
 
@@ -24,9 +17,8 @@ export interface ClaimCombinedParams extends ClaimParams {
  */
 export async function claimCombined({
   program,
-  connection,
+  provider,
   playerPubkey,
-  sendTransaction,
   adminPubkey,
   gameCode,
   mint,
@@ -41,13 +33,12 @@ export async function claimCombined({
     // 1. Execute the on-chain claim transaction using the imported claim function
     const txId = await claim({
       program,
-      connection,
+      provider,
       playerPubkey,
       adminPubkey,
       gameCode,
       mint,
       isNative,
-      sendTransaction,
     });
 
     // 2. Update the database

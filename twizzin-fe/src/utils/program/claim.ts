@@ -1,39 +1,27 @@
-import { Program } from '@coral-xyz/anchor';
-import {
-  PublicKey,
-  SystemProgram,
-  Connection,
-  Transaction,
-} from '@solana/web3.js';
+import { Program, AnchorProvider } from '@coral-xyz/anchor';
+import { PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
 import { TOKEN_PROGRAM_ID, getAssociatedTokenAddress } from '@solana/spl-token';
 import { TwizzinIdl } from '@/types/idl';
 import { deriveGamePDAs, derivePlayerPDA } from './pdas';
 
 export interface ClaimParams {
   program: Program<TwizzinIdl>;
-  connection: Connection;
+  provider: AnchorProvider;
   playerPubkey: PublicKey;
   adminPubkey: PublicKey;
   gameCode: string;
   mint?: PublicKey;
   isNative: boolean;
-  sendTransaction: (
-    // eslint-disable-next-line no-unused-vars
-    transaction: Transaction,
-    // eslint-disable-next-line no-unused-vars
-    connection: Connection
-  ) => Promise<string>;
 }
 
 export async function claim({
   program,
-  connection,
+  provider,
   playerPubkey,
   adminPubkey,
   gameCode,
   mint,
   isNative,
-  sendTransaction,
 }: ClaimParams): Promise<string> {
   try {
     // Derive all necessary PDAs
@@ -90,8 +78,8 @@ export async function claim({
 
     const transaction = new Transaction().add(instruction);
 
-    // Send the transaction using the provided sendTransaction function
-    return await sendTransaction(transaction, connection);
+    // Send the transaction using the provider
+    return await provider.sendAndConfirm(transaction);
   } catch (error) {
     console.error('Error in claim function:', error);
     throw error;
