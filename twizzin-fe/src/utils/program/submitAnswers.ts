@@ -1,28 +1,16 @@
 import {
   Transaction,
-  PublicKey,
   SystemProgram,
-  Connection,
-  SendOptions,
   ComputeBudgetProgram,
 } from '@solana/web3.js';
-import { Program, BN } from '@coral-xyz/anchor';
+import { Program, BN, AnchorProvider } from '@coral-xyz/anchor';
 import { TwizzinIdl } from '@/types/idl';
 import { deriveGamePDAs, derivePlayerPDA } from './pdas';
 import { SubmitAnswersParams } from '@/types';
 
 export const submitAnswers = async (
   program: Program<TwizzinIdl>,
-  connection: Connection,
-  publicKey: PublicKey,
-  sendTransaction: (
-    // eslint-disable-next-line no-unused-vars
-    transaction: Transaction,
-    // eslint-disable-next-line no-unused-vars
-    connection: Connection,
-    // eslint-disable-next-line no-unused-vars
-    options?: SendOptions
-  ) => Promise<string>,
+  provider: AnchorProvider,
   params: SubmitAnswersParams
 ): Promise<{
   success: boolean;
@@ -30,14 +18,15 @@ export const submitAnswers = async (
   error: string | null;
 }> => {
   try {
+    const publicKey = provider.wallet.publicKey;
+    if (!publicKey) throw new Error('Wallet not connected');
+
     console.log('Starting submitAnswers with params:', {
       gameCode: params.gameCode,
       admin: params.admin.toString(),
       answersCount: params.answers.length,
       clientFinishTime: params.clientFinishTime,
     });
-
-    if (!publicKey) throw new Error('Wallet not connected');
 
     // 1. Derive PDAs
     const { gamePda } = deriveGamePDAs(program, params.admin, params.gameCode);
@@ -50,7 +39,7 @@ export const submitAnswers = async (
     // 2. Create transaction and get blockhash
     const transaction = new Transaction();
     const { blockhash, lastValidBlockHeight } =
-      await connection.getLatestBlockhash('confirmed');
+      await provider.connection.getLatestBlockhash('confirmed');
     transaction.recentBlockhash = blockhash;
     transaction.feePayer = publicKey;
 
@@ -91,12 +80,10 @@ export const submitAnswers = async (
 
     // 4. Send and confirm transaction
     console.log('Sending transaction with skip preflight...');
-    const signature = await sendTransaction(transaction, connection, {
-      skipPreflight: true,
-    });
+    const signature = await provider.sendAndConfirm(transaction);
 
     console.log('Transaction sent, waiting for confirmation...');
-    await connection.confirmTransaction({
+    await provider.connection.confirmTransaction({
       signature,
       blockhash,
       lastValidBlockHeight,

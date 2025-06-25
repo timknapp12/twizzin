@@ -1,5 +1,5 @@
-import { Connection, PublicKey, Transaction } from '@solana/web3.js';
-import { Program, BN } from '@coral-xyz/anchor';
+import { PublicKey } from '@solana/web3.js';
+import { Program, BN, AnchorProvider } from '@coral-xyz/anchor';
 import { TwizzinIdl } from '@/types/idl';
 import {
   GameSession,
@@ -22,14 +22,7 @@ interface SubmitAnswersResult {
 
 interface SubmitAnswersParams {
   program: Program<TwizzinIdl>;
-  connection: Connection;
-  publicKey: PublicKey;
-  sendTransaction: (
-    // eslint-disable-next-line no-unused-vars
-    transaction: Transaction,
-    // eslint-disable-next-line no-unused-vars
-    connection: Connection
-  ) => Promise<string>;
+  provider: AnchorProvider;
   gameData: JoinFullGame;
   gameSession: GameSession;
   // eslint-disable-next-line no-unused-vars
@@ -40,14 +33,13 @@ interface SubmitAnswersParams {
 
 export const submitAnswersCombined = async ({
   program,
-  connection,
-  publicKey,
-  sendTransaction,
+  provider,
   gameData,
   gameSession,
   markSessionSubmitted,
   setGameSession,
 }: SubmitAnswersParams): Promise<SubmitAnswersResult> => {
+  const publicKey = provider.wallet.publicKey;
   if (!gameSession || !program || !publicKey || !gameData) {
     return {
       success: false,
@@ -113,18 +105,12 @@ export const submitAnswersCombined = async ({
     }
 
     // Submit to Solana
-    const solanaResult = await submitAnswers(
-      program,
-      connection,
-      publicKey,
-      sendTransaction,
-      {
-        admin: new PublicKey(gameData.admin_wallet),
-        gameCode: gameData.game_code,
-        answers: verifiedAnswers,
-        clientFinishTime: finishTimeAnchor,
-      }
-    );
+    const solanaResult = await submitAnswers(program, provider, {
+      admin: new PublicKey(gameData.admin_wallet),
+      gameCode: gameData.game_code,
+      answers: verifiedAnswers,
+      clientFinishTime: finishTimeAnchor,
+    });
 
     if (!solanaResult.success) {
       throw new Error(solanaResult.error || 'Failed to submit to Solana');

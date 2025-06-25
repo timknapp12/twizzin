@@ -605,7 +605,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const handleSubmitAnswers = async (): Promise<string | undefined> => {
-    if (!gameSession || !program || !publicKey || !gameData) {
+    if (!program || !provider || !gameSession || !gameData) {
       console.error('Missing required parameters for game submission');
       return undefined;
     }
@@ -667,9 +667,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
 
       const result = await submitAnswersCombined({
         program,
-        connection,
-        publicKey,
-        sendTransaction,
+        provider,
         gameData,
         gameSession: formattedGameSession,
         markSessionSubmitted: markSessionSubmittedWrapper,
