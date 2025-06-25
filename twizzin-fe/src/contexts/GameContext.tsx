@@ -775,7 +775,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
   }, [gameData, isAdmin]);
 
   const handleEndGame = async () => {
-    if (!program) throw new Error(t('Program not initialized'));
+    if (!program || !provider) throw new Error(t('Program not initialized'));
     if (!gameData) throw new Error('Game data not found');
     if (!publicKey) throw new Error(t('Please connect your wallet'));
     if (!sendTransaction)
@@ -793,20 +793,14 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      const result = await endGameAndDeclareWinners(
-        program,
-        connection,
-        publicKey,
-        sendTransaction,
-        {
-          gameId: gameData.id,
-          gameCode: gameData.game_code,
-          isNative: gameData.is_native,
-          vaultTokenAccount: gameData.is_native ? undefined : undefined, // Use actual vault token account
-          adminTokenAccount: gameData.is_native ? undefined : undefined, // Use actual admin token account
-          treasuryTokenAccount: gameData.is_native ? undefined : undefined, // Use actual treasury token account
-        }
-      );
+      const result = await endGameAndDeclareWinners(program, provider, {
+        gameId: gameData.id,
+        gameCode: gameData.game_code,
+        isNative: gameData.is_native,
+        vaultTokenAccount: gameData.is_native ? undefined : undefined, // Use actual vault token account
+        adminTokenAccount: gameData.is_native ? undefined : undefined, // Use actual admin token account
+        treasuryTokenAccount: gameData.is_native ? undefined : undefined, // Use actual treasury token account
+      });
 
       if (!result.success) {
         console.error('Failed to end game:', result.error);

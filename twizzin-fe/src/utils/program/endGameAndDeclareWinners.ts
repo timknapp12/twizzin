@@ -1,11 +1,10 @@
 import {
   PublicKey,
-  Connection,
   Transaction,
   SystemProgram,
   ComputeBudgetProgram,
 } from '@solana/web3.js';
-import { Program } from '@coral-xyz/anchor';
+import { Program, AnchorProvider } from '@coral-xyz/anchor';
 import { TwizzinIdl } from '@/types/idl';
 import { supabase } from '@/utils/supabase';
 import {
@@ -23,16 +22,7 @@ import { updateGameWinners } from '../supabase/updateWinners';
 
 export async function endGameAndDeclareWinners(
   program: Program<TwizzinIdl>,
-  connection: Connection,
-  admin: PublicKey,
-  sendTransaction: (
-    // eslint-disable-next-line no-unused-vars
-    transaction: Transaction,
-    // eslint-disable-next-line no-unused-vars
-    connection: Connection,
-    // eslint-disable-next-line no-unused-vars
-    options?: { skipPreflight: boolean }
-  ) => Promise<string>,
+  provider: AnchorProvider,
   params: {
     gameId: string;
     gameCode: string;
@@ -42,6 +32,9 @@ export async function endGameAndDeclareWinners(
     treasuryTokenAccount?: PublicKey;
   }
 ) {
+  const admin = provider.wallet.publicKey;
+  if (!admin) throw new Error('Wallet not connected');
+
   try {
     // Get game data from Supabase
     const { data: gameData, error: gameError } = await supabase
@@ -146,11 +139,9 @@ export async function endGameAndDeclareWinners(
     }
 
     // Send and confirm transaction
-    const signature = await sendTransaction(transaction, connection, {
-      skipPreflight: true,
-    });
-    const latestBlockhash = await connection.getLatestBlockhash();
-    await connection.confirmTransaction({
+    const signature = await provider.sendAndConfirm(transaction);
+    const latestBlockhash = await provider.connection.getLatestBlockhash();
+    await provider.connection.confirmTransaction({
       signature,
       ...latestBlockhash,
     });
