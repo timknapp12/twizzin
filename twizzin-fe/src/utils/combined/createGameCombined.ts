@@ -1,5 +1,4 @@
-import { Program } from '@coral-xyz/anchor';
-import { Connection, PublicKey, Transaction } from '@solana/web3.js';
+import { Program, AnchorProvider } from '@coral-xyz/anchor';
 import { NATIVE_MINT } from '@solana/spl-token';
 import { initializeGame } from '../program/initGame';
 import { createGameWithQuestions } from '../supabase/createGame';
@@ -11,16 +10,10 @@ import { getAnchorTimestamp, getSupabaseTimestamp } from '../helpers';
 
 export const createGameCombined = async (
   program: Program<TwizzinIdl>,
-  connection: Connection,
-  publicKey: PublicKey,
-  sendTransaction: (
-    // eslint-disable-next-line no-unused-vars
-    transaction: Transaction,
-    // eslint-disable-next-line no-unused-vars
-    connection: Connection
-  ) => Promise<string>,
+  provider: AnchorProvider,
   params: CreateGameCombinedParams
 ) => {
+  const publicKey = provider.wallet.publicKey;
   if (!publicKey) throw new Error('Wallet not connected');
 
   const isNative = params.tokenMint.equals(NATIVE_MINT);
@@ -71,9 +64,7 @@ export const createGameCombined = async (
     // 4. Initialize on-chain
     const onChainResult = await initializeGame(
       program,
-      connection,
-      publicKey,
-      sendTransaction,
+      provider,
       paramsForOnChain
     );
 

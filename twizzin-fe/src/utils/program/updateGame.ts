@@ -2,7 +2,6 @@ import {
   Transaction,
   PublicKey,
   SystemProgram,
-  Connection,
   ComputeBudgetProgram,
 } from '@solana/web3.js';
 import {
@@ -10,7 +9,7 @@ import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   getAssociatedTokenAddress,
 } from '@solana/spl-token';
-import { BN, Program } from '@coral-xyz/anchor';
+import { BN, Program, AnchorProvider } from '@coral-xyz/anchor';
 import { TwizzinIdl } from '@/types/idl';
 import { deriveGamePDAs } from './pdas';
 
@@ -32,16 +31,7 @@ interface UpdateGameParams {
 
 export const updateGame = async (
   program: Program<TwizzinIdl>,
-  connection: Connection,
-  publicKey: PublicKey,
-  sendTransaction: (
-    // eslint-disable-next-line no-unused-vars
-    transaction: Transaction,
-    // eslint-disable-next-line no-unused-vars
-    connection: Connection,
-    // eslint-disable-next-line no-unused-vars
-    options?: { skipPreflight: boolean }
-  ) => Promise<string>,
+  provider: AnchorProvider,
   params: UpdateGameParams
 ): Promise<{
   success: boolean;
@@ -49,6 +39,8 @@ export const updateGame = async (
   error: string | null;
 }> => {
   try {
+    const publicKey = provider.wallet.publicKey;
+    if (!publicKey) throw new Error('Wallet not connected');
     const { gamePda, vaultPda } = deriveGamePDAs(
       program,
       publicKey,
@@ -120,13 +112,9 @@ export const updateGame = async (
       transaction.add(computeBudgetInstruction);
       transaction.add(instruction);
 
-      const signature = await sendTransaction(transaction, connection, {
-        skipPreflight: true,
-      });
-
-      // Wait for confirmation
-      const latestBlockhash = await connection.getLatestBlockhash();
-      await connection.confirmTransaction({
+      const signature = await provider.sendAndConfirm(transaction);
+      const latestBlockhash = await provider.connection.getLatestBlockhash();
+      await provider.connection.confirmTransaction({
         signature,
         ...latestBlockhash,
       });
@@ -171,13 +159,9 @@ export const updateGame = async (
       transaction.add(computeBudgetInstruction);
       transaction.add(instruction);
 
-      const signature = await sendTransaction(transaction, connection, {
-        skipPreflight: true,
-      });
-
-      // Wait for confirmation
-      const latestBlockhash = await connection.getLatestBlockhash();
-      await connection.confirmTransaction({
+      const signature = await provider.sendAndConfirm(transaction);
+      const latestBlockhash = await provider.connection.getLatestBlockhash();
+      await provider.connection.confirmTransaction({
         signature,
         ...latestBlockhash,
       });
