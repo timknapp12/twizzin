@@ -509,7 +509,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
 
   // For handleStartGame function (for admin)
   const handleStartGame = async () => {
-    if (!program) throw new Error(t('Program not initialized'));
+    if (!program || !provider) throw new Error(t('Program not initialized'));
     if (!partialGameData) throw new Error('Game data not found');
     if (!publicKey) throw new Error(t('Please connect your wallet'));
     if (!sendTransaction)
@@ -526,17 +526,11 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      const result = await startGameCombined(
-        program,
-        connection,
-        publicKey,
-        sendTransaction,
-        {
-          gameId: partialGameData.id,
-          gameCode: partialGameData.game_code,
-          totalTimeMs,
-        }
-      );
+      const result = await startGameCombined(program, provider, {
+        gameId: partialGameData.id,
+        gameCode: partialGameData.game_code,
+        totalTimeMs,
+      });
 
       if (result.success) {
         setGameData((prevGameData) => {
