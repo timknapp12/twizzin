@@ -6,7 +6,7 @@ import { PrimaryText, SecondaryText } from '@/components/texts';
 import { GameReward } from '@/types';
 import { claimCombined, getCurrentConfig } from '@/utils';
 import { useProgram, useAppContext } from '@/contexts';
-import { useConnection, useWallet } from '@solana/wallet-adapter-react';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { PublicKey } from '@solana/web3.js';
 import { toast } from 'react-toastify';
 
@@ -15,24 +15,22 @@ const { network } = getCurrentConfig();
 
 const ClaimRewardCard = ({ reward }: { reward: GameReward }) => {
   const { t, fetchUserXPAndRewards } = useAppContext();
-  const { program } = useProgram();
-  const { connection } = useConnection();
-  const { publicKey, sendTransaction } = useWallet();
+  const { program, provider } = useProgram();
+  const { publicKey } = useWallet();
 
   const [loading, setLoading] = useState(false);
 
   const handleClaim = async () => {
     setLoading(true);
-    if (!program || !connection || !publicKey || !sendTransaction) {
+    if (!program || !provider || !publicKey) {
       toast.error(t('Connect your wallet to claim rewards'));
       return setLoading(false);
     }
     try {
       const result = await claimCombined({
         program,
-        connection,
+        provider,
         playerPubkey: publicKey,
-        sendTransaction,
         adminPubkey: new PublicKey(reward.adminWallet),
         gameCode: reward.gameCode,
         mint: new PublicKey(reward.tokenMint),

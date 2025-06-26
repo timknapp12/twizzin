@@ -92,7 +92,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
     console.log('currentPlayers', currentPlayers);
   }
 
-  const { program } = useProgram();
+  const { program, provider } = useProgram();
   const { connection } = useConnection();
   const wallet = useWallet();
   const { publicKey, sendTransaction } = wallet;
@@ -428,7 +428,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
   }, [program, connection, partialGameData]);
 
   const handleJoinGame = async (): Promise<string | null> => {
-    if (!program) throw new Error(t('Please connect your wallet'));
+    if (!program || !provider) throw new Error(t('Please connect your wallet'));
     if (!publicKey) throw new Error(t('Please connect your wallet'));
     if (!sendTransaction)
       throw new Error(t('Wallet adapter not properly initialized'));
@@ -492,13 +492,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
         username: username,
       };
 
-      const result = await joinGameCombined(
-        program,
-        connection,
-        publicKey,
-        sendTransaction,
-        params
-      );
+      const result = await joinGameCombined(program, provider, params);
 
       // Update game state to JOINED after successful join
       setGameStateWithMetadata(GameState.JOINED, {
@@ -515,7 +509,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
 
   // For handleStartGame function (for admin)
   const handleStartGame = async () => {
-    if (!program) throw new Error(t('Program not initialized'));
+    if (!program || !provider) throw new Error(t('Program not initialized'));
     if (!partialGameData) throw new Error('Game data not found');
     if (!publicKey) throw new Error(t('Please connect your wallet'));
     if (!sendTransaction)
@@ -532,17 +526,11 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      const result = await startGameCombined(
-        program,
-        connection,
-        publicKey,
-        sendTransaction,
-        {
-          gameId: partialGameData.id,
-          gameCode: partialGameData.game_code,
-          totalTimeMs,
-        }
-      );
+      const result = await startGameCombined(program, provider, {
+        gameId: partialGameData.id,
+        gameCode: partialGameData.game_code,
+        totalTimeMs,
+      });
 
       if (result.success) {
         setGameData((prevGameData) => {
@@ -611,7 +599,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const handleSubmitAnswers = async (): Promise<string | undefined> => {
-    if (!gameSession || !program || !publicKey || !gameData) {
+    if (!program || !provider || !gameSession || !gameData) {
       console.error('Missing required parameters for game submission');
       return undefined;
     }
@@ -673,9 +661,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
 
       const result = await submitAnswersCombined({
         program,
-        connection,
-        publicKey,
-        sendTransaction,
+        provider,
         gameData,
         gameSession: formattedGameSession,
         markSessionSubmitted: markSessionSubmittedWrapper,
@@ -783,7 +769,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
   }, [gameData, isAdmin]);
 
   const handleEndGame = async () => {
-    if (!program) throw new Error(t('Program not initialized'));
+    if (!program || !provider) throw new Error(t('Program not initialized'));
     if (!gameData) throw new Error('Game data not found');
     if (!publicKey) throw new Error(t('Please connect your wallet'));
     if (!sendTransaction)
@@ -801,20 +787,14 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      const result = await endGameAndDeclareWinners(
-        program,
-        connection,
-        publicKey,
-        sendTransaction,
-        {
-          gameId: gameData.id,
-          gameCode: gameData.game_code,
-          isNative: gameData.is_native,
-          vaultTokenAccount: gameData.is_native ? undefined : undefined, // Use actual vault token account
-          adminTokenAccount: gameData.is_native ? undefined : undefined, // Use actual admin token account
-          treasuryTokenAccount: gameData.is_native ? undefined : undefined, // Use actual treasury token account
-        }
-      );
+      const result = await endGameAndDeclareWinners(program, provider, {
+        gameId: gameData.id,
+        gameCode: gameData.game_code,
+        isNative: gameData.is_native,
+        vaultTokenAccount: gameData.is_native ? undefined : undefined, // Use actual vault token account
+        adminTokenAccount: gameData.is_native ? undefined : undefined, // Use actual admin token account
+        treasuryTokenAccount: gameData.is_native ? undefined : undefined, // Use actual treasury token account
+      });
 
       if (!result.success) {
         console.error('Failed to end game:', result.error);

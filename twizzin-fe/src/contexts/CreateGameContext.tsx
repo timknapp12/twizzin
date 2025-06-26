@@ -10,7 +10,7 @@ import React, {
   useCallback,
 } from 'react';
 import { NATIVE_MINT } from '@solana/spl-token';
-import { useConnection, useWallet } from '@solana/wallet-adapter-react';
+import { useWallet } from '@solana/wallet-adapter-react';
 import {
   CreateGameContextType,
   QuestionForDb,
@@ -41,9 +41,8 @@ export const useCreateGameContext = () => {
 
 export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
   const { t, userProfile } = useAppContext();
-  const { program } = useProgram();
+  const { program, provider } = useProgram();
   const wallet = useWallet();
-  const { connection } = useConnection();
   const { publicKey, sendTransaction } = wallet;
 
   const initialGameData: CreateGameData = {
@@ -165,7 +164,7 @@ export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const handleCreateGame = async (): Promise<GameCreationResult | null> => {
-    if (!program) {
+    if (!program || !provider) {
       setError(t('Program not initialized'));
       return null;
     }
@@ -213,13 +212,7 @@ export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
           username: gameData.username,
         };
 
-        const result = await updateGameCombined(
-          program,
-          connection,
-          publicKey,
-          sendTransaction,
-          params
-        );
+        const result = await updateGameCombined(program, provider, params);
 
         return result;
       } else {
@@ -240,13 +233,7 @@ export const CreateGameProvider = ({ children }: { children: ReactNode }) => {
           username: gameData.username,
         };
 
-        const result = await createGameCombined(
-          program,
-          connection,
-          publicKey,
-          sendTransaction,
-          params
-        );
+        const result = await createGameCombined(program, provider, params);
 
         // Reset form after successful creation
 

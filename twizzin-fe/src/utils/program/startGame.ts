@@ -1,5 +1,5 @@
-import { Connection, PublicKey, Transaction } from '@solana/web3.js';
-import { Program, BN } from '@coral-xyz/anchor';
+import { Transaction } from '@solana/web3.js';
+import { Program, BN, AnchorProvider } from '@coral-xyz/anchor';
 import { TwizzinIdl } from '@/types/idl';
 import { StartGameResult } from '@/types';
 import { deriveGamePDAs } from './pdas';
@@ -7,14 +7,7 @@ import { supabase } from '@/utils/supabase';
 
 export const startGame = async (
   program: Program<TwizzinIdl>,
-  connection: Connection,
-  admin: PublicKey,
-  sendTransaction: (
-    // eslint-disable-next-line no-unused-vars
-    transaction: Transaction,
-    // eslint-disable-next-line no-unused-vars
-    connection: Connection
-  ) => Promise<string>,
+  provider: AnchorProvider,
   params: {
     gameCode: string;
     totalTimeMs: number;
@@ -28,6 +21,8 @@ export const startGame = async (
   endTime?: number;
 }> => {
   try {
+    const admin = provider.wallet.publicKey;
+    if (!admin) throw new Error('Wallet not connected');
     const { gamePda } = deriveGamePDAs(program, admin, params.gameCode);
     const totalTimeMsBN = new BN(params.totalTimeMs);
 
@@ -41,13 +36,17 @@ export const startGame = async (
       .instruction();
 
     transaction.add(instruction);
-    const signature = await sendTransaction(transaction, connection);
+    const { blockhash, lastValidBlockHeight } =
+      await provider.connection.getLatestBlockhash('confirmed');
+    transaction.recentBlockhash = blockhash;
+    transaction.feePayer = admin;
+    const signature = await provider.sendAndConfirm(transaction);
 
     // Wait for confirmation and processing
-    const latestBlockhash = await connection.getLatestBlockhash();
-    const confirmation = await connection.confirmTransaction({
+    const confirmation = await provider.connection.confirmTransaction({
       signature,
-      ...latestBlockhash,
+      blockhash,
+      lastValidBlockHeight,
     });
 
     if (confirmation.value.err) {
@@ -140,14 +139,7 @@ export const startGame = async (
 
 export const startGameCombined = async (
   program: Program<TwizzinIdl>,
-  connection: Connection,
-  admin: PublicKey,
-  sendTransaction: (
-    // eslint-disable-next-line no-unused-vars
-    transaction: Transaction,
-    // eslint-disable-next-line no-unused-vars
-    connection: Connection
-  ) => Promise<string>,
+  provider: AnchorProvider,
   params: {
     gameId: string;
     gameCode: string;
@@ -157,17 +149,11 @@ export const startGameCombined = async (
   try {
     // 1. Start game on Anchor
     // the anchor program will mark the start time as the current time when the program ix is called
-    const result = await startGame(
-      program,
-      connection,
-      admin,
-      sendTransaction,
-      {
-        gameCode: params.gameCode,
-        totalTimeMs: params.totalTimeMs,
-        gameId: params.gameId,
-      }
-    );
+    const result = await startGame(program, provider, {
+      gameCode: params.gameCode,
+      totalTimeMs: params.totalTimeMs,
+      gameId: params.gameId,
+    });
 
     if (!result.success || !result.startTime || !result.endTime) {
       throw new Error(result.error || 'Failed to start game on chain');

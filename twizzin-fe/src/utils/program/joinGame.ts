@@ -1,29 +1,17 @@
-import {
-  Transaction,
-  PublicKey,
-  SystemProgram,
-  Connection,
-} from '@solana/web3.js';
+import { Transaction, SystemProgram } from '@solana/web3.js';
 import {
   TOKEN_PROGRAM_ID,
   ASSOCIATED_TOKEN_PROGRAM_ID,
   NATIVE_MINT,
 } from '@solana/spl-token';
-import { Program } from '@coral-xyz/anchor';
+import { Program, AnchorProvider } from '@coral-xyz/anchor';
 import { TwizzinIdl } from '@/types/idl';
 import { deriveGamePDAs, derivePlayerPDA } from './pdas';
 import { JoinGameParams } from '@/types';
 
 export const joinGame = async (
   program: Program<TwizzinIdl>,
-  connection: Connection,
-  publicKey: PublicKey,
-  sendTransaction: (
-    // eslint-disable-next-line no-unused-vars
-    transaction: Transaction,
-    // eslint-disable-next-line no-unused-vars
-    connection: Connection
-  ) => Promise<string>,
+  provider: AnchorProvider,
   params: JoinGameParams
 ): Promise<{
   success: boolean;
@@ -31,6 +19,7 @@ export const joinGame = async (
   error: string | null;
 }> => {
   try {
+    const publicKey = provider.wallet.publicKey;
     if (!publicKey) throw new Error('Wallet not connected');
 
     // 1. Derive PDAs and log them
@@ -45,7 +34,7 @@ export const joinGame = async (
     // 2. Create transaction and get blockhash first
     const transaction = new Transaction();
     const { blockhash, lastValidBlockHeight } =
-      await connection.getLatestBlockhash('confirmed');
+      await provider.connection.getLatestBlockhash('confirmed');
     transaction.recentBlockhash = blockhash;
     transaction.feePayer = publicKey;
 
@@ -54,7 +43,6 @@ export const joinGame = async (
       const transferInstruction = SystemProgram.transfer({
         fromPubkey: publicKey,
         toPubkey: vaultPda,
-        // the anchor program will automatically pull the correct amount from game state
         lamports: 0,
       });
       transaction.add(transferInstruction);
@@ -80,9 +68,9 @@ export const joinGame = async (
 
     transaction.add(instruction);
 
-    const signature = await sendTransaction(transaction, connection);
+    const signature = await provider.sendAndConfirm(transaction);
 
-    await connection.confirmTransaction({
+    await provider.connection.confirmTransaction({
       signature,
       blockhash,
       lastValidBlockHeight,
@@ -101,15 +89,7 @@ export const joinGame = async (
     console.error('Error details:', errorDetails);
 
     if (error.message) {
-      if (error.message.includes('0x1')) {
-        errorMessage = 'Insufficient funds for transaction';
-      } else if (error.message.includes('0x0')) {
-        errorMessage = 'Player has already joined this game';
-      } else if (error.message.includes('simulation failed')) {
-        errorMessage = `Simulation failed: ${error.message}`;
-      } else {
-        errorMessage = error.message;
-      }
+      errorMessage = error.message;
     }
 
     return {

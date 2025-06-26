@@ -1,5 +1,4 @@
 import { Program } from '@coral-xyz/anchor';
-import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { NATIVE_MINT } from '@solana/spl-token';
 import { updateGame } from '../program/updateGame';
 import { updateGameWithQuestions } from '../supabase/updateGameToDb';
@@ -8,19 +7,14 @@ import { TwizzinIdl } from '@/types/idl';
 import { generateMerkleRoot } from '../merkle/generateMerkleRoot';
 import { supabase } from '../supabase/supabaseClient';
 import { getAnchorTimestamp, getSupabaseTimestamp } from '../helpers';
+import { AnchorProvider } from '@coral-xyz/anchor';
 
 export const updateGameCombined = async (
   program: Program<TwizzinIdl>,
-  connection: Connection,
-  publicKey: PublicKey,
-  sendTransaction: (
-    // eslint-disable-next-line no-unused-vars
-    transaction: Transaction,
-    // eslint-disable-next-line no-unused-vars
-    connection: Connection
-  ) => Promise<string>,
+  provider: AnchorProvider,
   params: UpdateGameCombinedParams
 ) => {
+  const publicKey = provider.wallet.publicKey;
   if (!publicKey) throw new Error('Wallet not connected');
   console.log('Starting game update process...');
 
@@ -94,13 +88,7 @@ export const updateGameCombined = async (
 
     // 5. Update on-chain
     console.log('Step 5: Updating game on-chain...');
-    const onChainResult = await updateGame(
-      program,
-      connection,
-      publicKey,
-      sendTransaction,
-      paramsForOnChain
-    );
+    const onChainResult = await updateGame(program, provider, paramsForOnChain);
 
     if (!onChainResult.success) {
       throw new Error(`Failed to update game on-chain: ${onChainResult.error}`);
