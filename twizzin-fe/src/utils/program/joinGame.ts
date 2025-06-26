@@ -89,15 +89,7 @@ export const joinGame = async (
     console.error('Error details:', errorDetails);
 
     if (error.message) {
-      if (error.message.includes('0x1')) {
-        errorMessage = 'Insufficient funds for transaction';
-      } else if (error.message.includes('0x0')) {
-        errorMessage = 'Player has already joined this game';
-      } else if (error.message.includes('simulation failed')) {
-        errorMessage = `Simulation failed: ${error.message}`;
-      } else {
-        errorMessage = error.message;
-      }
+      errorMessage = error.message;
     }
 
     return {
