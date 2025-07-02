@@ -9,6 +9,7 @@ import twizzin from '../assets/svgs/twizzin.svg';
 import twizzinIcon from '../assets/svgs/twizzin-icon.svg';
 import { FaCircleInfo } from 'react-icons/fa6';
 import { useAppContext } from '@/contexts';
+import AuthBanner from './AuthBanner';
 
 export const Header: React.FC = () => {
   const { language, setIsBetaModalOpen } = useAppContext();
@@ -48,8 +49,9 @@ export const Header: React.FC = () => {
           <WalletButton />
         </div>
       </header>
+      <AuthBanner />
       <div
-        className='bg-primary w-full flex justify-center items-center p-2 mt-2 gap-2 cursor-pointer'
+        className='bg-primary w-full flex justify-center items-center p-2 mt-1 gap-2 cursor-pointer'
         onClick={() => setIsBetaModalOpen(true)}
       >
         <div className='text-white text-sm'>Beta on Solana devnet</div>
