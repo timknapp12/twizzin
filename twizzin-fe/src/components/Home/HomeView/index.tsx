@@ -72,11 +72,7 @@ const HomeView = ({ onSetView }: HomeViewProps) => {
     <Column className='gap-4 justify-between h-full flex flex-1'>
       <Column className='gap-4'>
         <div className='w-full'>
-          {connected ? (
-            <ClaimRewardsRow onSetView={onSetView} />
-          ) : (
-            <ConnectWalletForRewardsButton />
-          )}
+          <ConnectWalletForRewardsButton onSetView={onSetView} />
         </div>
         <Carousel
           items={items}

@@ -34,6 +34,7 @@ const PlayGame = ({ goToResults = () => {} }: PlayGameProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isTimeExpired, setIsTimeExpired] = useState(false);
   const [bufferTimeRemaining, setBufferTimeRemaining] = useState<string>('');
+  const [hasClickedSubmit, setHasClickedSubmit] = useState(false);
   const hasHandledTimeExpiration = useRef(false);
 
   const { name, questions, end_time } = gameData || {};
@@ -84,19 +85,20 @@ const PlayGame = ({ goToResults = () => {} }: PlayGameProps) => {
     return null;
   }, [handleAutoSubmitUnanswered]);
 
-  // Show toast when time expires
+  // Show toast when time expires (only if user hasn't clicked submit)
   useEffect(() => {
     if (
       isTimeExpired &&
       !isAdmin &&
       !bufferTimeRemaining &&
+      !hasClickedSubmit &&
       gameState !== GameState.SUBMITTED
     ) {
       toast.warning(
         t('Time has expired. Please review and submit your answers.')
       );
     }
-  }, [isTimeExpired, isAdmin, t, gameState, bufferTimeRemaining]);
+  }, [isTimeExpired, isAdmin, t, gameState, bufferTimeRemaining, hasClickedSubmit]);
 
   // Timer effect - only handles checking time and setting isTimeExpired
   useEffect(() => {
@@ -219,6 +221,7 @@ const PlayGame = ({ goToResults = () => {} }: PlayGameProps) => {
       return;
     }
 
+    setHasClickedSubmit(true);
     setIsSubmitting(true);
     try {
       const signature = await handleSubmitAnswers();

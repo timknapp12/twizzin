@@ -1,9 +1,8 @@
 import { TwizzinIdl } from '@/types/idl';
 import { Program, AnchorProvider } from '@coral-xyz/anchor';
 import { joinGame } from '../program/joinGame';
-import { getGameFromDb } from '../supabase/getGameFromDb';
-import { recordPlayerJoinGame } from '../supabase/playerJoinGame';
 import { JoinGameParams } from '@/types';
+import { authenticatedApiClient } from '../api/authenticatedClient';
 
 export const joinGameCombined = async (
   program: Program<TwizzinIdl>,
@@ -24,21 +23,21 @@ export const joinGameCombined = async (
     }
 
     if (success) {
-      // Get the game from the database
-      const game = await getGameFromDb(params.gameCode);
-
-      if (!game) {
-        throw new Error('Game not found in database');
-      }
-
-      // Record the player join in Supabase
-      await recordPlayerJoinGame(
-        game.id,
-        publicKey.toString(),
+      // Record the player join in Supabase using authenticated API
+      const apiResult = await authenticatedApiClient.joinGame(
+        params.gameCode,
         params.username
       );
 
-      return { game, signature };
+      if (!apiResult.success) {
+        throw new Error(apiResult.error || 'Failed to record game join in database');
+      }
+
+      return { 
+        game: apiResult.data.game, 
+        signature,
+        playerGameId: apiResult.data.playerGameId 
+      };
     }
 
     throw new Error('Failed to join game');

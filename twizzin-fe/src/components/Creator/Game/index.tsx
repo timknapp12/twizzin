@@ -13,6 +13,7 @@ import {
   Row,
   Label,
 } from '@/components';
+import { FullAuthGuard } from '@/components/AuthGuard';
 import { FaSpinner } from 'react-icons/fa6';
 import { Header } from '@/components/Header';
 import {
@@ -28,7 +29,7 @@ import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { toast } from 'react-toastify';
 import PlayGame from '@/components/Game/PlayGame';
 import PlayerGameResults from '@/components/Game/PlayerGameResults';
-import Link from 'next/link';
+
 import { MainSkeleton } from '@/components/MainSkeleton';
 import PlayersList from './PlayersList';
 
@@ -208,6 +209,10 @@ export const CreatorGameComponent = () => {
         toast.error(t('Game not found'));
         return null;
       }
+      console.log('🔍 Creator Game Debug - Fresh game data from DB:', {
+        status: freshGameData.status,
+        gameCode: freshGameData.game_code
+      });
       setGameData(freshGameData);
       setQuestions(formatQuestionsForState(freshGameData.questions));
       updateCreateGameContext(freshGameData);
@@ -229,6 +234,22 @@ export const CreatorGameComponent = () => {
     await fetchFreshGameData();
     setActiveTab(TABS.DETAILS);
   }, [fetchFreshGameData, TABS.DETAILS]);
+
+  // Auto-switch to RESULTS tab when game ends
+  useEffect(() => {
+    console.log('🔍 Creator Game Debug - Status check:', {
+      gameDataStatus: gameData?.status,
+      gameState: gameState,
+      gameResult: !!gameResult,
+      contextGameDataStatus: contextGameData?.status,
+      activeTab: activeTab
+    });
+    
+    if (gameData?.status === 'ended' || gameState === GameState.ENDED || gameResult) {
+      console.log('🔍 Creator Game Debug - Switching to RESULTS tab');
+      setActiveTab(TABS.RESULTS);
+    }
+  }, [gameData?.status, gameState, gameResult, TABS.RESULTS, contextGameData?.status, activeTab]);
 
   useEffect(() => {
     if (!gameCode || !isMounted || !isAdmin) return;
@@ -307,8 +328,8 @@ export const CreatorGameComponent = () => {
 
   const errorColor = 'var(--color-error)';
 
-  // Show "Connect Wallet" screen if publicKey is null
-  if (publicKey === null) {
+  // Show "Connect Wallet" screen if no wallet is connected
+  if (isMounted && !publicKey) {
     return <ConnectWallet />;
   }
 
@@ -324,78 +345,85 @@ export const CreatorGameComponent = () => {
     <ScreenContainer>
       <Header />
       <InnerScreenContainer>
-        <div
-          className='flex-grow flex flex-col items-center w-full'
-          style={{ marginTop: '3vh' }}
-        >
-          {isRefreshing && (
-            <Row className='w-full justify-center mb-2'>
-              <FaSpinner className='animate-spin' size={16} />
-              <span className='ml-2'>{t('Refreshing game data...')}</span>
-            </Row>
+        <FullAuthGuard
+          fallbackMessage={t(
+            'Connect your wallet and verify to manage your game'
           )}
-          <Tabs activeTab={activeTab} onChange={setActiveTab}>
-            {getVisibleTabs().map((tab) => (
-              <Tab key={tab} id={tab} label={tab}>
-                {tab === TABS.DETAILS && (
-                  <>
-                    <Row className='gap-2 mb-4'>
-                      {countdown === 'Game has started!' || countdown === '' ? (
-                        <div style={{ height: '24px' }} />
-                      ) : (
-                        <Label>{t('Time till game starts')}:</Label>
-                      )}
-                      <Label style={{ color: errorColor }}>
-                        {countDownText}
-                      </Label>
-                    </Row>
-                    <DisplayAddedGame
-                      gameData={{
-                        gameName: gameData.name,
-                        entryFee: gameData.entry_fee / LAMPORTS_PER_SOL,
-                        startTime: new Date(gameData.start_time),
-                        commission: gameData.commission_bps / 100,
-                        donation: gameData.donation_amount / LAMPORTS_PER_SOL,
-                        maxWinners: gameData.max_winners,
-                        evenSplit: gameData.even_split,
-                        allAreWinners: gameData.all_are_winners,
-                        username: gameData.username || '',
-                        gameCode: gameData.game_code,
-                      }}
-                      questions={questions}
-                      setIsEdit={() => setActiveTab(TABS.EDIT)}
+        >
+          <div
+            className='flex-grow flex flex-col items-center w-full'
+            style={{ marginTop: '3vh' }}
+          >
+            {isRefreshing && (
+              <Row className='w-full justify-center mb-2'>
+                <FaSpinner className='animate-spin' size={16} />
+                <span className='ml-2'>{t('Refreshing game data...')}</span>
+              </Row>
+            )}
+            <Tabs activeTab={activeTab} onChange={setActiveTab}>
+              {getVisibleTabs().map((tab) => (
+                <Tab key={tab} id={tab} label={tab}>
+                  {tab === TABS.DETAILS && (
+                    <>
+                      <Row className='gap-2 mb-4'>
+                        {countdown === 'Game has started!' ||
+                        countdown === '' ? (
+                          <div style={{ height: '24px' }} />
+                        ) : (
+                          <Label>{t('Time till game starts')}:</Label>
+                        )}
+                        <Label style={{ color: errorColor }}>
+                          {countDownText}
+                        </Label>
+                      </Row>
+                      <DisplayAddedGame
+                        gameData={{
+                          gameName: gameData.name,
+                          entryFee: gameData.entry_fee / LAMPORTS_PER_SOL,
+                          startTime: new Date(gameData.start_time),
+                          commission: gameData.commission_bps / 100,
+                          donation: gameData.donation_amount / LAMPORTS_PER_SOL,
+                          maxWinners: gameData.max_winners,
+                          evenSplit: gameData.even_split,
+                          allAreWinners: gameData.all_are_winners,
+                          username: gameData.username || '',
+                          gameCode: gameData.game_code,
+                        }}
+                        questions={questions}
+                        setIsEdit={() => setActiveTab(TABS.EDIT)}
+                      />
+                      {isAdmin &&
+                        (gameState === GameState.JOINED ||
+                          gameState === GameState.JOINING) && (
+                          <Row justify='center' className='mt-6'>
+                            <Button
+                              onClick={onStartGame}
+                              isLoading={isStartingGame}
+                            >
+                              {t('Start Game')}
+                            </Button>
+                          </Row>
+                        )}
+                    </>
+                  )}
+                  {tab === TABS.EDIT && (
+                    <AddUpdateGame
+                      gameCode={gameData.game_code}
+                      setIsDisplayGame={handleSwitchToDetails}
                     />
-                    {isAdmin &&
-                      (gameState === GameState.JOINED ||
-                        gameState === GameState.JOINING) && (
-                        <Row justify='center' className='mt-6'>
-                          <Button
-                            onClick={onStartGame}
-                            isLoading={isStartingGame}
-                          >
-                            {t('Start Game')}
-                          </Button>
-                        </Row>
-                      )}
-                  </>
-                )}
-                {tab === TABS.EDIT && (
-                  <AddUpdateGame
-                    gameCode={gameData.game_code}
-                    setIsDisplayGame={handleSwitchToDetails}
-                  />
-                )}
-                {tab === TABS.PLAY && (
-                  <PlayGame goToResults={() => setActiveTab(TABS.RESULTS)} />
-                )}
-                {tab === TABS.RESULTS && <PlayerGameResults />}
-                {tab === TABS.PLAYERS && (
-                  <PlayersList gameCode={gameData.game_code} />
-                )}
-              </Tab>
-            ))}
-          </Tabs>
-        </div>
+                  )}
+                  {tab === TABS.PLAY && (
+                    <PlayGame goToResults={() => setActiveTab(TABS.RESULTS)} />
+                  )}
+                  {tab === TABS.RESULTS && <PlayerGameResults />}
+                  {tab === TABS.PLAYERS && (
+                    <PlayersList gameCode={gameData.game_code} />
+                  )}
+                </Tab>
+              ))}
+            </Tabs>
+          </div>
+        </FullAuthGuard>
       </InnerScreenContainer>
     </ScreenContainer>
   );
@@ -418,7 +446,7 @@ const ConnectWallet = () => {
 };
 
 const CreatorOnly = ({ gameCode }: { gameCode: string }) => {
-  const { t, language } = useAppContext();
+  const { t } = useAppContext();
   return (
     <ScreenContainer>
       <Header />
@@ -430,9 +458,10 @@ const CreatorOnly = ({ gameCode }: { gameCode: string }) => {
               'Only the game creator can view this page. If you are the game creator, please connect with the correct wallet. Otherwise, go to the player page to participate in this game.'
             )}
           </div>
-          <Link className='w-full' href={`/${language}/game/${gameCode}`}>
-            <Button>{t('Go to Player Page')}</Button>
-          </Link>
+          <div className='text-center mt-4'>
+            <span className='text-sm text-gray-600'>{t('Game Code')}: </span>
+            <span className='font-mono font-bold'>{gameCode}</span>
+          </div>
         </Column>
       </InnerScreenContainer>
     </ScreenContainer>

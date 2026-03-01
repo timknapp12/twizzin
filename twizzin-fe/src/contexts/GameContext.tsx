@@ -19,8 +19,8 @@ import {
   GameResultFromDb,
 } from '@/types';
 import {
-  getPartialGameFromDb,
   getGameFromDb,
+  getGameForPlayer,
   joinGameCombined,
   deriveGamePDAs,
   derivePlayerPDA,
@@ -37,8 +37,6 @@ import {
   fetchCompleteGameResults,
   setupPlayerResultSubscription,
   cleanupPlayerResultSubscription,
-  supabase,
-  fetchGameLeaderboard,
   GameState,
   getGameState,
   setGameState,
@@ -51,7 +49,7 @@ import { useAppContext, useProgram } from '.';
 import { PublicKey } from '@solana/web3.js';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { BN } from '@coral-xyz/anchor';
-import { recordPlayerJoinGame } from '@/utils/supabase/playerJoinGame';
+import { authenticatedApiClient } from '@/utils/api/authenticatedClient';
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
@@ -87,10 +85,6 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
   );
   const [currentPlayers, setCurrentPlayers] = useState<GamePlayer[]>([]);
   const [rehydrationError, setRehydrationError] = useState<string | null>(null);
-
-  if (currentPlayers.length > 0) {
-    console.log('currentPlayers', currentPlayers);
-  }
 
   const { program, provider } = useProgram();
   const { connection } = useConnection();
@@ -201,7 +195,14 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
 
   const getGameByCode = async (code: string): Promise<Boolean> => {
     try {
-      const game = await getPartialGameFromDb(code);
+      // Use public API endpoint for partial game data
+      const response = await fetch(`/api/games/${code}/partial`);
+      if (!response.ok) {
+        throw new Error('Game not found');
+      }
+      const result = await response.json();
+      const game = result.data;
+
       setPartialGameData(game);
       setGameCode(game.game_code);
 
@@ -268,7 +269,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
         // Check if game is already active
         if (partialGameData.status === 'active') {
           console.log('[GameStart] Game is already active, updating state...');
-          const fullGameData = await getGameFromDb(partialGameData.game_code);
+          const fullGameData = await getGameForPlayer(partialGameData.game_code);
           setGameData({
             ...fullGameData,
             status: 'active',
@@ -294,7 +295,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
               const actualEndTime = event.endTime.toNumber();
 
               try {
-                const fullGameData = await getGameFromDb(
+                const fullGameData = await getGameForPlayer(
                   partialGameData.game_code
                 );
                 setGameData({
@@ -470,9 +471,8 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
         // Also update the player's username in the database if needed
         if (username) {
           try {
-            await recordPlayerJoinGame(
-              partialGameData.id,
-              publicKey.toString(),
+            await authenticatedApiClient.joinGame(
+              partialGameData.game_code,
               username
             );
           } catch (error) {
@@ -552,6 +552,20 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
       }
     } catch (error: any) {
       console.error('Error in handleStartGame:', error);
+
+      // Check if the error is about transaction already processed
+      if (
+        error.message?.includes('already been processed') ||
+        error.message?.includes('This transaction has already been processed')
+      ) {
+        // Game might have already started, check the current state
+        console.log(
+          'Transaction already processed - game may have already started'
+        );
+        // Don't throw error, just return - the game state will be updated by event listeners
+        return;
+      }
+
       throw new Error(t('Failed to start game'));
     }
   };
@@ -605,8 +619,10 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      // Get or set finish time
-      const finishTime = gameSession.submittedTime || Date.now();
+      // Get or set finish time (cap to game end time if user submits after deadline)
+      const gameEndTime = new Date(gameData.end_time).getTime();
+      const finishTime =
+        gameSession.submittedTime || Math.min(Date.now(), gameEndTime);
 
       // Convert StoredGameSession to GameSession format
       const formattedGameSession = {
@@ -753,6 +769,12 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
     if (gameData.status !== 'active' || !gameData || !isAdmin) return;
 
     const checkEndGameEligibility = () => {
+      // Don't allow ending if game is already ended on blockchain
+      if (gameState === GameState.ENDED) {
+        setCanEndGame(false);
+        return;
+      }
+
       const now = Date.now();
       const endTime = new Date(gameData.end_time).getTime();
       const bufferTime = 30000; // 30 seconds after end_time
@@ -766,7 +788,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
     checkEndGameEligibility(); // Initial check
 
     return () => clearInterval(timer);
-  }, [gameData, isAdmin]);
+  }, [gameData, isAdmin, gameState]);
 
   const handleEndGame = async () => {
     if (!program || !provider) throw new Error(t('Program not initialized'));
@@ -775,6 +797,16 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
     if (!sendTransaction)
       throw new Error(t('Wallet adapter not properly initialized'));
     if (!isAdmin) throw new Error(t('Only admin can end the game'));
+
+    // Check if game is already ended on blockchain
+    if (gameState === GameState.ENDED) {
+      console.log('Game already ended on blockchain, skipping transaction');
+      // Update database status if needed
+      setGameStateWithMetadata(GameState.ENDED, {
+        endedAt: Date.now(),
+      });
+      return null; // Return null to indicate no transaction was needed
+    }
 
     const now = Date.now();
     const endTime = new Date(gameData.end_time).getTime();
@@ -954,16 +986,14 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
         // Different approach for admin vs player
         if (isAdmin) {
           try {
-            // For admins, fetch game data and leaderboard info directly
-            const [gameDataResult, leaderboardResults] = await Promise.all([
-              supabase
-                .from('games')
-                .select('*')
-                .eq('id', gameData.id)
-                .single()
-                .then(({ data }) => data),
-              fetchGameLeaderboard(gameData.id),
-            ]);
+            // For admins, fetch game data and leaderboard info via API
+            const adminResultsResponse = await authenticatedApiClient.getAdminResults(gameData.id);
+
+            if (!adminResultsResponse.success) {
+              throw new Error(adminResultsResponse.error || 'Failed to load admin results');
+            }
+
+            const { gameData: gameDataResult, leaderboard: leaderboardResults } = adminResultsResponse.data;
 
             // Update game data with latest information
             setGameData((prev) => ({

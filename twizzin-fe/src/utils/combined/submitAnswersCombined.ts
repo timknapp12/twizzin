@@ -4,14 +4,12 @@ import { TwizzinIdl } from '@/types/idl';
 import {
   GameSession,
   JoinFullGame,
-  QuestionFromDb,
   GameResultFromDb,
   GameResultQuestion,
 } from '@/types';
 import { submitAnswers } from '../program/submitAnswers';
-import { submitAnswersToDb } from '../supabase/submitAnswersToDb';
-import { verifyAndPrepareAnswers } from '../merkle/verifyUserAnswers';
 import { getSupabaseTimestamp } from '../helpers/timeHelpers';
+import { authenticatedApiClient } from '../api/authenticatedClient';
 
 interface SubmitAnswersResult {
   success: boolean;
@@ -49,54 +47,79 @@ export const submitAnswersCombined = async ({
   }
 
   try {
-    // Ensure finish time is not after game end time
-    const gameEndTime = new Date(gameData.end_time).getTime();
-    const submissionTime = Math.min(gameSession.finishTime, gameEndTime);
+    // Use the client submission time (already properly set by UI layer)
+    // - If user manually submitted: finishTime = Date.now() when they clicked
+    // - If time expired: finishTime = game end time (set by handleAutoSubmitUnanswered)
+    const submissionTime = gameSession.finishTime;
     // Format finish time for different uses
     const finishTimeAnchor = new BN(submissionTime);
     const finishTimeDb = getSupabaseTimestamp(new Date(submissionTime));
-
-    // Extract questions with correct answers
-    const questions = gameData.questions.map((q: QuestionFromDb) => ({
-      id: q.id,
-      correct_answer: q.correct_answer,
-      display_order: q.display_order,
-    }));
 
     // Sort answers by display order
     const sortedAnswers = [...gameSession.answers].sort(
       (a, b) => a.displayOrder - b.displayOrder
     );
 
-    // Format session for verification
-    const formattedSession: GameSession = {
-      answers: sortedAnswers.map((answer) => ({
-        displayOrder: answer.displayOrder,
-        answer: answer.answer,
-        questionId: answer.questionId,
-      })),
-      startTime: gameSession.startTime,
-      finishTime: submissionTime,
-      submitted: gameSession.submitted,
-    };
+    // Format answers for the server-side verification API
+    const answersForApi = sortedAnswers.map((answer) => ({
+      displayOrder: answer.displayOrder,
+      answer: answer.answer,
+      questionId: answer.questionId,
+    }));
 
-    // Verify and prepare answers
-    const { answers: verifiedAnswers, numCorrect } =
-      await verifyAndPrepareAnswers(formattedSession, questions);
+    // Call server-side API to generate merkle proofs and verify answers
+    // This keeps correct answers on the server — they are never sent to the client
+    const verifyResult = await authenticatedApiClient.verifyAnswers(
+      gameData.game_code,
+      answersForApi,
+      submissionTime
+    );
+
+    if (!verifyResult.success || !verifyResult.data) {
+      throw new Error(verifyResult.error || 'Failed to verify answers');
+    }
+
+    const { answers: verifiedAnswersWithResults, numCorrect } = verifyResult.data;
+
+    // Extract proof-only answers for Solana submission (strip result display data)
+    const verifiedAnswers = verifiedAnswersWithResults.map(
+      (a: {
+        displayOrder: number;
+        answer: string;
+        questionId: string;
+        proof: number[][];
+        isCorrect: boolean;
+      }) => ({
+        displayOrder: a.displayOrder,
+        answer: a.answer,
+        questionId: a.questionId,
+        proof: a.proof,
+        isCorrect: a.isCorrect,
+      })
+    );
 
     // Verify answers because of the out of index error
     console.log(
       'Verified answers being sent to Solana:',
       JSON.stringify(verifiedAnswers, null, 2)
     );
-    // Verify answers because of the out of index error
-    verifiedAnswers.forEach((a, i) => {
-      if (!Array.isArray(a.proof)) {
-        throw new Error(
-          `Answer at index ${i} has invalid proof: ${JSON.stringify(a.proof)}`
-        );
+    verifiedAnswers.forEach(
+      (a: { proof: number[][] }, i: number) => {
+        if (!Array.isArray(a.proof)) {
+          throw new Error(
+            `Answer at index ${i} has invalid proof: ${JSON.stringify(a.proof)}`
+          );
+        }
       }
-    });
+    );
+
+    // Format session for DB submission
+    const formattedSession: GameSession = {
+      answers: answersForApi,
+      startTime: gameSession.startTime,
+      finishTime: submissionTime,
+      submitted: gameSession.submitted,
+    };
 
     // Mark the session as submitted
     const submittedSession = markSessionSubmitted(gameData.game_code);
@@ -116,33 +139,35 @@ export const submitAnswersCombined = async ({
       throw new Error(solanaResult.error || 'Failed to submit to Solana');
     }
 
-    // Submit to Supabase
-    const dbResult = await submitAnswersToDb({
-      gameId: gameData.id,
-      playerWallet: publicKey.toString(),
-      gameSession: {
+    // Submit to Supabase using authenticated API
+    const apiResult = await authenticatedApiClient.submitAnswers(
+      gameData.game_code,
+      {
         ...formattedSession,
         answers: verifiedAnswers,
         finishTime: finishTimeDb,
       },
-      signature: solanaResult.signature!,
-      numCorrect,
-    });
+      solanaResult.signature!,
+      numCorrect
+    );
 
-    if (!dbResult.success) {
-      throw new Error(dbResult.error || 'Failed to submit to database');
+    if (!apiResult.success) {
+      throw new Error(apiResult.error || 'Failed to submit to database');
     }
 
-    // Construct game result from available data
+    // Construct game result from server-verified data
+    // The verify-answers API returns correctAnswerText and correctAnswerLetter
+    // so we can build the results display without having correct answers locally
     const answeredQuestions: GameResultQuestion[] = gameData.questions.map(
       (question) => {
-        const userAnswer = verifiedAnswers.find(
-          (answer) => answer.questionId === question.id
+        const serverAnswer = verifiedAnswersWithResults.find(
+          (a: { questionId: string }) => a.questionId === question.id
         );
-        const userAnswerDetails = userAnswer
-          ? question.answers.find((a) => a.answer_text === userAnswer.answer)
+        const userAnswerDetails = serverAnswer
+          ? question.answers.find(
+              (a) => a.display_letter === serverAnswer.answer
+            )
           : null;
-        const correctAnswer = question.answers.find((a) => a.is_correct);
 
         return {
           questionId: question.id,
@@ -154,10 +179,10 @@ export const submitAnswersCombined = async ({
               }
             : null,
           correctAnswer: {
-            text: correctAnswer?.answer_text || '',
-            displayLetter: correctAnswer?.display_letter || '',
+            text: serverAnswer?.correctAnswerText || '',
+            displayLetter: serverAnswer?.correctAnswerLetter || '',
           },
-          isCorrect: userAnswer?.isCorrect || false,
+          isCorrect: serverAnswer?.isCorrect || false,
           displayOrder: question.display_order,
         };
       }

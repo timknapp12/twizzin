@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { Button, Column, Row, Label, Input } from '@/components';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { TbListDetails } from 'react-icons/tb';
@@ -19,6 +20,7 @@ import {
 import { toast } from 'react-toastify';
 import { FaUsers } from 'react-icons/fa6';
 import { JoinedPlayersModal } from '@/components/modals';
+import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 
 const { network } = getCurrentConfig();
 
@@ -27,7 +29,8 @@ const JoinGameDetails = ({
 }: {
   partialGameData: PartialGame;
 }) => {
-  const { t, language } = useAppContext();
+  const { t, language, isAuthenticated } = useAppContext();
+  const { connected } = useWallet();
   const {
     username,
     setUsername,
@@ -78,6 +81,17 @@ const JoinGameDetails = ({
   }, [start_time]);
 
   const onJoinGame = async () => {
+    // Check authentication before allowing join
+    if (!connected) {
+      toast.error(t('Please connect your wallet first'));
+      return;
+    }
+
+    if (!isAuthenticated) {
+      toast.error(t('Please verify your wallet signature first'));
+      return;
+    }
+
     setIsLoading(true);
     try {
       const signature = await handleJoinGame();
@@ -273,7 +287,7 @@ const JoinGameDetails = ({
       </div>
 
       <Column className='gap-4 w-full'>
-        {!isAdmin && !hasJoinedGame && (
+        {!isAdmin && !hasJoinedGame && connected && (
           <Input
             label={t('Username')}
             value={username}
@@ -283,7 +297,25 @@ const JoinGameDetails = ({
             placeholder={t('Enter your username')}
           />
         )}
-        {hasJoinedGame ? (
+
+        {/* Show different buttons based on connection and authentication status */}
+        {!connected ? (
+          <Column className='gap-2 w-full'>
+            <Label className='text-center text-sm opacity-70'>
+              {t('Connect your wallet to join this game')}
+            </Label>
+            <WalletMultiButton />
+          </Column>
+        ) : !isAuthenticated ? (
+          <Column className='gap-2 w-full'>
+            <Label className='text-center text-sm opacity-70'>
+              {t('Please verify your wallet signature to join this game')}
+            </Label>
+            <Button onClick={onJoinGame} isLoading={isLoading}>
+              {t('Join game')}
+            </Button>
+          </Column>
+        ) : hasJoinedGame ? (
           <Button secondary onClick={onLeaveGame}>
             {t('Leave game')}
           </Button>
@@ -292,6 +324,7 @@ const JoinGameDetails = ({
             {t('Join game')}
           </Button>
         )}
+
         {hasJoinedGame && isAdmin && (
           <Button onClick={onStartGame} isLoading={isStartingGame}>
             {t('Start game')}

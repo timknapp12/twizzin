@@ -6,12 +6,12 @@ import {
   Row,
   ScreenContainer,
 } from '../containers';
+import { FullAuthGuard } from '../AuthGuard';
 import { Input } from '../inputs';
 import { Button } from '../buttons/Button';
 import { PrimaryText } from '../texts';
 import { useProgram } from '@/contexts/ProgramContext';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { initializeConfig } from '@/utils';
 import { useAppContext } from '@/contexts';
 import { Header } from '../Header';
@@ -113,78 +113,100 @@ export const AdminComponent = () => {
     <ScreenContainer>
       <Header />
       <InnerScreenContainer justify='start' className='mt-[7vh]'>
-        <PrimaryText>{t('Initialize Program Config')}</PrimaryText>
-
-        {!isWalletConnected ? (
-          <Column className='items-center gap-4'>
-            <p className='text-amber-600'>
-              {t('Please connect your wallet first')}
-            </p>
-            <WalletMultiButton />
-          </Column>
-        ) : (
-          <>
-            <Row className='w-full gap-4'>
-              <Input
-                className='flex-grow'
-                type='text'
-                id='treasuryAddress'
-                name='treasuryAddress'
-                placeholder={t('Enter treasury address')}
-                value={treasuryAddress}
-                onChange={(e) => setTreasuryAddress(e.target.value)}
-                aria-label='Treasury Address'
-                required
-                disabled={status.loading}
-              />
-              <Input
-                className='flex-grow'
-                type='number'
-                id='treasuryFee'
-                name='treasuryFee'
-                placeholder={t('Enter treasury fee (0-10)')}
-                value={treasuryFee}
-                onChange={(e) => setTreasuryFee(e.target.value)}
-                aria-label='Treasury Fee'
-                required
-                min='0'
-                max='10'
-                step='0.1'
-                disabled={status.loading}
-              />
-            </Row>
-            <Column className='w-1/2'>
-              <Button
-                onClick={handleInitConfig}
-                disabled={status.loading || !treasuryAddress || !treasuryFee}
-              >
-                {status.loading ? t('Initializing...') : t('Initialize Config')}
-              </Button>
-            </Column>
-          </>
-        )}
-
-        {status.error && (
-          <div className='p-4 bg-red-100 border border-red-400 rounded text-red-700'>
-            {status.error}
-          </div>
-        )}
-
-        {status.signature && (
-          <div className='p-4 bg-green-100 border border-green-400 rounded'>
-            <p className='text-green-700'>
-              {t('Config initialized successfully!')}
-            </p>
-            <a
-              href={`https://explorer.solana.com/tx/${status.signature}?cluster=${network}`}
-              target='_blank'
-              rel='noopener noreferrer'
-              className='text-sm text-blue-500 hover:underline'
+        <FullAuthGuard
+          fallbackMessage={t(
+            'Connect your wallet and verify to access admin functions'
+          )}
+        >
+          <PrimaryText>{t('Initialize Program Config')}</PrimaryText>
+          <Row className='w-full gap-4'>
+            <Input
+              className='flex-grow'
+              type='text'
+              id='treasuryAddress'
+              name='treasuryAddress'
+              placeholder={t('Enter treasury address')}
+              value={treasuryAddress}
+              onChange={(e) => setTreasuryAddress(e.target.value)}
+              aria-label='Treasury Address'
+              required
+              disabled={status.loading}
+            />
+            <Input
+              className='flex-grow'
+              type='number'
+              id='treasuryFee'
+              name='treasuryFee'
+              placeholder={t('Enter treasury fee (0-10)')}
+              value={treasuryFee}
+              onChange={(e) => setTreasuryFee(e.target.value)}
+              aria-label='Treasury Fee'
+              required
+              min='0'
+              max='10'
+              step='0.1'
+              disabled={status.loading}
+            />
+          </Row>
+          <Column className='w-1/2'>
+            <Button
+              onClick={handleInitConfig}
+              disabled={status.loading || !treasuryAddress || !treasuryFee}
             >
-              {t('View transaction')}
-            </a>
-          </div>
-        )}
+              {status.loading ? t('Initializing...') : t('Initialize Config')}
+            </Button>
+          </Column>
+          <Row className='w-full gap-4'>
+            <Input
+              className='flex-grow'
+              placeholder={t('Treasury Address')}
+              value={treasuryAddress}
+              onChange={(e) => setTreasuryAddress(e.target.value)}
+              disabled={status.loading}
+            />
+            <Input
+              className='flex-grow'
+              placeholder={t('Treasury Fee (%)')}
+              value={treasuryFee}
+              onChange={(e) => setTreasuryFee(e.target.value)}
+              type='number'
+              min='0'
+              max='10'
+              step='0.1'
+              disabled={status.loading}
+            />
+          </Row>
+          <Column className='w-1/2'>
+            <Button
+              onClick={handleInitConfig}
+              disabled={status.loading || !treasuryAddress || !treasuryFee}
+            >
+              {status.loading ? t('Initializing...') : t('Initialize Config')}
+            </Button>
+          </Column>
+
+          {status.error && (
+            <div className='p-4 bg-red-100 border border-red-400 rounded text-red-700'>
+              {status.error}
+            </div>
+          )}
+
+          {status.signature && (
+            <div className='p-4 bg-green-100 border border-green-400 rounded'>
+              <p className='text-green-700'>
+                {t('Config initialized successfully!')}
+              </p>
+              <a
+                href={`https://explorer.solana.com/tx/${status.signature}?cluster=${network}`}
+                target='_blank'
+                rel='noopener noreferrer'
+                className='text-sm text-blue-500 hover:underline'
+              >
+                {t('View transaction')}
+              </a>
+            </div>
+          )}
+        </FullAuthGuard>
       </InnerScreenContainer>
     </ScreenContainer>
   );
