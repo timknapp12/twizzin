@@ -213,7 +213,8 @@ export async function rateLimit(
  */
 export function createRateLimitedHandler(
   config: RateLimitConfig,
-  handler: (_request: NextRequest) => Promise<NextResponse>
+  // eslint-disable-next-line no-unused-vars
+  handler: (request: NextRequest) => Promise<NextResponse>
 ) {
   return async (request: NextRequest): Promise<NextResponse> => {
     // Increment once and capture the result for headers
