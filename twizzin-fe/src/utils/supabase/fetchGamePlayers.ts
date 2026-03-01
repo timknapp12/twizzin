@@ -96,7 +96,6 @@ export const fetchGamePlayers = async (
       return [];
     }
 
-    console.log('[PlayerLoad] Found player wallets:', players);
     // Filter out the admin wallet before fetching player details
     const nonAdminPlayers = players.filter(
       (player) => player.player_wallet !== game.admin_wallet
