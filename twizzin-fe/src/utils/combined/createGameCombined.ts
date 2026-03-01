@@ -1,12 +1,11 @@
 import { Program, AnchorProvider } from '@coral-xyz/anchor';
 import { NATIVE_MINT } from '@solana/spl-token';
 import { initializeGame } from '../program/initGame';
-import { createGameWithQuestions } from '../supabase/createGame';
 import { CreateGameCombinedParams } from '@/types';
 import { TwizzinIdl } from '@/types/idl';
 import { generateMerkleRoot } from '../merkle/generateMerkleRoot';
-import { supabase } from '../supabase/supabaseClient';
 import { getAnchorTimestamp, getSupabaseTimestamp } from '../helpers';
+import { authenticatedApiClient } from '../api/authenticatedClient';
 
 export const createGameCombined = async (
   program: Program<TwizzinIdl>,
@@ -19,11 +18,10 @@ export const createGameCombined = async (
   const isNative = params.tokenMint.equals(NATIVE_MINT);
 
   try {
-    // 1. First create database entries
-    const dbResult = await createGameWithQuestions(
+    // 1. First create database entries using authenticated API
+    const apiResult = await authenticatedApiClient.createGame(
       {
         gamePubkey: '',
-        adminWallet: publicKey.toString(),
         name: params.name,
         tokenMint: params.tokenMint.toString(),
         entryFee: params.entryFee,
@@ -40,8 +38,14 @@ export const createGameCombined = async (
         username: params.username,
       },
       params.questions,
-      params.imageFile
+      params.imageFile || undefined
     );
+
+    if (!apiResult.success) {
+      throw new Error(apiResult.error || 'Failed to create game in database');
+    }
+
+    const dbResult = apiResult.data;
 
     // 2. Generate merkle root
     const answerHash = await generateMerkleRoot(dbResult.questions);
@@ -74,14 +78,17 @@ export const createGameCombined = async (
       );
     }
 
-    // 5. Update database with on-chain info
-    await supabase
-      .from('games')
-      .update({
-        game_pubkey: onChainResult.signature,
-        answer_merkle_root: answerHash,
-      })
-      .eq('id', dbResult.game.id);
+    // 5. Update database with on-chain info via API
+    const updateResult = await authenticatedApiClient.updateOnchainInfo(
+      dbResult.game.id,
+      onChainResult.signature ?? '',
+      answerHash
+    );
+
+    if (!updateResult.success) {
+      console.error(`Failed to update on-chain info via API: ${updateResult.error}`);
+      // Log clearly but don't throw - on-chain transaction already succeeded
+    }
 
     return {
       onChain: onChainResult,
@@ -89,6 +96,18 @@ export const createGameCombined = async (
     };
   } catch (err: unknown) {
     console.log('❌ Error creating game:', err);
+
+    // Check if the error is about transaction already processed
+    if (
+      err instanceof Error &&
+      (err.message?.includes('already been processed') ||
+        err.message?.includes('This transaction has already been processed'))
+    ) {
+      throw new Error(
+        'Network issue detected. Please try creating the game again - this usually resolves the issue.'
+      );
+    }
+
     throw err;
   }
 };

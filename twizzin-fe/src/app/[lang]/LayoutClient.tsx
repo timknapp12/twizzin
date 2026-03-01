@@ -1,10 +1,15 @@
 'use client';
+
 import React from 'react';
 import { I18nextProvider } from 'react-i18next';
 import i18n from '../../i18n';
 import { ErrorBoundary, MainSkeleton } from '@/components';
 import dynamic from 'next/dynamic';
-import { ProgramContextProvider, AppContextProvider } from '@/contexts';
+import {
+  ProgramContextProvider,
+  AppContextProvider,
+  SupabaseAuthProvider,
+} from '@/contexts';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -32,14 +37,16 @@ export default function LayoutClient({ children, lang }: LayoutClientProps) {
   return (
     <I18nextProvider i18n={i18n} defaultNS='common'>
       <WalletProviders>
-        <ProgramContextProvider>
+        <SupabaseAuthProvider>
           <AppContextProvider>
-            <ErrorBoundary>
-              {children}
-              <ToastContainer position='top-right' />
-            </ErrorBoundary>
+            <ProgramContextProvider>
+              <ErrorBoundary>
+                {children}
+                <ToastContainer position='top-right' />
+              </ErrorBoundary>
+            </ProgramContextProvider>
           </AppContextProvider>
-        </ProgramContextProvider>
+        </SupabaseAuthProvider>
       </WalletProviders>
     </I18nextProvider>
   );

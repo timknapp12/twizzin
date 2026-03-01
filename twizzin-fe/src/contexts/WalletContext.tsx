@@ -5,7 +5,7 @@ import {
   WalletProvider,
 } from '@solana/wallet-adapter-react';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
-import { clusterApiUrl, Commitment } from '@solana/web3.js';
+import { Commitment } from '@solana/web3.js';
 import {
   PhantomWalletAdapter,
   SolflareWalletAdapter,
@@ -32,17 +32,10 @@ export const WalletContextProvider: FC<PropsWithChildren> = ({ children }) => {
   const environment = process.env.NEXT_PUBLIC_ENVIRONMENT;
   const isDevnet = environment === 'devnet';
 
+  // Use the /api/rpc proxy so the Helius API key stays server-side.
   const endpoint = useMemo(() => {
-    if (process.env.NEXT_PUBLIC_HELIUS_API_KEY) {
-      return `https://${
-        isDevnet ? 'devnet' : 'mainnet'
-      }.helius-rpc.com/?api-key=${process.env.NEXT_PUBLIC_HELIUS_API_KEY}`;
-    }
-    return (
-      process.env.NEXT_PUBLIC_RPC_URL ||
-      clusterApiUrl(isDevnet ? 'devnet' : 'mainnet-beta')
-    );
-  }, [isDevnet]);
+    return '/api/rpc';
+  }, []);
 
   const wallets = useMemo(
     () => [
@@ -57,16 +50,20 @@ export const WalletContextProvider: FC<PropsWithChildren> = ({ children }) => {
           : WalletAdapterNetwork.Mainnet,
       }),
     ],
-    [isDevnet]
+    [isDevnet],
   );
 
-  const connectionConfig = useMemo(
-    () => ({
+  const connectionConfig = useMemo(() => {
+    const config: { commitment: Commitment; wsEndpoint?: string } = {
       commitment: 'confirmed' as Commitment,
-      wsEndpoint: endpoint.replace('https', 'wss'),
-    }),
-    [endpoint]
-  );
+    };
+    // The /api/rpc proxy only handles HTTP POSTs, not WebSocket connections.
+    // Only set wsEndpoint when using a direct Helius/RPC URL.
+    if (endpoint.startsWith('https')) {
+      config.wsEndpoint = endpoint.replace('https', 'wss');
+    }
+    return config;
+  }, [endpoint]);
 
   if (!mounted) {
     return null;

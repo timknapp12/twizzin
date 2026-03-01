@@ -23,23 +23,22 @@ const Game = () => {
 
   const [isMounted, setIsMounted] = useState(false);
 
-  // Route-level redirect logic
+  // Route-level redirect logic - only redirect if wallet is connected and user is admin
   useEffect(() => {
-    if (!gameCode || !publicKey || !partialGameData) {
-      if (!gameCode) console.log('[Game] No gameCode in params');
-      if (!publicKey) console.log('[Game] No publicKey (wallet not connected)');
-      if (!partialGameData)
-        console.log('[Game] No partialGameData (not loaded yet)');
+    if (!gameCode || !partialGameData) {
       return;
     }
 
-    const isGameAdmin = Boolean(
-      publicKey.toBase58() === partialGameData.admin_wallet
-    );
+    // Only check admin status if wallet is connected
+    if (publicKey) {
+      const isGameAdmin = Boolean(
+        publicKey.toBase58() === partialGameData.admin_wallet
+      );
 
-    if (isGameAdmin) {
-      // If admin, redirect to creator route
-      router.push(`/${language}/creator/game/${gameCode}`);
+      if (isGameAdmin) {
+        // If admin, redirect to creator route
+        router.push(`/${language}/creator/game/${gameCode}`);
+      }
     }
   }, [publicKey, partialGameData, gameCode, router, language]);
 
@@ -63,40 +62,24 @@ const Game = () => {
   if (!isMounted) return <GameDetailsSkeleton />;
 
   const renderGameContent = () => {
+    // If we have game results, show them (requires auth)
     if (gameResult) return <PlayerGameResults />;
+    
+    // If game is active, show play interface (requires auth)
     if (gameState === GameState.ACTIVE || gameData?.status === 'active') {
       if (!gameData)
         console.log('[Game] gameData missing when trying to render PlayGame');
       return <PlayGame />;
     }
-    if (gameState === GameState.JOINING || gameState === GameState.JOINED) {
-      if (!partialGameData)
-        console.log(
-          '[Game] partialGameData missing when trying to render JoinGameDetails'
-        );
-      if (partialGameData)
-        return <JoinGameDetails partialGameData={partialGameData} />;
+    
+    // Show game details for joining (public view, auth only required when actually joining)
+    if (partialGameData) {
+      return <JoinGameDetails partialGameData={partialGameData} />;
     }
+    
     console.log('[Game] Fallback to GameDetailsSkeleton');
     return <GameDetailsSkeleton />;
   };
-
-  // Show "Connect Wallet" screen if publicKey is null
-  if (publicKey === null) {
-    return (
-      <ScreenContainer>
-        <Header />
-        <InnerScreenContainer>
-          <Column className='w-full h-64 items-center justify-center'>
-            <div className='text-xl mb-4'>
-              {t('Please Connect Your Wallet')}
-            </div>
-            <div>{t('You need to connect your wallet to view this game.')}</div>
-          </Column>
-        </InnerScreenContainer>
-      </ScreenContainer>
-    );
-  }
 
   return (
     <ScreenContainer>

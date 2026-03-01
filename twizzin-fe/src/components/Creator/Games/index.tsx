@@ -16,10 +16,11 @@ import {
   Label,
   Header,
 } from '@/components';
+import { FullAuthGuard } from '@/components/AuthGuard';
 import { FaSpinner } from 'react-icons/fa6';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useAppContext } from '@/contexts';
-import { supabase } from '@/utils';
+import { authenticatedApiClient } from '@/utils/api/authenticatedClient';
 
 interface Game {
   id: string;
@@ -53,17 +54,13 @@ export const CreatorGamesComponent = () => {
       setError('');
 
       try {
-        const { data, error } = await supabase
-          .from('games')
-          .select(
-            'id, game_code, name, created_at, status, image_url, entry_fee, token_mint, admin_wallet'
-          )
-          .eq('admin_wallet', publicKey.toBase58())
-          .order('created_at', { ascending: false });
+        const result = await authenticatedApiClient.getCreatorGames();
 
-        if (error) throw error;
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to load games');
+        }
 
-        setGames(data || []);
+        setGames(result.data || []);
       } catch (err) {
         console.error('Error fetching creator games:', err);
         setError(
@@ -125,25 +122,11 @@ export const CreatorGamesComponent = () => {
     );
   }
 
-  if (!publicKey) {
-    return (
-      <ScreenContainer>
-        <Header />
-        <InnerScreenContainer>
-          <Column className='w-full h-64 items-center justify-center'>
-            <div className='mb-4'>
-              {t('Please connect your wallet to view your games')}
-            </div>
-          </Column>
-        </InnerScreenContainer>
-      </ScreenContainer>
-    );
-  }
-
   return (
     <ScreenContainer>
       <Header />
       <InnerScreenContainer>
+        <FullAuthGuard fallbackMessage={t('Connect your wallet and verify to view your created games')}>
         <Column className='w-full'>
           <Row className='w-full justify-between items-center mb-6'>
             <H3>{t('Your Created Games')}</H3>
@@ -218,6 +201,7 @@ export const CreatorGamesComponent = () => {
             </Grid>
           )}
         </Column>
+        </FullAuthGuard>
       </InnerScreenContainer>
     </ScreenContainer>
   );

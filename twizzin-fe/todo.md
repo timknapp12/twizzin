@@ -43,3 +43,20 @@ refactor after MVP:
 // https://app.timsol.org/
 
 // cloudflared tunnel run solana-local
+
+auth test:
+
+1. auth from beginning and create game
+2. auth from beginning and join game
+3. no auth and try to join game
+4. no auth and try to create game
+5. disconnect wallet on different screens
+
+Need to update in prod:
+
+- supabase - authentication
+  - enable web3 solana auth
+  - site url as env domain
+  - get supabase secret role key and set in vercel env var
+  - update all vercel prod env vars from staging to prod
+  - add prod project id from supabse to next.config.mjs

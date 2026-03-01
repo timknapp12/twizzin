@@ -2,15 +2,27 @@
 import { PiShootingStarFill } from 'react-icons/pi';
 import { FaChevronRight } from 'react-icons/fa6';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
+import { useWallet } from '@solana/wallet-adapter-react';
 
 import { Row } from '@/components';
 import { useAppContext } from '@/contexts';
+import ClaimRewardsRow from './ClaimRewardsRow';
 
-const ConnectWalletForRewardsButton = () => {
+interface ConnectWalletForRewardsButtonProps {
+  onSetView?: (view: string) => void;
+}
+
+const ConnectWalletForRewardsButton = ({ onSetView }: ConnectWalletForRewardsButtonProps) => {
   const { setVisible } = useWalletModal();
+  const { connected } = useWallet();
   const { t } = useAppContext();
 
   const handleClick = () => setVisible(true);
+
+  // If connected, show the rewards row instead
+  if (connected && onSetView) {
+    return <ClaimRewardsRow onSetView={onSetView} />;
+  }
 
   return (
     <button

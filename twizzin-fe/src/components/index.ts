@@ -17,3 +17,4 @@ export * from './MainSkeleton';
 export * from './Callout';
 export * from './Creator';
 export * from './Tabs';
+export * from './AuthGuard';

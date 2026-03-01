@@ -1,6 +1,7 @@
 import { FaArrowLeft } from 'react-icons/fa6';
 import { IconButton, Column, Row, PrimaryText } from '@/components';
 import ClaimRewardCard from './ClaimRewardCard';
+import { FullAuthGuard } from '@/components/AuthGuard';
 
 import RewardsBanner from './RewardsBanner';
 import { useAppContext } from '@/contexts';
@@ -23,12 +24,14 @@ const RewardsView = ({ onSetView }: RewardsViewProps) => {
         />
         <PrimaryText style={{ fontSize: 16 }}>{t('Back')}</PrimaryText>
       </Row>
-      <Column className='w-full gap-4'>
-        <RewardsBanner rewards={unclaimedRewards || 0} />
-        {userRewards.map((reward) => (
-          <ClaimRewardCard key={reward.gameId} reward={reward} />
-        ))}
-      </Column>
+      <FullAuthGuard fallbackMessage={t('Connect your wallet and verify to view your rewards')}>
+        <Column className='w-full gap-4'>
+          <RewardsBanner rewards={unclaimedRewards || 0} />
+          {userRewards.map((reward) => (
+            <ClaimRewardCard key={reward.gameId} reward={reward} />
+          ))}
+        </Column>
+      </FullAuthGuard>
     </Column>
   );
 };

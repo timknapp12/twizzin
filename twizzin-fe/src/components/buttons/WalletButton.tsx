@@ -5,6 +5,7 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 import { FaSignOutAlt, FaWallet, FaSpinner } from 'react-icons/fa';
 import { useAppContext } from '@/contexts';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useScreenSize } from '@/hooks/useScreenSize';
 
 interface WalletButtonProps {
@@ -15,13 +16,16 @@ export const WalletButton: React.FC<WalletButtonProps> = ({ className }) => {
   const { connecting, connected, publicKey, disconnect } = useWallet();
   const { setVisible } = useWalletModal();
   const { t } = useAppContext();
+  const { signOut } = useSupabaseAuth();
   const [isHovering, setIsHovering] = useState(false);
   const screenSize = useScreenSize();
 
   const shouldShowIcons = screenSize === 'large' || screenSize === 'medium';
 
-  const handleClick = () => {
+  const handleClick = async () => {
     if (connected) {
+      // Sign out from Supabase first, then disconnect wallet
+      await signOut();
       disconnect();
     } else {
       setVisible(true);

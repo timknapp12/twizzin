@@ -6,19 +6,13 @@ import {
 } from '@solana/web3.js';
 import { Program, AnchorProvider } from '@coral-xyz/anchor';
 import { TwizzinIdl } from '@/types/idl';
-import { supabase } from '@/utils/supabase';
 import {
   TOKEN_PROGRAM_ID,
   ASSOCIATED_TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
 import { deriveGamePDAs } from './pdas';
-import { distributeGameXP } from '@/utils/supabase/xp';
-import {
-  fetchGameSubmissions,
-  determineWinnersAndLeaderboard,
-} from '@/utils/supabase/getGameResults';
 import { fetchGameWinners } from './getWinners';
-import { updateGameWinners } from '../supabase/updateWinners';
+import { authenticatedApiClient } from '../api/authenticatedClient';
 
 export async function endGameAndDeclareWinners(
   program: Program<TwizzinIdl>,
@@ -35,25 +29,29 @@ export async function endGameAndDeclareWinners(
   const admin = provider.wallet.publicKey;
   if (!admin) throw new Error('Wallet not connected');
 
+  // Get game data from API
+  const gameResult = await authenticatedApiClient.getGameById(params.gameId);
+
+  if (!gameResult.success || !gameResult.data) {
+    throw new Error(`Failed to fetch game data: ${gameResult.error}`);
+  }
+
+  const gameData = gameResult.data;
+
   try {
-    // Get game data from Supabase
-    const { data: gameData, error: gameError } = await supabase
-      .from('games')
-      .select('*')
-      .eq('id', params.gameId)
-      .single();
 
-    if (gameError || !gameData) {
-      throw new Error(`Failed to fetch game data: ${gameError?.message}`);
-    }
-
-    // Get submissions and determine winners using utility functions
-    const submissions = await fetchGameSubmissions(params.gameId);
-    const gameResults = determineWinnersAndLeaderboard(
-      submissions,
+    // Get submissions and determine winners using API
+    const submissionsResult = await authenticatedApiClient.getGameSubmissions(
+      params.gameId,
       gameData.max_winners,
       gameData.all_are_winners
     );
+
+    if (!submissionsResult.success || !submissionsResult.data) {
+      throw new Error(`Failed to fetch game submissions: ${submissionsResult.error}`);
+    }
+
+    const gameResults = submissionsResult.data;
 
     // Derive PDAs and fetch config
     const { gamePda, vaultPda, configPda, winnersPda } = deriveGamePDAs(
@@ -100,7 +98,7 @@ export async function endGameAndDeclareWinners(
     // Only add declareWinners instruction if there are winners
     if (gameResults.winners.length > 0) {
       const winnerPDAs = await Promise.all(
-        gameResults.winners.map(async (winner) => {
+        gameResults.winners.map(async (winner: any) => {
           const winnerPubkey = new PublicKey(winner.wallet);
           const [playerPda] = PublicKey.findProgramAddressSync(
             [
@@ -124,7 +122,7 @@ export async function endGameAndDeclareWinners(
       };
 
       const declareWinnersIx = await program.methods
-        .declareWinners(gameResults.winners.map((w) => new PublicKey(w.wallet)))
+        .declareWinners(gameResults.winners.map((w: any) => new PublicKey(w.wallet)))
         // @ts-ignore
         .accounts(declareWinnersAccounts)
         .remainingAccounts(
@@ -146,16 +144,12 @@ export async function endGameAndDeclareWinners(
       ...latestBlockhash,
     });
 
-    // Update game status in database
-    const { error: updateError } = await supabase
-      .from('games')
-      .update({
-        status: 'ended',
-      })
-      .eq('id', params.gameId);
+    // Update game status in database via API
+    const statusResult = await authenticatedApiClient.endGameStatus(params.gameId);
 
-    if (updateError) {
-      throw new Error(`Failed to update game status: ${updateError.message}`);
+    if (!statusResult.success) {
+      console.error(`Failed to update game status via API: ${statusResult.error}`);
+      // Log clearly but don't throw - on-chain transaction already succeeded
     }
 
     // Only fetch and update winner information if there are winners
@@ -165,18 +159,31 @@ export async function endGameAndDeclareWinners(
         admin,
         params.gameCode
       );
-      await updateGameWinners(params.gameId, onChainWinners);
+
+      const winnersResult = await authenticatedApiClient.updateWinners(
+        params.gameId,
+        onChainWinners
+      );
+
+      if (!winnersResult.success) {
+        console.error(`Failed to update winners via API: ${winnersResult.error}`);
+        // Log clearly but don't throw - on-chain transaction already succeeded
+      }
     }
 
     // Distribute XP if there are players
     if (gameResults.allPlayers.length > 0) {
-      await distributeGameXP(
+      const xpResult = await authenticatedApiClient.distributeXP(
         params.gameId,
         gameResults.allPlayers,
         gameData.even_split,
-        admin.toBase58(),
         gameResults.allPlayers.length
       );
+
+      if (!xpResult.success) {
+        console.error(`Failed to distribute XP via API: ${xpResult.error}`);
+        // Log clearly but don't throw - on-chain transaction already succeeded
+      }
     }
 
     return {
@@ -188,6 +195,33 @@ export async function endGameAndDeclareWinners(
     };
   } catch (error: any) {
     console.error('Failed to end game and declare winners:', error);
+
+    // Check if this is a "transaction already processed" error
+    if (error?.message?.includes('This transaction has already been processed')) {
+      console.log('Game already ended, treating as success');
+      // Try to get the game results even though the transaction failed
+      try {
+        const submissionsResult = await authenticatedApiClient.getGameSubmissions(
+          params.gameId,
+          gameData.max_winners,
+          gameData.all_are_winners
+        );
+
+        if (submissionsResult.success && submissionsResult.data) {
+          const gameResults = submissionsResult.data;
+          return {
+            success: true,
+            signature: null, // No new signature since transaction was already processed
+            error: null,
+            winners: gameResults.winners,
+            leaderboard: gameResults.allPlayers,
+          };
+        }
+      } catch (resultsError) {
+        console.error('Failed to get game results after duplicate transaction:', resultsError);
+      }
+    }
+
     return {
       success: false,
       signature: null,

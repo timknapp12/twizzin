@@ -7,7 +7,7 @@
 # dependencies
 /twizzin-fe/node_modules
 /twizzin-fe/.pnp
-/twizzin-fe.pnp.js
+/twizzin-fe/.pnp.js
 /twizzin-fe/.yarn/install-state.gz
 /twizzin-fe/install-state.gz
 
@@ -22,31 +22,29 @@
 /twizzin-fe/build
 
 # misc
-/twizzin-fe.DS_Store
-/twizzin-fe*.pem
+/twizzin-fe/.DS_Store
+/twizzin-fe/*.pem
 
 # debug
-/twizzin-fenpm-debug.log*
-/twizzin-feyarn-debug.log*
-/twizzin-feyarn-error.log*
+/twizzin-fe/npm-debug.log*
+/twizzin-fe/yarn-debug.log*
+/twizzin-fe/yarn-error.log*
 
 # local env files
-/twizzin-fe.env*.local
+/twizzin-fe/.env*.local
 
 # vercel
-/twizzin-fe.vercel
+/twizzin-fe/.vercel
 
 # typescript
-/twizzin-fe*.tsbuildinfo
-/twizzin-fenext-env.d.ts
+/twizzin-fe/*.tsbuildinfo
+/twizzin-fe/next-env.d.ts
 
 # env variables
 .env.local
 .env.development
 .env.staging
 .env.production
-
-/twizzin-fe/.vercel
 
 # backend-v2
 /twizzin-be-2/.anchor
@@ -59,4 +57,3 @@
 /twizzin-be-2/program-keypair.json
 
 *wallet.json
-

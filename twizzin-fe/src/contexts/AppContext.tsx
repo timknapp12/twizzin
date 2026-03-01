@@ -9,21 +9,17 @@ import React, {
   useCallback,
 } from 'react';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
-import {
-  AppContextType,
-  GameReward,
-  UserProfile,
-  GameHistory,
-  XPLevelData,
-} from '@/types';
+import { AppContextType, GameReward, UserProfile, GameHistory } from '@/types';
 import { usePathname, useRouter } from 'next/navigation';
 import i18n from '@/i18n';
 import { useTranslation } from 'react-i18next';
-import { localeMap, getPlayerDataWithRewards, getUserXPLevel } from '@/utils';
+import { localeMap } from '@/utils';
 import { processPlayerRewardsResponse } from '@/types/dbTypes';
+import { authenticatedApiClient } from '@/utils/api/authenticatedClient';
 import { CreateGameProvider } from './CreateGameContext';
 import { GameContextProvider } from './GameContext';
-import { BetaModal } from '@/components/modals';
+import { BetaModal, AuthModal } from '@/components/modals';
+import { useSupabaseAuth } from './SupabaseAuthContext';
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -52,6 +48,15 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const pathname = usePathname();
 
   const [isBetaModalOpen, setIsBetaModalOpen] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authModalDismissed, setAuthModalDismissed] = useState(false);
+  const [wasAuthenticated, setWasAuthenticated] = useState(false);
+  // When an AuthGuard with requireAuth=true is mounted, it manages its own
+  // AuthModal. The global AuthModal rendered in this provider should be
+  // suppressed to avoid two overlapping modals.
+  const [authGuardActive, setAuthGuardActive] = useState(false);
+  const { loading, error, signInWithSupabase, supabaseUser } =
+    useSupabaseAuth();
 
   // Initialize language from localStorage or default to 'en'
   const [language, setLanguage] = useState(() => {
@@ -134,29 +139,71 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const { connection } = useConnection();
-  const { publicKey } = useWallet();
+  const { publicKey, connected } = useWallet();
+
+  // Reset auth modal dismissed state and clear user data when wallet disconnects
+  useEffect(() => {
+    if (!connected) {
+      setAuthModalDismissed(false);
+      setShowAuthModal(false);
+      // Clear all user data when wallet disconnects
+      setUserXP(0);
+      setUserRewards([]);
+      setUnclaimedRewards(0);
+      setUserProfile(null);
+      setLevel(0);
+      setNextLevelXP(300);
+      setProgress(0);
+      setGameHistory([]);
+    }
+  }, [connected]);
+
+  // Track when user becomes authenticated
+  useEffect(() => {
+    if (connected && supabaseUser) {
+      setWasAuthenticated(true);
+    }
+  }, [connected, supabaseUser]);
+
+  // Reset authentication tracking when wallet disconnects
+  useEffect(() => {
+    if (!connected) {
+      setWasAuthenticated(false);
+    }
+  }, [connected]);
+
+  // Show auth modal when wallet connects (if not already authenticated and not dismissed)
+  // Don't show if user was previously authenticated (to avoid showing on token refresh issues)
+  useEffect(() => {
+    if (connected && publicKey && !supabaseUser && !authModalDismissed && !wasAuthenticated) {
+      setShowAuthModal(true);
+    }
+  }, [connected, publicKey, supabaseUser, authModalDismissed, wasAuthenticated]);
 
   // Fetch user data (profile, XP, and rewards) in a single function
   const fetchUserXPAndRewards = useCallback(async () => {
-    if (!publicKey || !connection) return;
+    if (!publicKey || !connection || !supabaseUser) return;
 
     try {
       // Fetch detailed XP data including level and game history
-      const xpData: XPLevelData = await getUserXPLevel(publicKey.toString());
+      const xpResult = await authenticatedApiClient.getUserXP();
 
-      // Update state with the new XP data
-      setUserXP(xpData.currentXP);
-      setLevel(xpData.level);
-      setNextLevelXP(xpData.nextLevelXP);
-      setProgress(xpData.progress);
-      setGameHistory(xpData.gameHistory);
+      if (xpResult.success && xpResult.data) {
+        const xpData = xpResult.data;
+        setUserXP(xpData.currentXP);
+        setLevel(xpData.level);
+        setNextLevelXP(xpData.nextLevelXP);
+        setProgress(xpData.progress);
+        setGameHistory(xpData.gameHistory);
+      }
 
       // Fetch basic player data and rewards
-      const playerData = await getPlayerDataWithRewards(publicKey.toString());
+      const rewardsResult = await authenticatedApiClient.getUserRewards();
 
-      if (playerData) {
-        const { userProfile, gameRewards } =
-          processPlayerRewardsResponse(playerData);
+      if (rewardsResult.success && rewardsResult.data) {
+        const { userProfile, gameRewards } = processPlayerRewardsResponse(
+          rewardsResult.data
+        );
         setUserProfile(userProfile);
         setUserRewards(gameRewards);
       } else {
@@ -165,12 +212,27 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.error('Failed to fetch user data:', error);
     }
-  }, [publicKey, connection]);
+  }, [publicKey, connection, supabaseUser]);
+
+  // Clear user data when supabaseUser changes (wallet switching)
+  useEffect(() => {
+    if (!supabaseUser) {
+      // Clear all user data when user signs out or switches wallets
+      setUserXP(0);
+      setUserRewards([]);
+      setUnclaimedRewards(0);
+      setUserProfile(null);
+      setLevel(0);
+      setNextLevelXP(300);
+      setProgress(0);
+      setGameHistory([]);
+    }
+  }, [supabaseUser]);
 
   useEffect(() => {
-    if (!publicKey || !connection) return;
+    if (!publicKey || !connection || !supabaseUser) return;
     fetchUserXPAndRewards();
-  }, [publicKey, connection, fetchUserXPAndRewards]);
+  }, [publicKey, connection, supabaseUser, fetchUserXPAndRewards]);
 
   useEffect(() => {
     const unclaimedRewards = userRewards.filter(
@@ -184,6 +246,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       value={{
         isSignedIn,
         setIsSignedIn,
+        isAuthenticated: connected && !!supabaseUser,
         admin,
         setAdmin,
         language,
@@ -205,6 +268,12 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         gameHistory,
         unclaimedRewards,
         setIsBetaModalOpen,
+        showAuthModal,
+        setShowAuthModal,
+        authModalDismissed,
+        setAuthModalDismissed,
+        signInWithSupabase,
+        setAuthGuardActive,
       }}
     >
       <CreateGameProvider>
@@ -214,6 +283,20 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         <BetaModal
           isOpen={isBetaModalOpen}
           onClose={() => setIsBetaModalOpen(false)}
+        />
+      )}
+      {/* Only render the global AuthModal when no AuthGuard is active on the
+          current page. AuthGuard manages its own modal instance. */}
+      {!authGuardActive && (
+        <AuthModal
+          isOpen={showAuthModal && !supabaseUser}
+          loading={loading}
+          error={error}
+          onAuthenticate={signInWithSupabase}
+          onClose={() => {
+            setShowAuthModal(false);
+            setAuthModalDismissed(true);
+          }}
         />
       )}
     </AppContext.Provider>

@@ -11,16 +11,22 @@ const EndGameButton = ({
   bufferTimeRemaining: string;
 }) => {
   const { t } = useAppContext();
-  const { handleEndGame, canEndGame, isAdmin, gameData } = useGameContext();
+  const { handleEndGame, canEndGame, isAdmin, gameData, gameState } = useGameContext();
   const [isEndingGame, setIsEndingGame] = useState(false);
 
-  if (!isAdmin || !gameData || gameData.status !== 'active') return null;
+  // Don't show button if game is already ended or not active
+  if (!isAdmin || !gameData || gameData.status !== 'active' || gameState === 'ENDED') return null;
 
   const onEndGame = async () => {
     setIsEndingGame(true);
     try {
-      await handleEndGame();
-      toast.success(t('Game ended successfully'));
+      const result = await handleEndGame();
+      // If result is null, it means game was already ended
+      if (result === null) {
+        toast.info(t('Game was already ended'));
+      } else {
+        toast.success(t('Game ended successfully'));
+      }
       goToResults();
     } catch (error: any) {
       toast.error(error.message || t('Failed to end game'));

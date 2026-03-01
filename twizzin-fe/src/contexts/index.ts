@@ -3,3 +3,4 @@ export * from './CreateGameContext';
 export * from './ProgramContext';
 export * from './WalletContext';
 export * from './GameContext';
+export * from './SupabaseAuthContext';
