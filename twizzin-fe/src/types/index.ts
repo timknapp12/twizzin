@@ -10,6 +10,7 @@ export * from './dbTypes';
 export interface AppContextType {
   isSignedIn: boolean;
   setIsSignedIn: (value: boolean) => void;
+  isAuthenticated: boolean;
   admin: any;
   setAdmin: (value: any) => void;
   language: string;
@@ -27,6 +28,12 @@ export interface AppContextType {
   gameHistory?: GameHistory[];
   unclaimedRewards?: number;
   setIsBetaModalOpen: (value: boolean) => void;
+  showAuthModal: boolean;
+  setShowAuthModal: (value: boolean) => void;
+  authModalDismissed: boolean;
+  setAuthModalDismissed: (value: boolean) => void;
+  signInWithSupabase: () => Promise<void>;
+  setAuthGuardActive: (value: boolean) => void;
 }
 
 export interface UserProfile {

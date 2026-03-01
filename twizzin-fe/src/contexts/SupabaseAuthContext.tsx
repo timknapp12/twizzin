@@ -61,6 +61,35 @@ export const SupabaseAuthProvider: React.FC<SupabaseAuthProviderProps> = ({
     };
   }, []);
 
+  // Invalidate session if wallet changes or disconnects
+  useEffect(() => {
+    const checkWalletSessionMatch = async () => {
+      if (!supabaseUser || !supabaseSession) return;
+
+      const sessionWallet =
+        supabaseUser.user_metadata?.custom_claims?.address ||
+        supabaseUser.user_metadata?.wallet_address ||
+        supabaseUser.app_metadata?.wallet_address;
+      const currentWallet = publicKey?.toBase58();
+
+      // Only check if we have a current wallet (don't sign out during wallet initialization)
+      if (currentWallet && sessionWallet && sessionWallet !== currentWallet) {
+        console.log('Wallet mismatch detected, signing out');
+        await signOut();
+      }
+      // If wallet is disconnected but we have a session, sign out
+      else if (!currentWallet && sessionWallet) {
+        console.log('Wallet disconnected, signing out');
+        await signOut();
+      }
+    };
+
+    // Add a small delay to allow wallet to initialize after page refresh
+    const timeoutId = setTimeout(checkWalletSessionMatch, 100);
+    return () => clearTimeout(timeoutId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [publicKey, supabaseUser, supabaseSession]);
+
   const signInWithSupabase = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -79,14 +108,16 @@ export const SupabaseAuthProvider: React.FC<SupabaseAuthProviderProps> = ({
       }
       const { data, error } = await supabase.auth.signInWithWeb3({
         chain: 'solana',
-        wallet: wallet.adapter,
+        wallet: wallet.adapter as any,
         statement: 'Sign in to Twizzin',
       });
+
       if (error) {
         setError(error.message);
         setLoading(false);
         return;
       }
+
       setSupabaseSession(data.session);
       setSupabaseUser(data.user);
       setLoading(false);
