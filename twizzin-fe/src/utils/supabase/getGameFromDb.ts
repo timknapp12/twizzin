@@ -43,6 +43,64 @@ export const getGameFromDb = async (gameCode: string) => {
   }
 };
 
+export const getGameById = async (gameId: string) => {
+  try {
+    const { data: game, error: gameError } = await supabase
+      .from('games')
+      .select(
+        `
+        *,
+        questions (
+          *,
+          answers (*)
+        )
+      `
+      )
+      .eq('id', gameId)
+      .single();
+
+    if (gameError) throw gameError;
+    if (!game) throw new Error('Game not found');
+
+    let username = null;
+    if (game.admin_wallet) {
+      const { data: playerData } = await supabase
+        .from('players')
+        .select('username')
+        .eq('wallet_address', game.admin_wallet)
+        .single();
+
+      username = playerData?.username || null;
+    }
+
+    return {
+      ...game,
+      username,
+    };
+  } catch (error) {
+    console.error('Error fetching game by ID:', error);
+    throw error;
+  }
+};
+
+export const getGameForPlayer = async (gameCode: string) => {
+  // Fetch the full game data
+  const game = await getGameFromDb(gameCode);
+
+  // Strip correct answer information from questions
+  return {
+    ...game,
+    questions: game.questions?.map((q: any) => ({
+      ...q,
+      correct_answer: undefined,
+      answers: q.answers?.map((a: any) => ({
+        ...a,
+        is_correct: undefined,
+      })),
+    })),
+  };
+};
+
 export const getPartialGameFromDb = async (gameCode: string) => {
   try {
     const { data: game, error: gameError } = await supabase
@@ -66,7 +124,7 @@ export const getPartialGameFromDb = async (gameCode: string) => {
         even_split,
         img_url,
         status,
-        questions:questions(count)
+        questions(id)
       `
       )
       .eq('game_code', gameCode.toUpperCase())
@@ -90,7 +148,7 @@ export const getPartialGameFromDb = async (gameCode: string) => {
     // Transform the questions count to be more directly accessible
     const gameWithExtras = {
       ...game,
-      question_count: game.questions[0].count,
+      question_count: game.questions?.length || 0,
       username, // Add the username directly
     };
     // Create a new object without the questions property
