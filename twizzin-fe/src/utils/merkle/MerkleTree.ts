@@ -66,16 +66,14 @@ export class MerkleTree {
     }
   }
 
-  private shouldBypassSecurityCheck = process.env.NODE_ENV === 'development';
   private async createLeaf(answer: AnswerToBeHashed): Promise<Uint8Array> {
-    // Check if we're in a browser environment and have crypto support
-    const hasCrypto =
-      typeof window !== 'undefined' &&
-      window.crypto &&
-      'subtle' in window.crypto;
+    // Check for crypto.subtle in both browser and Node.js (18+) environments
+    const cryptoSubtle = globalThis.crypto?.subtle;
 
-    if (!hasCrypto && !this.shouldBypassSecurityCheck) {
-      throw new Error('Crypto API not available');
+    if (!cryptoSubtle) {
+      throw new Error(
+        'Crypto API not available. Requires a browser with Web Crypto API or Node.js 18+.'
+      );
     }
 
     try {
@@ -92,11 +90,7 @@ export class MerkleTree {
       data.set(answerBytes, displayOrderBytes.length);
       data.set(saltBytes, displayOrderBytes.length + answerBytes.length);
 
-      if (!crypto?.subtle) {
-        throw new Error('crypto.subtle is not available');
-      }
-
-      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+      const hashBuffer = await cryptoSubtle.digest('SHA-256', data);
       if (!hashBuffer) {
         throw new Error('Hash operation failed');
       }
@@ -113,6 +107,14 @@ export class MerkleTree {
   }
 
   private async createNextLayer(nodes: Uint8Array[]): Promise<Uint8Array[]> {
+    const cryptoSubtle = globalThis.crypto?.subtle;
+
+    if (!cryptoSubtle) {
+      throw new Error(
+        'Crypto API not available. Requires a browser with Web Crypto API or Node.js 18+.'
+      );
+    }
+
     try {
       const layerNodes: Uint8Array[] = [];
       for (let i = 0; i < nodes.length; i += 2) {
@@ -130,11 +132,7 @@ export class MerkleTree {
             combined.set(nodes[i], nodes[i + 1].length);
           }
 
-          if (!crypto?.subtle) {
-            throw new Error('crypto.subtle is not available');
-          }
-
-          const hashBuffer = await crypto.subtle.digest('SHA-256', combined);
+          const hashBuffer = await cryptoSubtle.digest('SHA-256', combined);
           if (!hashBuffer) {
             throw new Error('Hash operation failed');
           }
