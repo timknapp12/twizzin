@@ -35,8 +35,8 @@ import {
   clearGameSession,
   endGameAndDeclareWinners,
   fetchCompleteGameResults,
-  setupPlayerResultSubscription,
-  cleanupPlayerResultSubscription,
+  pollForResultUpdates,
+  cancelResultPolling,
   GameState,
   getGameState,
   setGameState,
@@ -246,7 +246,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
   const eventListenerRef = React.useRef<number | null>(null);
   const winnersDeclaredEventListenerRef = React.useRef<number | null>(null);
   const playerJoinedEventListenerRef = React.useRef<number | null>(null);
-  const subscriptionRef = React.useRef(null);
+  const pollingRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasSetupListenerRef = React.useRef(false);
 
   // Setup game start event listener for all users
@@ -907,12 +907,12 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
                   endedByEvent: true,
                 });
 
-                // Start listening for database updates if we're a player
+                // Start polling for database updates if we're a player
                 if (!isAdmin && publicKey) {
-                  setupPlayerResultSubscription(
+                  pollForResultUpdates(
                     gameData.id,
                     publicKey.toString(),
-                    subscriptionRef,
+                    pollingRef,
                     setGameResult
                   );
                 }
@@ -1041,7 +1041,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
             } as GameResultFromDb;
           });
 
-          // Set up subscription if we're a player and XP/rank data isn't available yet
+          // Poll for updates if we're a player and XP/rank data isn't available yet
           if (publicKey && results.playerResult) {
             if (
               results.playerResult.xpEarned === undefined ||
@@ -1049,10 +1049,10 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
               results.playerResult.finalRank === null ||
               results.playerResult.finalRank === undefined
             ) {
-              setupPlayerResultSubscription(
+              pollForResultUpdates(
                 gameData.id,
                 publicKey.toString(),
-                subscriptionRef,
+                pollingRef,
                 setGameResult
               );
             }
@@ -1086,7 +1086,7 @@ export const GameContextProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     return () => {
       clearGameState();
-      cleanupPlayerResultSubscription(subscriptionRef);
+      cancelResultPolling(pollingRef);
     };
   }, []);
 

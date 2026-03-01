@@ -386,88 +386,73 @@ export const fetchCompleteGameResults = async (
     throw error;
   }
 };
-// Subscribe to changes in player_games table for this player and game
-export const setupPlayerResultSubscription = (
+// Poll for result updates (replaces Supabase Realtime subscription).
+// After the admin ends a game on-chain, there's a brief window before
+// winners/XP/rewards are written to the DB. This polls the API until
+// the data is complete, then stops automatically.
+const POLL_INTERVAL_MS = 3000;
+const MAX_POLL_ATTEMPTS = 20; // ~60 seconds max
+
+export const pollForResultUpdates = (
   gameId: string,
   playerWallet: string,
-  ref: React.RefObject<any>,
+  ref: React.MutableRefObject<ReturnType<typeof setTimeout> | null>,
   setGameResult: React.Dispatch<React.SetStateAction<GameResultFromDb | null>>
 ) => {
-  if (ref.current) {
-    supabase.removeChannel(ref.current);
-  }
+  // Clear any existing poll
+  cancelResultPolling(ref);
 
-  const channel = supabase
-    .channel(`player_game_updates_${gameId}`)
-    .on(
-      'postgres_changes',
-      {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'player_games',
-        filter: `game_id=eq.${gameId} AND player_wallet=eq.${playerWallet}`,
-      },
-      (payload) => {
-        console.log('Database update received:', payload);
+  let attempts = 0;
 
-        // Create a function to apply updates to the game result
-        const applyUpdates = (
-          newData: any,
-          prevResult: GameResultFromDb | null
-        ) => {
-          if (!prevResult) return prevResult;
+  const poll = async () => {
+    attempts++;
+    try {
+      const result = await fetchGameResult(gameId, playerWallet);
+      if (!result) return;
 
-          const updates: Partial<GameResultFromDb> = {};
+      const isComplete =
+        result.finalRank !== undefined &&
+        result.finalRank !== null &&
+        result.xpEarned !== undefined &&
+        result.xpEarned > 0;
 
-          // Only include fields that have changed
-          if (newData.xp_earned !== undefined) {
-            updates.xpEarned = newData.xp_earned;
-            console.log('Updating XP earned to:', newData.xp_earned);
-          }
+      // Apply whatever data we got
+      setGameResult((prev) => {
+        if (!prev) return result;
+        return { ...prev, ...result };
+      });
 
-          if (newData.final_rank !== undefined) {
-            updates.finalRank = newData.final_rank;
-            console.log('Updating final rank to:', newData.final_rank);
-          }
-
-          if (newData.rewards_earned !== undefined) {
-            updates.rewardsEarned = newData.rewards_earned;
-            console.log('Updating rewards earned to:', newData.rewards_earned);
-          }
-
-          // If we have any updates to apply
-          if (Object.keys(updates).length > 0) {
-            console.log('Applying updates to game result:', updates);
-            return { ...prevResult, ...updates };
-          }
-
-          return prevResult;
-        };
-
-        // Only process updates if there's new data
-        if (payload.new) {
-          // Update our game result with the new data
-          setGameResult((prevResult) => applyUpdates(payload.new, prevResult));
-        }
+      if (isComplete) {
+        console.log('Result polling complete — all data received');
+        cancelResultPolling(ref);
+        return;
       }
-    )
-    .subscribe();
+    } catch (error) {
+      console.error('Error polling for result updates:', error);
+    }
 
-  // Use MutableRefObject type to allow assignment
-  (ref as React.MutableRefObject<any>).current = channel;
+    // Schedule next poll if we haven't exceeded max attempts
+    if (attempts < MAX_POLL_ATTEMPTS) {
+      ref.current = setTimeout(poll, POLL_INTERVAL_MS);
+    } else {
+      console.log('Result polling stopped — max attempts reached');
+      cancelResultPolling(ref);
+    }
+  };
+
+  // Start first poll after a short delay (give DB time to write)
+  ref.current = setTimeout(poll, POLL_INTERVAL_MS);
 
   console.log(
-    `Subscription setup for player ${playerWallet} in game ${gameId}`
+    `Result polling started for player ${playerWallet} in game ${gameId}`
   );
-
-  // Return the channel for potential external handling
-  return channel;
 };
 
-// Function to clean up subscription
-export const cleanupPlayerResultSubscription = (ref: React.RefObject<any>) => {
+export const cancelResultPolling = (
+  ref: React.MutableRefObject<ReturnType<typeof setTimeout> | null>
+) => {
   if (ref.current) {
-    supabase.removeChannel(ref.current);
-    (ref as React.MutableRefObject<any>).current = null;
+    clearTimeout(ref.current);
+    ref.current = null;
   }
 };
