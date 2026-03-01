@@ -180,7 +180,7 @@ export async function rateLimit(
   config: RateLimitConfig
 ): Promise<NextResponse | null> {
   const clientId = getClientIp(request);
-  const { count, remaining, resetTime } = await increment(clientId, config);
+  const { count, resetTime } = await increment(clientId, config);
 
   if (count > config.maxRequests) {
     const now = Date.now();
@@ -213,7 +213,7 @@ export async function rateLimit(
  */
 export function createRateLimitedHandler(
   config: RateLimitConfig,
-  handler: (request: NextRequest) => Promise<NextResponse>
+  handler: (_request: NextRequest) => Promise<NextResponse>
 ) {
   return async (request: NextRequest): Promise<NextResponse> => {
     // Increment once and capture the result for headers

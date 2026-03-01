@@ -9,7 +9,6 @@ export const joinGameCombined = async (
   provider: AnchorProvider,
   params: JoinGameParams
 ) => {
-  const publicKey = provider.wallet.publicKey;
   try {
     // First join the game on-chain
     const { success, signature, error } = await joinGame(

@@ -35,8 +35,6 @@ function getRpcEndpoint(isDevnet: boolean): string {
   return clusterApiUrl(isDevnet ? 'devnet' : 'mainnet-beta');
 }
 
-const isDevnet = process.env.NEXT_PUBLIC_ENVIRONMENT !== 'mainnet';
-
 export const NETWORK_CONFIGS = {
   devnet: {
     endpoint: getRpcEndpoint(true),
