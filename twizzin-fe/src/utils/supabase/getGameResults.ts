@@ -399,8 +399,8 @@ export const pollForResultUpdates = (
   ref: React.MutableRefObject<ReturnType<typeof setTimeout> | null>,
   setGameResult: React.Dispatch<React.SetStateAction<GameResultFromDb | null>>
 ) => {
-  // Clear any existing poll
-  cancelResultPolling(ref);
+  // Skip if already polling (prevents attempt counter reset)
+  if (ref.current) return;
 
   let attempts = 0;
 
@@ -414,7 +414,7 @@ export const pollForResultUpdates = (
         result.finalRank !== undefined &&
         result.finalRank !== null &&
         result.xpEarned !== undefined &&
-        result.xpEarned > 0;
+        result.xpEarned !== null;
 
       // Apply whatever data we got
       setGameResult((prev) => {
